@@ -10,16 +10,16 @@ from infer.Backbone import Backbone
 from dataset import Words
 
 parser = argparse.ArgumentParser(description='Spatial channel attention')
-parser.add_argument('--config', default='config.yaml', type=str, help='配置文件路径')
-parser.add_argument('--image_path', default='/home/yuanye/work/data/CROHME2014/14_off_image_test', type=str, help='测试image路径')
-parser.add_argument('--label_path', default='/home/yuanye/work/data/CROHME2014/test_caption.txt', type=str, help='测试label路径')
+parser.add_argument('--config', default='config.yaml', type=str, help='config file path')
+parser.add_argument('--image_path', default='/home/yuanye/work/data/CROHME2014/14_off_image_test', type=str, help='test image path')
+parser.add_argument('--label_path', default='/home/yuanye/work/data/CROHME2014/test_caption.txt', type=str, help='test label path')
 args = parser.parse_args()
 
 if not args.config:
-    print('请提供config yaml路径！')
+    print('Please provide config yaml path!')
     exit(-1)
 
-"""加载config文件"""
+"""Load config file"""
 params = load_config(args.config)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

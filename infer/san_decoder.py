@@ -111,7 +111,7 @@ class SAN_decoder(nn.Module):
                     result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
                     prediction = prediction + self.params['words'].words_index_dict[word.item()] + ' '
                 #
-                # 当预测文字为结构符
+                # When predicted word is a structure symbol
                 if word.item() == 2:
 
                     struct_prob = self.struct_convert(word_out_state)

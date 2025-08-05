@@ -1,10 +1,10 @@
-# 实验名称
+# Experiment name
 experiment: "SAN"
 
-# 随机种子
+# Random seed
 seed: 20200814
 
-# 训练参数
+# Training parameters
 epoches: 200
 batch_size: 8
 workers: 0
@@ -26,7 +26,7 @@ gradient: 100
 gradient_clip: True
 use_label_mask: False
 
-# 训练数据
+# Training data
 train_image_path: 'data/train_image.pkl'
 train_label_path: 'data/train_label.pkl'
 eval_image_path: 'data/test_image.pkl'
@@ -34,7 +34,7 @@ eval_label_path: 'data/test_label.pkl'
 
 word_path: 'data/word.txt'
 
-# 选择encoder
+# Encoder selection
 encoder:
   net: DenseNet
   input_channels: 1
@@ -50,14 +50,14 @@ densenet:
   bottleneck: True
   use_dropout: True
 
-# 使用的rnn cell
+# RNN cell to use
 decoder:
   net: SAN_decoder
   cell: 'GRU'
   input_size: 256
   hidden_size: 256
 
-# attention 参数
+# Attention parameters
 attention:
   attention_dim: 512
 
@@ -65,11 +65,11 @@ attention:
 hybrid_tree:
   threshold: 0.5
 
-# 训练权重存放路径
+# Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: False
 checkpoint: ""
 
-# tensorboard路径
+# TensorBoard path
 log_dir: 'logs'

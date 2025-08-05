@@ -5,7 +5,7 @@ import cv2
 import pickle as pkl
 
 
-image_path = '/Users/tal/Documents/Tal/myWork/公式识别/code/WAP/data/off_image_train'
+image_path = '/Users/tal/Documents/Tal/myWork/formula_recognition/code/WAP/data/off_image_train'
 image_out = 'train_image.pkl'
 laebl_path = 'train_hyb'
 label_out = 'train_label.pkl'
