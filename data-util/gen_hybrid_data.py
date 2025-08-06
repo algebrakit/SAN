@@ -22,7 +22,7 @@ def convert(root: Tree, f):
 
 
 
-label = '../train_latex.txt'
+label = 'train_latex.txt'
 out = 'train_hyb'
 
 position = set(['^', '_'])

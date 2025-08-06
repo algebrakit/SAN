@@ -13,6 +13,19 @@ This is the official PyTorch implementation of **SAN (Syntax-Aware Network)** fo
 pip3 install -r requirement.txt
 ```
 
+### Data Preparation (CROHME 2016)
+```bash
+cd data
+# Step 1: Prepare image and label files
+python3 prepare_crohme_data.py
+
+# Step 2: Generate hybrid tree labels
+python3 gen_hybrid_data.py
+
+# Step 3: Convert to pickle format
+python3 convert_hybrid_to_pkl.py
+```
+
 ### Training
 ```bash
 python3 train.py --config config.yaml
