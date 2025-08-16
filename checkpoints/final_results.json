@@ -1,0 +1,8 @@
+{
+  "train_accuracy": 0.9786524349566378,
+  "val_accuracy": 0.40342679127725856,
+  "test_accuracy": 0.3652647975077882,
+  "weighted_precision": 0.3920902717047577,
+  "weighted_recall": 0.3652647975077882,
+  "weighted_f1": 0.3589771939966555
+}
