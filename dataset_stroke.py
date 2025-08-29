@@ -87,6 +87,10 @@ class StrokeNormalizer:
     def normalize_expression_coordinates(self, strokes):
         """Normalize entire expression coordinates while preserving relationships"""
         if not strokes or not any(stroke['points'] for stroke in strokes):
+<<<<<<< Updated upstream
+=======
+            print("Warning: No valid strokes found for normalization")
+>>>>>>> Stashed changes
             return strokes, {'scale_factor': 1.0, 'offset': (0, 0)}
         
         # Extract all coordinates from entire expression
@@ -95,6 +99,10 @@ class StrokeNormalizer:
             all_points.extend(stroke['points'])
         
         if not all_points:
+<<<<<<< Updated upstream
+=======
+            print("Warning: No valid points found in strokes")
+>>>>>>> Stashed changes
             return strokes, {'scale_factor': 1.0, 'offset': (0, 0)}
         
         xs = [p[0] for p in all_points]
@@ -156,10 +164,61 @@ class StrokeNormalizer:
             'scale_factor': scale,
             'offset': (offset_x, offset_y),
             'original_bounds': (x_min, y_min, x_max, y_max),
+<<<<<<< Updated upstream
             'aspect_ratio': expr_aspect,
             'estimated_char_size': scaled_char_width
         }
         
+=======
+            'normalized_bounds': (-scaled_width/2, -scaled_height/2, scaled_width/2, scaled_height/2),
+            'aspect_ratio': expr_aspect,
+            'estimated_char_size': scaled_char_width,
+            'target_width': self.target_width,
+            'target_height': effective_target_height
+        }
+        
+        # Validation: check if normalized coordinates are reasonable
+        if abs(offset_x) > 10 or abs(offset_y) > 10:
+            print(f"Warning: Large offset detected: ({offset_x:.2f}, {offset_y:.2f})")
+        if scale < 0.001 or scale > 1000:
+            print(f"Warning: Extreme scaling detected: {scale:.4f}")
+            print(f"  Original expression size: {expr_width:.1f} x {expr_height:.1f}")
+            print(f"  This suggests very large original coordinates in InkML")
+        if scaled_char_width < 0.001:
+            print(f"Warning: Extremely small character size: {scaled_char_width:.4f}")
+            
+        # If scaling is too extreme, apply a more reasonable scaling
+        if scale < 0.0005:  # Very small scale factor
+            print(f"  Applying minimum scale factor to prevent numerical issues")
+            min_scale = 0.0005
+            scale = min_scale
+            
+            # Recalculate with minimum scale
+            scaled_width = expr_width * scale
+            scaled_height = expr_height * scale
+            offset_x = -x_min * scale - scaled_width / 2
+            offset_y = -y_min * scale - scaled_height / 2
+            
+            # Re-apply normalization with corrected scale
+            normalized_strokes = []
+            for stroke in strokes:
+                normalized_points = []
+                for x, y, t in stroke['points']:
+                    norm_x = x * scale + offset_x
+                    norm_y = y * scale + offset_y
+                    normalized_points.append((norm_x, norm_y, t))
+                
+                normalized_strokes.append({
+                    'id': stroke['id'],
+                    'points': normalized_points
+                })
+            
+            # Update metadata
+            norm_info['scale_factor'] = scale
+            norm_info['offset'] = (offset_x, offset_y)
+            norm_info['estimated_char_size'] = estimated_char_width * scale
+        
+>>>>>>> Stashed changes
         return normalized_strokes, norm_info
     
     def normalize_temporal_sequence(self, strokes):
@@ -196,6 +255,7 @@ class StrokeNormalizer:
             
             normalized_points = []
             for point_idx, (x, y, t) in enumerate(stroke['points']):
+<<<<<<< Updated upstream
                 # Global temporal position [0, 1]
                 global_t = (t - t_min) / total_duration
                 
@@ -207,6 +267,25 @@ class StrokeNormalizer:
                 
                 # Combined temporal encoding
                 enhanced_t = (global_t * 0.6 + stroke_order_norm * 0.25 + point_progress * 0.15)
+=======
+                # Simplified temporal encoding - just use stroke order for now
+                # This reduces complexity and potential confusion during training
+                
+                # Global temporal position [0, 1] (original time)
+                global_t = (t - t_min) / total_duration if total_duration > 0 else 0.0
+                
+                # Stroke order encoding (more important for mathematical structure)
+                stroke_order_norm = stroke_order.index(stroke_idx) / max(1, len(strokes) - 1)
+                
+                # Point position within stroke [0, 1] 
+                point_progress = point_idx / max(1, len(stroke['points']) - 1)
+                
+                # Simplified temporal encoding - prioritize stroke order
+                enhanced_t = stroke_order_norm * 0.8 + point_progress * 0.2
+                
+                # Clamp to valid range
+                enhanced_t = max(0.0, min(1.0, enhanced_t))
+>>>>>>> Stashed changes
                 
                 normalized_points.append((x, y, enhanced_t))
             
@@ -269,9 +348,19 @@ class StrokeNormalizer:
                 # Centroid for spatial positioning
                 center_x = (x_min + x_max) / 2
                 center_y = (y_min + y_max) / 2
+<<<<<<< Updated upstream
                 width = x_max - x_min
                 height = y_max - y_min
                 
+=======
+                width = max(x_max - x_min, 0.01)  # Ensure minimum width
+                height = max(y_max - y_min, 0.01)  # Ensure minimum height
+                
+                # Validate coordinates are within expected range
+                if not (-3 <= center_x <= 3) or not (-1 <= center_y <= 1):
+                    print(f"Warning: Stroke center out of expected range: ({center_x:.2f}, {center_y:.2f})")
+                    
+>>>>>>> Stashed changes
                 stroke_positions.append([center_x, center_y, width, height])
                 stroke_bounds.append([x_min, y_min, x_max, y_max])
             else:

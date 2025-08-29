@@ -134,6 +134,7 @@ class StrokeInference:
         
         # Convert to words
         predicted_words = []
+<<<<<<< Updated upstream
         for token_id in word_predictions:
             token_id = token_id.item()
             if token_id == 0:  # End of sequence
@@ -144,6 +145,31 @@ class StrokeInference:
                     predicted_words.append(word)
         
         # Join words to form LaTeX expression
+=======
+        for i, token_id in enumerate(word_predictions):
+            token_id = token_id.item()
+            
+            # Check for end-of-sequence tokens
+            if token_id == 0 or (token_id < len(self.words.words_index_dict) and 
+                                self.words.words_index_dict[token_id] == '<eos>'):
+                break
+                
+            # Validate token ID bounds
+            if token_id >= len(self.words.words_index_dict):
+                print(f"Warning: Invalid token ID {token_id} at position {i}, max vocab size: {len(self.words.words_index_dict)}")
+                continue
+                
+            word = self.words.words_index_dict[token_id]
+            
+            # Skip special tokens
+            if word not in ['<pad>', '<sos>', '<eos>', 'struct']:
+                predicted_words.append(word)
+        
+        # Join words to form LaTeX expression, handle empty case
+        if not predicted_words:
+            return "<empty_prediction>"
+            
+>>>>>>> Stashed changes
         latex_expression = ' '.join(predicted_words)
         return latex_expression
     

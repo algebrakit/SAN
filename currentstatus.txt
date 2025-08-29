@@ -1,0 +1,516 @@
+Epoch 1/100
+--------------------------------------------------
+Epoch 1 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:06<00:00,  5.01s/it, Loss=2.8039, Word=2.7647, Struct=0.0006, WordAcc=0.330, LR=0.001000]
+Epoch 1 Eval:   0%|                                                                                                                                                                    | 0/10000 [00:00<?, ?it/s]/home/pedro/.local/lib/python3.10/site-packages/torch/nn/modules/transformer.py:296: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. (Triggered internally at ../aten/src/ATen/NestedTensorImpl.cpp:177.)
+  output = torch._nested_tensor_from_mask(output, src_key_padding_mask.logical_not(), mask_check=False)
+Epoch 1 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:14<00:00, 39.31it/s, Loss=9.7401, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.760114 | Eval Loss: 9.666041
+Train - Word: 0.339, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.280, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3392_structRate-0.9206_ExpRate-0.0000_1.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.2797_structRate-0.7459_ExpRate-0.0000_1.pth
+
++ New best model saved (eval loss: 9.666041)
+
+Epoch 2/100
+--------------------------------------------------
+Epoch 2 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.6029, Word=2.5832, Struct=0.0002, WordAcc=0.345, LR=0.001000]
+Epoch 2 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:16<00:00, 38.91it/s, Loss=9.7156, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.786742 | Eval Loss: 9.647193
+Train - Word: 0.336, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3364_structRate-0.9205_ExpRate-0.0000_2.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.2815_structRate-0.7459_ExpRate-0.0000_2.pth
+
++ New best model saved (eval loss: 9.647193)
+
+Epoch 3/100
+--------------------------------------------------
+Epoch 3 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.7448, Word=2.7147, Struct=0.0003, WordAcc=0.326, LR=0.000999]
+Epoch 3 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:17<00:00, 38.90it/s, Loss=9.7201, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.776588 | Eval Loss: 9.648810
+Train - Word: 0.339, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3388_structRate-0.9205_ExpRate-0.0000_3.pth
+
+
+Epoch 4/100
+--------------------------------------------------
+Epoch 4 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.8138, Word=2.7621, Struct=0.0008, WordAcc=0.316, LR=0.000998]
+Epoch 4 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:20<00:00, 38.39it/s, Loss=9.7559, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.763236 | Eval Loss: 9.634053
+Train - Word: 0.339, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.276, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3388_structRate-0.9207_ExpRate-0.0000_4.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.2761_structRate-0.7459_ExpRate-0.0000_4.pth
+
++ New best model saved (eval loss: 9.634053)
+
+Epoch 5/100
+--------------------------------------------------
+Epoch 5 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=3.0659, Word=2.9976, Struct=0.0026, WordAcc=0.309, LR=0.000996]
+Epoch 5 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:19<00:00, 38.53it/s, Loss=9.7732, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.755825 | Eval Loss: 9.660058
+Train - Word: 0.340, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.281, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3404_structRate-0.9205_ExpRate-0.0000_5.pth
+
+
+Epoch 6/100
+--------------------------------------------------
+Epoch 6 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.6493, Word=2.5639, Struct=0.0018, WordAcc=0.392, LR=0.000994]
+Epoch 6 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:17<00:00, 38.82it/s, Loss=9.7513, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.744142 | Eval Loss: 9.636851
+Train - Word: 0.342, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.281, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3421_structRate-0.9206_ExpRate-0.0000_6.pth
+
+
+Epoch 7/100
+--------------------------------------------------
+Epoch 7 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.5449, Word=2.4480, Struct=0.0011, WordAcc=0.392, LR=0.000991]
+Epoch 7 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:21<00:00, 38.28it/s, Loss=9.7276, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.728107 | Eval Loss: 9.638114
+Train - Word: 0.344, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3440_structRate-0.9204_ExpRate-0.0000_7.pth
+
+
+Epoch 8/100
+--------------------------------------------------
+Epoch 8 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.7174, Word=2.6406, Struct=0.0006, WordAcc=0.360, LR=0.000988]
+Epoch 8 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:20<00:00, 38.44it/s, Loss=9.7635, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.713711 | Eval Loss: 9.636198
+Train - Word: 0.344, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.274, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3437_structRate-0.9203_ExpRate-0.0000_8.pth
+
+
+Epoch 9/100
+--------------------------------------------------
+Epoch 9 Train: 100%|██████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.5076, Word=2.4662, Struct=0.0007, WordAcc=0.370, LR=0.000984]
+Epoch 9 Eval: 100%|████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:27<00:00, 37.34it/s, Loss=9.7528, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.699075 | Eval Loss: 9.629061
+Train - Word: 0.346, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.278, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3462_structRate-0.9204_ExpRate-0.0000_9.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.2775_structRate-0.7459_ExpRate-0.0000_9.pth
+
++ New best model saved (eval loss: 9.629061)
+
+Epoch 10/100
+--------------------------------------------------
+Epoch 10 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.8031, Word=2.7288, Struct=0.0005, WordAcc=0.341, LR=0.000980]
+Epoch 10 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:15<00:00, 39.16it/s, Loss=9.7465, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.683543 | Eval Loss: 9.643489
+Train - Word: 0.348, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3478_structRate-0.9206_ExpRate-0.0000_10.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3478_structRate-0.9206_ExpRate-0.0000_10.pth
+
+
+Epoch 11/100
+--------------------------------------------------
+Epoch 11 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.9388, Word=2.8836, Struct=0.0018, WordAcc=0.297, LR=0.000976]
+Epoch 11 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:22<00:00, 38.10it/s, Loss=9.7977, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.663847 | Eval Loss: 9.672870
+Train - Word: 0.349, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.283, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3488_structRate-0.9205_ExpRate-0.0000_11.pth
+
+
+Epoch 12/100
+--------------------------------------------------
+Epoch 12 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.9731, Word=2.9128, Struct=0.0042, WordAcc=0.294, LR=0.000970]
+Epoch 12 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:25<00:00, 37.69it/s, Loss=9.8109, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.643996 | Eval Loss: 9.669562
+Train - Word: 0.351, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3513_structRate-0.9205_ExpRate-0.0000_12.pth
+
+
+Epoch 13/100
+--------------------------------------------------
+Epoch 13 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.0534, Word=2.0405, Struct=0.0003, WordAcc=0.438, LR=0.000965]
+Epoch 13 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:28<00:00, 37.26it/s, Loss=9.7846, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.621948 | Eval Loss: 9.672493
+Train - Word: 0.354, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.284, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3538_structRate-0.9208_ExpRate-0.0000_13.pth
+
+
+Epoch 14/100
+--------------------------------------------------
+Epoch 14 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.7240, Word=2.6943, Struct=0.0019, WordAcc=0.337, LR=0.000959]
+Epoch 14 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:33<00:00, 36.56it/s, Loss=9.7371, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.601534 | Eval Loss: 9.675896
+Train - Word: 0.356, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3557_structRate-0.9205_ExpRate-0.0000_14.pth
+
+
+Epoch 15/100
+--------------------------------------------------
+Epoch 15 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.5450, Word=2.5004, Struct=0.0018, WordAcc=0.395, LR=0.000952]
+Epoch 15 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:28<00:00, 37.31it/s, Loss=9.8472, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.576836 | Eval Loss: 9.671895
+Train - Word: 0.360, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.283, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3596_structRate-0.9205_ExpRate-0.0000_15.pth
+
+
+Epoch 16/100
+--------------------------------------------------
+Epoch 16 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.1775, Word=2.1684, Struct=0.0070, WordAcc=0.407, LR=0.000946]
+Epoch 16 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:41<00:00, 35.54it/s, Loss=9.7940, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.548617 | Eval Loss: 9.711241
+Train - Word: 0.362, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.276, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3620_structRate-0.9205_ExpRate-0.0000_16.pth
+
+
+Epoch 17/100
+--------------------------------------------------
+Epoch 17 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.8042, Word=2.8040, Struct=0.0003, WordAcc=0.348, LR=0.000938]
+Epoch 17 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:46<00:00, 34.90it/s, Loss=10.0788, WordAcc=0.167, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.529570 | Eval Loss: 9.719506
+Train - Word: 0.365, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.270, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3652_structRate-0.9207_ExpRate-0.0000_17.pth
+
+
+Epoch 18/100
+--------------------------------------------------
+Epoch 18 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=1.7599, Word=1.7419, Struct=0.0009, WordAcc=0.483, LR=0.000930]
+Epoch 18 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:46<00:00, 34.88it/s, Loss=9.7393, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.502743 | Eval Loss: 9.707866
+Train - Word: 0.367, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.269, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3672_structRate-0.9207_ExpRate-0.0000_18.pth
+
+
+Epoch 19/100
+--------------------------------------------------
+Epoch 19 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.2213, Word=2.2102, Struct=0.0001, WordAcc=0.421, LR=0.000922]
+Epoch 19 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:59<00:00, 33.42it/s, Loss=10.0004, WordAcc=0.111, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.479877 | Eval Loss: 9.813929
+Train - Word: 0.370, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.246, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3703_structRate-0.9207_ExpRate-0.0000_19.pth
+
+
+Epoch 20/100
+--------------------------------------------------
+Epoch 20 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.1998, Word=2.1478, Struct=0.0004, WordAcc=0.454, LR=0.000914]
+Epoch 20 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:34<00:00, 36.37it/s, Loss=9.9055, WordAcc=0.556, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.477046 | Eval Loss: 9.700013
+Train - Word: 0.371, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.283, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3715_structRate-0.9206_ExpRate-0.0000_20.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3715_structRate-0.9206_ExpRate-0.0000_20.pth
+
+
+Epoch 21/100
+--------------------------------------------------
+Epoch 21 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.2518, Word=2.2323, Struct=0.0025, WordAcc=0.394, LR=0.000905]
+Epoch 21 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:37<00:00, 36.10it/s, Loss=9.6726, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.452654 | Eval Loss: 9.711457
+Train - Word: 0.373, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3731_structRate-0.9205_ExpRate-0.0000_21.pth
+
+
+Epoch 22/100
+--------------------------------------------------
+Epoch 22 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.0632, Word=2.0310, Struct=0.0015, WordAcc=0.392, LR=0.000895]
+Epoch 22 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:36<00:00, 36.12it/s, Loss=9.8851, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.422857 | Eval Loss: 9.831631
+Train - Word: 0.378, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.281, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3785_structRate-0.9203_ExpRate-0.0000_22.pth
+
+
+Epoch 23/100
+--------------------------------------------------
+Epoch 23 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=1.9114, Word=1.8953, Struct=0.0004, WordAcc=0.483, LR=0.000885]
+Epoch 23 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:51<00:00, 34.26it/s, Loss=9.7929, WordAcc=0.556, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.391361 | Eval Loss: 9.866229
+Train - Word: 0.381, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.270, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3812_structRate-0.9205_ExpRate-0.0000_23.pth
+
+
+Epoch 24/100
+--------------------------------------------------
+Epoch 24 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.4848, Word=2.4281, Struct=0.0125, WordAcc=0.355, LR=0.000875]
+Epoch 24 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:43<00:00, 35.25it/s, Loss=10.0179, WordAcc=0.556, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.373501 | Eval Loss: 9.850132
+Train - Word: 0.384, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.272, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3837_structRate-0.9204_ExpRate-0.0000_24.pth
+
+
+Epoch 25/100
+--------------------------------------------------
+Epoch 25 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.3800, Word=2.3862, Struct=0.0007, WordAcc=0.390, LR=0.000864]
+Epoch 25 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:53<00:00, 34.13it/s, Loss=9.7170, WordAcc=0.556, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.349218 | Eval Loss: 9.923269
+Train - Word: 0.387, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.270, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3867_structRate-0.9202_ExpRate-0.0000_25.pth
+
+
+Epoch 26/100
+--------------------------------------------------
+Epoch 26 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.5682, Word=2.5298, Struct=0.0003, WordAcc=0.355, LR=0.000854]
+Epoch 26 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:50<00:00, 34.45it/s, Loss=9.7936, WordAcc=0.611, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.330737 | Eval Loss: 9.970723
+Train - Word: 0.389, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.275, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3892_structRate-0.9202_ExpRate-0.0000_26.pth
+
+
+Epoch 27/100
+--------------------------------------------------
+Epoch 27 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.1286, Word=2.1256, Struct=0.0014, WordAcc=0.394, LR=0.000842]
+Epoch 27 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:52<00:00, 34.22it/s, Loss=9.6678, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.308887 | Eval Loss: 10.045580
+Train - Word: 0.393, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.269, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3934_structRate-0.9206_ExpRate-0.0000_27.pth
+
+
+Epoch 28/100
+--------------------------------------------------
+Epoch 28 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=1.8369, Word=1.8120, Struct=0.0005, WordAcc=0.476, LR=0.000831]
+Epoch 28 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:52<00:00, 34.21it/s, Loss=10.9493, WordAcc=0.167, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.288852 | Eval Loss: 10.028243
+Train - Word: 0.396, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.272, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3958_structRate-0.9204_ExpRate-0.0000_28.pth
+
+
+Epoch 29/100
+--------------------------------------------------
+Epoch 29 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.1820, Word=2.1598, Struct=0.0004, WordAcc=0.407, LR=0.000819]
+Epoch 29 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:44<00:00, 35.10it/s, Loss=11.4212, WordAcc=0.167, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.266776 | Eval Loss: 9.980638
+Train - Word: 0.399, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.282, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3989_structRate-0.9206_ExpRate-0.0000_29.pth
+
+
+Epoch 30/100
+--------------------------------------------------
+Epoch 30 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.0022, Word=1.9992, Struct=0.0001, WordAcc=0.393, LR=0.000806]
+Epoch 30 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:45<00:00, 35.08it/s, Loss=9.6467, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.249591 | Eval Loss: 9.983759
+Train - Word: 0.402, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.281, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4016_structRate-0.9203_ExpRate-0.0000_30.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4016_structRate-0.9203_ExpRate-0.0000_30.pth
+
+
+Epoch 31/100
+--------------------------------------------------
+Epoch 31 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.0664, Word=2.0405, Struct=0.0019, WordAcc=0.418, LR=0.000794]
+Epoch 31 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:01<00:00, 33.13it/s, Loss=10.3929, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.236256 | Eval Loss: 10.244746
+Train - Word: 0.403, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.266, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4035_structRate-0.9205_ExpRate-0.0000_31.pth
+
+
+Epoch 32/100
+--------------------------------------------------
+Epoch 32 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.3837, Word=2.3843, Struct=0.0003, WordAcc=0.367, LR=0.000781]
+Epoch 32 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:49<00:00, 34.53it/s, Loss=9.8776, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.225639 | Eval Loss: 10.106653
+Train - Word: 0.405, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.273, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4046_structRate-0.9204_ExpRate-0.0000_32.pth
+
+
+Epoch 33/100
+--------------------------------------------------
+Epoch 33 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.2603, Word=2.2075, Struct=0.0106, WordAcc=0.412, LR=0.000768]
+Epoch 33 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:53<00:00, 34.03it/s, Loss=9.6684, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.195234 | Eval Loss: 10.204937
+Train - Word: 0.410, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.267, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4103_structRate-0.9205_ExpRate-0.0000_33.pth
+
+
+Epoch 34/100
+--------------------------------------------------
+Epoch 34 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.1836, Word=2.1836, Struct=0.0017, WordAcc=0.403, LR=0.000755]
+Epoch 34 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:54<00:00, 33.91it/s, Loss=10.1818, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.176855 | Eval Loss: 10.247209
+Train - Word: 0.414, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.272, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4138_structRate-0.9204_ExpRate-0.0000_34.pth
+
+
+Epoch 35/100
+--------------------------------------------------
+Epoch 35 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:03<00:00,  4.99s/it, Loss=2.2661, Word=2.2322, Struct=0.0084, WordAcc=0.404, LR=0.000741]
+Epoch 35 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:57<00:00, 33.64it/s, Loss=10.0000, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.164342 | Eval Loss: 10.278624
+Train - Word: 0.415, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.272, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4145_structRate-0.9203_ExpRate-0.0001_35.pth
+
+
+Epoch 36/100
+--------------------------------------------------
+Epoch 36 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=1.4927, Word=1.4937, Struct=0.0085, WordAcc=0.517, LR=0.000727]
+Epoch 36 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:52<00:00, 34.21it/s, Loss=9.6746, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.148567 | Eval Loss: 10.253242
+Train - Word: 0.417, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.270, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4175_structRate-0.9205_ExpRate-0.0000_36.pth
+
+
+Epoch 37/100
+--------------------------------------------------
+Epoch 37 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=1.9373, Word=1.8889, Struct=0.0013, WordAcc=0.460, LR=0.000713]
+Epoch 37 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:06<00:00, 32.60it/s, Loss=10.1140, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.131993 | Eval Loss: 10.378472
+Train - Word: 0.421, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.267, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4211_structRate-0.9205_ExpRate-0.0000_37.pth
+
+
+Epoch 38/100
+--------------------------------------------------
+Epoch 38 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.1503, Word=2.1431, Struct=0.0001, WordAcc=0.440, LR=0.000699]
+Epoch 38 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:08<00:00, 32.38it/s, Loss=10.0272, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.114468 | Eval Loss: 10.440603
+Train - Word: 0.424, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.264, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4243_structRate-0.9202_ExpRate-0.0000_38.pth
+
+
+Epoch 39/100
+--------------------------------------------------
+Epoch 39 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:03<00:00,  4.99s/it, Loss=2.1215, Word=2.1262, Struct=0.0035, WordAcc=0.424, LR=0.000684]
+Epoch 39 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:57<00:00, 33.61it/s, Loss=10.2228, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.099412 | Eval Loss: 10.404303
+Train - Word: 0.429, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.265, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4286_structRate-0.9203_ExpRate-0.0000_39.pth
+
+
+Epoch 40/100
+--------------------------------------------------
+Epoch 40 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.0651, Word=2.0515, Struct=0.0003, WordAcc=0.450, LR=0.000669]
+Epoch 40 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:14<00:00, 31.77it/s, Loss=12.9160, WordAcc=0.056, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.088435 | Eval Loss: 10.621621
+Train - Word: 0.429, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.253, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4289_structRate-0.9203_ExpRate-0.0000_40.pth
+
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4289_structRate-0.9203_ExpRate-0.0000_40.pth
+
+
+Epoch 41/100
+--------------------------------------------------
+Epoch 41 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.3130, Word=2.3255, Struct=0.0017, WordAcc=0.419, LR=0.000655]
+Epoch 41 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:03<00:00, 33.00it/s, Loss=11.8086, WordAcc=0.056, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.076456 | Eval Loss: 10.423267
+Train - Word: 0.432, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.265, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4319_structRate-0.9204_ExpRate-0.0000_41.pth
+
+
+Epoch 42/100
+--------------------------------------------------
+Epoch 42 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=1.7891, Word=1.7777, Struct=0.0019, WordAcc=0.529, LR=0.000639]
+Epoch 42 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:04<00:00, 32.87it/s, Loss=10.2843, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.063667 | Eval Loss: 10.535013
+Train - Word: 0.435, Struct: 0.921, Expr: 0.000
+Eval  - Word: 0.266, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4345_structRate-0.9206_ExpRate-0.0000_42.pth
+
+
+Epoch 43/100
+--------------------------------------------------
+Epoch 43 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=2.1019, Word=2.0962, Struct=0.0026, WordAcc=0.400, LR=0.000624]
+Epoch 43 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:02<00:00, 33.01it/s, Loss=10.4189, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.053549 | Eval Loss: 10.588749
+Train - Word: 0.436, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.267, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4355_structRate-0.9204_ExpRate-0.0000_43.pth
+
+
+Epoch 44/100
+--------------------------------------------------
+Epoch 44 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:05<00:00,  5.00s/it, Loss=2.0043, Word=2.0186, Struct=0.0007, WordAcc=0.437, LR=0.000609]
+Epoch 44 Eval: 100%|███████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [04:55<00:00, 33.89it/s, Loss=9.8816, WordAcc=0.444, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.040907 | Eval Loss: 10.497209
+Train - Word: 0.438, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.271, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4379_structRate-0.9204_ExpRate-0.0001_44.pth
+
+
+Epoch 45/100
+--------------------------------------------------
+Epoch 45 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=1.6338, Word=1.6398, Struct=0.0095, WordAcc=0.476, LR=0.000594]
+Epoch 45 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:09<00:00, 32.34it/s, Loss=10.2666, WordAcc=0.500, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.030533 | Eval Loss: 10.708693
+Train - Word: 0.440, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.262, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4395_structRate-0.9204_ExpRate-0.0001_45.pth
+
+
+Epoch 46/100
+--------------------------------------------------
+Epoch 46 Train: 100%|█████████████████████████████████████████████████████████████████████████████████████| 193/193 [16:04<00:00,  5.00s/it, Loss=1.9671, Word=1.9706, Struct=0.0008, WordAcc=0.446, LR=0.000578]
+Epoch 46 Eval: 100%|██████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [05:02<00:00, 33.01it/s, Loss=10.4851, WordAcc=0.556, StructAcc=0.500, ExprAcc=0.000]
+Train Loss: 2.018733 | Eval Loss: 10.622435
+Train - Word: 0.442, Struct: 0.920, Expr: 0.000
+Eval  - Word: 0.266, Struct: 0.746, Expr: 0.000
+Save checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4422_structRate-0.9203_ExpRate-0.0000_46.pth
+
+
+python inference_stroke.py --config config_stroke.yaml --checkpoint checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4379_structRate-0.9204_ExpRate-0.0001_44.pth --inkml 0001e735aa74f8bc.inkml
+>>
+>> Initializing Stroke-Aware SAN Inference...
+Loaded stroke configuration with 55 parameters
+>> Loaded config: config_stroke.yaml
+>> Using device: cuda
+115 symbols in vocabulary
+>> Vocabulary loaded: 115 symbols
+>> Stroke normalizer initialized
+>> Building stroke-aware model...
+>> Loading checkpoint: checkpoints_stroke/SAN_Stroke_2025-08-28-17-26_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.4379_structRate-0.9204_ExpRate-0.0001_44.pth
+>> Model loaded from epoch unknown
+   Word accuracy: unknown
+   Struct accuracy: unknown
+>> Model ready for inference!
+============================================================
+
+>> Processing InkML: 0001e735aa74f8bc.inkml
+   Original label: O_{ij}
+   Number of strokes: 5
+   Input tensor shape: torch.Size([1, 20, 10, 3])
+   Valid strokes: 5
+C:\Users\Pedro\AppData\Local\Programs\Python\Python312\Lib\site-packages\torch\nn\modules\transformer.py:505: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\pytorch\aten\src\ATen\NestedTensorImpl.cpp:182.)
+  output = torch._nested_tensor_from_mask(
+>> Prediction complete!
+
+============================================================
+>> INFERENCE RESULTS
+============================================================
+Original label: O_{ij}
+Predicted LaTeX: i , 1 i h = c h m p
+Valid strokes: 5
+Confidence: [-1.8087881 -5.2010865 -3.911756  -3.9061491 -6.94287   -4.634065
+ -6.569478  -2.083555  -1.6183882 -2.948849 ]

@@ -2,6 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
+<<<<<<< Updated upstream
+=======
+import warnings
+>>>>>>> Stashed changes
 
 
 class PointSequenceLSTM(nn.Module):
@@ -207,6 +211,7 @@ class SpatialFeatureGenerator(nn.Module):
                 
                 # Map normalized coordinates to feature grid
                 # Coordinates are in range [-2, 2] for width, [-0.5, 0.5] for height
+<<<<<<< Updated upstream
                 grid_x = int((center_x + 2.0) * self.feature_width / 4.0)
                 grid_y = int((center_y + 0.5) * self.feature_height / 1.0)
                 
@@ -219,6 +224,41 @@ class SpatialFeatureGenerator(nn.Module):
                 
                 # Simple point placement (can be improved with Gaussian spreading)
                 canvas[batch_idx, :, grid_y, grid_x] += stroke_feat
+=======
+                # Fixed coordinate mapping with proper scaling
+                grid_x_f = ((center_x + 2.0) / 4.0) * (self.feature_width - 1)
+                grid_y_f = ((center_y + 0.5) / 1.0) * (self.feature_height - 1)
+                
+                # Clamp to valid range first, then convert to int
+                grid_x_f = max(0, min(self.feature_width - 1, grid_x_f))
+                grid_y_f = max(0, min(self.feature_height - 1, grid_y_f))
+                
+                grid_x = int(grid_x_f)
+                grid_y = int(grid_y_f)
+                
+                # Calculate stroke size for Gaussian spreading
+                stroke_feat = stroke_proj[batch_idx, stroke_idx]  # [512]
+                stroke_width = max(0.5, width * self.feature_width / 4.0)  # Scale width to grid
+                stroke_height = max(0.5, height * self.feature_height / 1.0)  # Scale height to grid
+                
+                # Gaussian spreading instead of single point
+                sigma_x = max(1.0, stroke_width / 2.0)
+                sigma_y = max(1.0, stroke_height / 2.0)
+                
+                # Apply Gaussian distribution around stroke center
+                for dy in range(-2, 3):  # 5x5 kernel
+                    for dx in range(-2, 3):
+                        target_x = grid_x + dx
+                        target_y = grid_y + dy
+                        
+                        # Check bounds
+                        if 0 <= target_x < self.feature_width and 0 <= target_y < self.feature_height:
+                            # Gaussian weight (ensure tensor operations)
+                            dx_norm = torch.tensor(float(dx / sigma_x), device=canvas.device, dtype=canvas.dtype)
+                            dy_norm = torch.tensor(float(dy / sigma_y), device=canvas.device, dtype=canvas.dtype)
+                            weight = torch.exp(-0.5 * (dx_norm**2 + dy_norm**2))
+                            canvas[batch_idx, :, target_y, target_x] += stroke_feat * weight
+>>>>>>> Stashed changes
         
         # Add spatial position embeddings
         canvas = canvas + self.spatial_embed_h + self.spatial_embed_w

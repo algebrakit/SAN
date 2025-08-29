@@ -48,6 +48,21 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                     kl_loss = torch.tensor(0.0, device=device)
                     total_loss = word_loss + struct_loss
                 
+<<<<<<< Updated upstream
+=======
+                # Validate loss values - detect suspicious patterns
+                if total_loss.item() < 0.01:
+                    print(f"\nWarning: Suspiciously low total loss: {total_loss.item():.6f}")
+                    print(f"  Word loss: {word_loss.item():.6f}")
+                    print(f"  Struct loss: {struct_loss.item():.6f}")
+                    print(f"  Batch size: {batch_size}, Sequence length: {time}")
+                    
+                if torch.isnan(total_loss) or torch.isinf(total_loss):
+                    print(f"\nError: Invalid loss detected: {total_loss.item()}")
+                    print(f"  Word loss: {word_loss.item()}, Struct loss: {struct_loss.item()}")
+                    continue
+                
+>>>>>>> Stashed changes
                 # Backward pass
                 total_loss.backward()
                 
@@ -63,6 +78,18 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                 # Calculate accuracy metrics
                 wordRate, structRate, ExpRate = cal_score(probs, labels, labels_mask)
                 
+<<<<<<< Updated upstream
+=======
+                # Debug: Print accuracy info for first batch of first epoch
+                if epoch == 0 and batch_idx == 0:
+                    print(f"\nFirst batch metrics:")
+                    print(f"  Word accuracy: {wordRate:.4f}")
+                    print(f"  Struct accuracy: {structRate:.4f}")
+                    print(f"  Expression accuracy: {ExpRate:.4f}")
+                    print(f"  Predicted shape: {probs[0].shape if isinstance(probs, tuple) else probs.shape}")
+                    print(f"  Labels shape: {labels.shape}")
+                
+>>>>>>> Stashed changes
                 word_right += wordRate * time
                 struct_right += structRate * time
                 exp_right += ExpRate * batch_size
@@ -94,9 +121,22 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
             except Exception as e:
                 print(f"\nError in training batch {batch_idx}: {e}")
                 print(f"Stroke data shape: {stroke_data.shape}")
+<<<<<<< Updated upstream
                 print(f"Labels shape: {labels.shape}")
                 import traceback
                 traceback.print_exc()
+=======
+                print(f"Stroke masks shape: {stroke_masks.shape}")
+                print(f"Stroke positions shape: {stroke_positions.shape}")
+                print(f"Labels shape: {labels.shape}")
+                print(f"Labels mask shape: {labels_mask.shape}")
+                print(f"Device: stroke_data={stroke_data.device}, labels={labels.device}")
+                import traceback
+                traceback.print_exc()
+                
+                # Skip this batch but don't crash the training
+                print("Skipping corrupted batch...")
+>>>>>>> Stashed changes
                 continue
     
     # Calculate epoch metrics
