@@ -1,0 +1,98 @@
+# Experiment name
+experiment: "SAN_Stroke"
+
+# Random seed
+seed: 20200814
+
+# Training parameters
+epoches: 10
+batch_size: 47
+workers: 0
+optimizer: AdamW
+lr: 0.001
+lr_decay: cosine
+step_ratio: 10
+eps: 1e-8
+weight_decay: 0.01
+beta: [0.9, 0.999]
+dropout: True
+dropout_ratio: 0.5
+relu: True
+gradient: 100
+gradient_clip: True
+use_label_mask: False
+
+# Stroke-specific parameters
+stroke_target_width: 4.0        # Normalized coordinate range [-2, 2]
+stroke_target_height: 1.0       # Normalized coordinate range [-0.5, 0.5]
+max_strokes: 20                 # Maximum strokes per expression
+max_points_per_stroke: 10       # Maximum points per stroke
+min_char_size: 0.05             # Minimum character size after normalization
+max_aspect_ratio: 10.0          # Maximum allowed aspect ratio
+
+# Stroke encoder architecture parameters
+point_lstm_hidden: 128          # Hidden size for point-level LSTM
+point_lstm_layers: 2            # Number of LSTM layers for point processing
+point_lstm_dropout: 0.2         # Dropout for point LSTM
+
+transformer_heads: 8            # Number of attention heads in stroke transformer
+transformer_layers: 3           # Number of transformer layers for stroke relationships
+transformer_ff_dim: 512         # Feed-forward dimension in transformer
+transformer_dropout: 0.2        # Dropout in transformer
+
+feature_height: 20              # Output feature map height (match DenseNet)
+feature_width: 100              # Output feature map width (match DenseNet)
+
+# Data paths for stroke processing
+inkml_folder: "synthetic"       # Folder containing InkML files
+word_path: "data/word.txt"      # Vocabulary file (reuse existing)
+max_sequence_length: 20         # Maximum length for LaTeX sequences
+
+# Encoder configuration (stroke-aware)
+encoder:
+  net: StrokeAwareEncoder       # Use stroke encoder instead of DenseNet
+  out_channels: 684             # Output channels (match DenseNet for compatibility)
+
+# DenseNet configuration (for ratio compatibility)
+densenet:
+  ratio: 16                     # Required for decoder compatibility
+  growthRate: 24
+  reduction: 0.5
+  bottleneck: True
+
+# Decoder configuration (unchanged - reuse SAN decoder)
+decoder:
+  net: SAN_decoder
+  cell: "GRU"
+  input_size: 256
+  hidden_size: 256
+
+# Attention parameters (unchanged)
+attention:
+  attention_dim: 512
+
+# Hybrid tree parameters (unchanged)
+hybrid_tree:
+  threshold: 0.5
+
+# Training weights save path
+optimizer_save: False
+checkpoint_dir: "checkpoints_stroke"
+finetune: True
+checkpoint: "checkpoints_stroke/SAN_Stroke_2025-08-28-13-59_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-13-59_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10/SAN_Stroke_2025-08-28-13-59_StrokeEncoder_Decoder-SAN_decoder_max_strokes-20_max_points-10_WordRate-0.3406_structRate-0.9205_ExpRate-0.0000_10.pth"
+
+# TensorBoard path
+log_dir: "logs_stroke"
+
+# Cache management
+use_cache: True                 # Whether to use cached data
+force_rebuild_cache: False      # Force rebuilding cache even if it exists
+cache_dir: "cache"              # Directory for cached data
+load_single_chunk: True         # Load only one chunk to reduce memory usage
+single_chunk_index: 10          # Which chunk to load (your chunks start from 1)
+
+# Additional stroke processing parameters
+stroke_encoder_type: "full"     # Type of stroke encoder to use
+normalize_coordinates: True     # Whether to normalize stroke coordinates
+preserve_aspect_ratio: True     # Whether to preserve aspect ratios during normalization
+use_temporal_encoding: True     # Whether to use temporal information in strokes
