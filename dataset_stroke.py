@@ -7,7 +7,12 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampl
 import pickle as pkl
 import hashlib
 import json
+<<<<<<< Updated upstream
 from latex_parser import LaTeXToSANConverter
+=======
+from simple_latex_converter import SimpleLaTeXConverter
+from smart_latex_converter import SmartLaTeXConverter
+>>>>>>> Stashed changes
 
 
 class StrokeNormalizer:
@@ -37,11 +42,19 @@ class StrokeNormalizer:
             label_elem = root.find('.//ink:annotation[@type="label"]', namespace)
             normalized_label_elem = root.find('.//ink:annotation[@type="normalizedLabel"]', namespace)
             
+<<<<<<< Updated upstream
             # Use normalized label if available, otherwise use regular label
             if normalized_label_elem is not None and normalized_label_elem.text:
                 label = normalized_label_elem.text.strip()
             elif label_elem is not None and label_elem.text:
                 label = label_elem.text.strip()
+=======
+            # Use regular label first (better for LaTeX commands), fallback to normalized
+            if label_elem is not None and label_elem.text:
+                label = label_elem.text.strip()
+            elif normalized_label_elem is not None and normalized_label_elem.text:
+                label = normalized_label_elem.text.strip()
+>>>>>>> Stashed changes
             else:
                 print(f"Warning: No label found in {file_path}")
                 return None
@@ -88,6 +101,10 @@ class StrokeNormalizer:
         """Normalize entire expression coordinates while preserving relationships"""
         if not strokes or not any(stroke['points'] for stroke in strokes):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+            print("Warning: No valid strokes found for normalization")
+>>>>>>> Stashed changes
 =======
             print("Warning: No valid strokes found for normalization")
 >>>>>>> Stashed changes
@@ -100,6 +117,10 @@ class StrokeNormalizer:
         
         if not all_points:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+            print("Warning: No valid points found in strokes")
+>>>>>>> Stashed changes
 =======
             print("Warning: No valid points found in strokes")
 >>>>>>> Stashed changes
@@ -165,11 +186,14 @@ class StrokeNormalizer:
             'offset': (offset_x, offset_y),
             'original_bounds': (x_min, y_min, x_max, y_max),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             'aspect_ratio': expr_aspect,
             'estimated_char_size': scaled_char_width
         }
         
 =======
+=======
+>>>>>>> Stashed changes
             'normalized_bounds': (-scaled_width/2, -scaled_height/2, scaled_width/2, scaled_height/2),
             'aspect_ratio': expr_aspect,
             'estimated_char_size': scaled_char_width,
@@ -218,6 +242,9 @@ class StrokeNormalizer:
             norm_info['offset'] = (offset_x, offset_y)
             norm_info['estimated_char_size'] = estimated_char_width * scale
         
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         return normalized_strokes, norm_info
     
@@ -256,6 +283,7 @@ class StrokeNormalizer:
             normalized_points = []
             for point_idx, (x, y, t) in enumerate(stroke['points']):
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 # Global temporal position [0, 1]
                 global_t = (t - t_min) / total_duration
                 
@@ -268,6 +296,8 @@ class StrokeNormalizer:
                 # Combined temporal encoding
                 enhanced_t = (global_t * 0.6 + stroke_order_norm * 0.25 + point_progress * 0.15)
 =======
+=======
+>>>>>>> Stashed changes
                 # Simplified temporal encoding - just use stroke order for now
                 # This reduces complexity and potential confusion during training
                 
@@ -285,6 +315,9 @@ class StrokeNormalizer:
                 
                 # Clamp to valid range
                 enhanced_t = max(0.0, min(1.0, enhanced_t))
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 
                 normalized_points.append((x, y, enhanced_t))
@@ -349,10 +382,13 @@ class StrokeNormalizer:
                 center_x = (x_min + x_max) / 2
                 center_y = (y_min + y_max) / 2
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 width = x_max - x_min
                 height = y_max - y_min
                 
 =======
+=======
+>>>>>>> Stashed changes
                 width = max(x_max - x_min, 0.01)  # Ensure minimum width
                 height = max(y_max - y_min, 0.01)  # Ensure minimum height
                 
@@ -360,6 +396,9 @@ class StrokeNormalizer:
                 if not (-3 <= center_x <= 3) or not (-1 <= center_y <= 1):
                     print(f"Warning: Stroke center out of expected range: ({center_x:.2f}, {center_y:.2f})")
                     
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 stroke_positions.append([center_x, center_y, width, height])
                 stroke_bounds.append([x_min, y_min, x_max, y_max])
@@ -410,6 +449,10 @@ class InkMLDataset(Dataset):
         # Store parameters for LaTeX converter
         self.word_path = params.get('word_path', 'data/word.txt')
         self.max_length = params.get('max_sequence_length', 50)
+<<<<<<< Updated upstream
+=======
+        self.use_smart_converter = params.get('use_smart_latex_converter', False)
+>>>>>>> Stashed changes
         
         # Create cache directory
         cache_dir = params.get('cache_dir', 'cache')
@@ -749,7 +792,18 @@ class InkMLDataset(Dataset):
             # Initialize converter with vocabulary path
             word_path = getattr(self, 'word_path', 'data/word.txt')
             max_length = getattr(self, 'max_length', 50)
+<<<<<<< Updated upstream
             self.latex_converter = LaTeXToSANConverter(word_path, max_length)
+=======
+            use_smart = getattr(self, 'use_smart_converter', False)
+            
+            if use_smart:
+                print("Using SmartLaTeXConverter for proper LaTeX tokenization")
+                self.latex_converter = SmartLaTeXConverter(word_path, max_length)
+            else:
+                print("Using SimpleLaTeXConverter (character-by-character)")
+                self.latex_converter = SimpleLaTeXConverter(word_path, max_length)
+>>>>>>> Stashed changes
         
         # Convert LaTeX to SAN label tensor [max_length, 11]
         real_labels = self.latex_converter.convert(label_text)

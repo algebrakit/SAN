@@ -49,7 +49,10 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                     total_loss = word_loss + struct_loss
                 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
                 # Validate loss values - detect suspicious patterns
                 if total_loss.item() < 0.01:
                     print(f"\nWarning: Suspiciously low total loss: {total_loss.item():.6f}")
@@ -62,6 +65,9 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                     print(f"  Word loss: {word_loss.item()}, Struct loss: {struct_loss.item()}")
                     continue
                 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 # Backward pass
                 total_loss.backward()
@@ -79,7 +85,10 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                 wordRate, structRate, ExpRate = cal_score(probs, labels, labels_mask)
                 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
                 # Debug: Print accuracy info for first batch of first epoch
                 if epoch == 0 and batch_idx == 0:
                     print(f"\nFirst batch metrics:")
@@ -89,6 +98,9 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                     print(f"  Predicted shape: {probs[0].shape if isinstance(probs, tuple) else probs.shape}")
                     print(f"  Labels shape: {labels.shape}")
                 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 word_right += wordRate * time
                 struct_right += structRate * time
@@ -122,10 +134,13 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                 print(f"\nError in training batch {batch_idx}: {e}")
                 print(f"Stroke data shape: {stroke_data.shape}")
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 print(f"Labels shape: {labels.shape}")
                 import traceback
                 traceback.print_exc()
 =======
+=======
+>>>>>>> Stashed changes
                 print(f"Stroke masks shape: {stroke_masks.shape}")
                 print(f"Stroke positions shape: {stroke_positions.shape}")
                 print(f"Labels shape: {labels.shape}")
@@ -136,6 +151,9 @@ def train_stroke(params, model, optimizer, epoch, train_loader, writer=None):
                 
                 # Skip this batch but don't crash the training
                 print("Skipping corrupted batch...")
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                 continue
     

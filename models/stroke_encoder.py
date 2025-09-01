@@ -3,6 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+import warnings
+>>>>>>> Stashed changes
 =======
 import warnings
 >>>>>>> Stashed changes
@@ -212,6 +216,7 @@ class SpatialFeatureGenerator(nn.Module):
                 # Map normalized coordinates to feature grid
                 # Coordinates are in range [-2, 2] for width, [-0.5, 0.5] for height
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
                 grid_x = int((center_x + 2.0) * self.feature_width / 4.0)
                 grid_y = int((center_y + 0.5) * self.feature_height / 1.0)
                 
@@ -225,6 +230,8 @@ class SpatialFeatureGenerator(nn.Module):
                 # Simple point placement (can be improved with Gaussian spreading)
                 canvas[batch_idx, :, grid_y, grid_x] += stroke_feat
 =======
+=======
+>>>>>>> Stashed changes
                 # Fixed coordinate mapping with proper scaling
                 grid_x_f = ((center_x + 2.0) / 4.0) * (self.feature_width - 1)
                 grid_y_f = ((center_y + 0.5) / 1.0) * (self.feature_height - 1)
@@ -258,6 +265,9 @@ class SpatialFeatureGenerator(nn.Module):
                             dy_norm = torch.tensor(float(dy / sigma_y), device=canvas.device, dtype=canvas.dtype)
                             weight = torch.exp(-0.5 * (dx_norm**2 + dy_norm**2))
                             canvas[batch_idx, :, target_y, target_x] += stroke_feat * weight
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         
         # Add spatial position embeddings

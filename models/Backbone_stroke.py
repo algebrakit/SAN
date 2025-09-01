@@ -75,7 +75,11 @@ class StrokeBackbone(nn.Module):
         # Compute losses (same as original Backbone)
         word_average_loss = self.cross(
             word_probs.contiguous().view(-1, word_probs.shape[-1]), 
+<<<<<<< Updated upstream
             labels[:, :, 1].view(-1)
+=======
+            labels[:, :, 0].view(-1)
+>>>>>>> Stashed changes
         )
 
         struct_probs = torch.sigmoid(struct_probs)

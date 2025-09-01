@@ -135,6 +135,7 @@ class StrokeInference:
         # Convert to words
         predicted_words = []
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         for token_id in word_predictions:
             token_id = token_id.item()
             if token_id == 0:  # End of sequence
@@ -146,6 +147,8 @@ class StrokeInference:
         
         # Join words to form LaTeX expression
 =======
+=======
+>>>>>>> Stashed changes
         for i, token_id in enumerate(word_predictions):
             token_id = token_id.item()
             
@@ -169,6 +172,9 @@ class StrokeInference:
         if not predicted_words:
             return "<empty_prediction>"
             
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
         latex_expression = ' '.join(predicted_words)
         return latex_expression

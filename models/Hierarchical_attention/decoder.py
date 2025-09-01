@@ -97,7 +97,13 @@ class SAN_decoder(nn.Module):
                 parent_hidden = parent_hiddens[parent_ids,:]
                 word_alpha_sum = word_alpha_sums[parent_ids, :, :, :]
 
-                word_embedding = self.embedding(labels[:, i, 3])
+                # Teacher forcing: use previous token as input, predict current token as target
+                if i == 0:
+                    # First step: use <sos> as input
+                    word_embedding = self.embedding(torch.ones(batch_size).long().to(device=self.device))
+                else:
+                    # Subsequent steps: use previous token as input
+                    word_embedding = self.embedding(labels[:, i-1, 0])
 
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
@@ -175,7 +181,7 @@ class SAN_decoder(nn.Module):
                 word_prob = self.word_convert(word_out_state)
 
 
-                word_probs[0][i, :] = word_prob
+                word_probs[0, i, :] = word_prob
                 word_alphas[:, i] = word_alpha
 
                 _, word = word_prob.max(1)
@@ -183,7 +189,7 @@ class SAN_decoder(nn.Module):
                 if word.item() == 2:
 
                     struct_prob = self.struct_convert(word_out_state)
-                    struct_probs[0][i, :] = struct_prob
+                    struct_probs[0, i, :] = struct_prob
 
                     structs = torch.sigmoid(struct_prob)
 

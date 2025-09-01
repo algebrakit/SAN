@@ -1,0 +1,98 @@
+# Experiment name
+experiment: "SAN_Stroke_Lambda_Expression_300E"
+
+# Random seed
+seed: 20200814
+
+# Training parameters - optimized for single expression
+epoches: 300                # Much more epochs for complex lambda expression
+batch_size: 1               # Batch size = single sample
+workers: 0
+optimizer: AdamW
+lr: 0.001                   # Higher learning rate for quick overfitting
+lr_decay: cosine
+step_ratio: 10
+eps: 1e-8
+weight_decay: 0.01
+beta: [0.9, 0.999]
+dropout: True               # Enable dropout (required by decoder)
+dropout_ratio: 0.0          # No dropout for maximum overfitting
+relu: True
+gradient: 100
+gradient_clip: True
+use_label_mask: False
+
+# Stroke-specific parameters
+stroke_target_width: 4.0        # Normalized coordinate range [-2, 2]
+stroke_target_height: 1.0       # Normalized coordinate range [-0.5, 0.5]
+max_strokes: 10                  # Increased for complex expression with 10 traces
+max_points_per_stroke: 100       # Handle longer traces
+min_char_size: 0.05             # Minimum character size after normalization
+max_aspect_ratio: 10.0          # Maximum allowed aspect ratio
+
+# Stroke encoder architecture parameters - simplified
+point_lstm_hidden: 64           # Reduced hidden size
+point_lstm_layers: 1            # Single layer
+point_lstm_dropout: 0.0         # No dropout
+
+transformer_heads: 4            # Reduced heads
+transformer_layers: 2           # Reduced layers
+transformer_ff_dim: 256         # Reduced FF dimension
+transformer_dropout: 0.0        # No dropout
+
+feature_height: 20              # Output feature map height (match DenseNet)
+feature_width: 100              # Output feature map width (match DenseNet)
+
+# Data paths for stroke processing
+inkml_folder: "root_inkml_dataset"    # Use root inkml dataset folder
+word_path: "data/word.txt"      # Vocabulary file (reuse existing)
+max_sequence_length: 20         # Maximum length for LaTeX sequences
+
+# Encoder configuration (stroke-aware)
+encoder:
+  net: StrokeAwareEncoder       # Use stroke encoder instead of DenseNet
+  out_channels: 684             # Output channels (match DenseNet for compatibility)
+
+# DenseNet configuration (for ratio compatibility)
+densenet:
+  ratio: 16                     # Required for decoder compatibility
+  growthRate: 24
+  reduction: 0.5
+  bottleneck: True
+
+# Decoder configuration (unchanged - reuse SAN decoder)
+decoder:
+  net: SAN_decoder
+  cell: "GRU"
+  input_size: 256
+  hidden_size: 256
+
+# Attention parameters (unchanged)
+attention:
+  attention_dim: 512
+
+# Hybrid tree parameters (unchanged)
+hybrid_tree:
+  threshold: 0.5
+
+# Training weights save path
+optimizer_save: False
+checkpoint_dir: "checkpoints_lambda_300e"
+finetune: False                 # Don't load existing checkpoint
+checkpoint: ""                  # No checkpoint to load
+
+# TensorBoard path
+log_dir: "logs_lambda_300e"
+
+# Cache management
+use_cache: False                # Disable cache for tiny dataset
+force_rebuild_cache: False      
+cache_dir: "cache"              
+load_single_chunk: False        # Load all data (it's tiny)
+single_chunk_index: 0           
+
+# Additional stroke processing parameters
+stroke_encoder_type: "full"     # Type of stroke encoder to use
+normalize_coordinates: True     # Whether to normalize stroke coordinates
+preserve_aspect_ratio: True     # Whether to preserve aspect ratios during normalization
+use_temporal_encoding: True     # Whether to use temporal information in strokes
