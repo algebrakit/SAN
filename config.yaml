@@ -69,7 +69,7 @@ hybrid_tree:
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: False
-checkpoint: ""
+checkpoint: "checkpoints/SAN_decoder/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'
