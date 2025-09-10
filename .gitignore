@@ -1,6 +1,28 @@
 *.DS_Store
 .idea/
-data/14_test_images/
 __pycache__/
-data/*
+backend/data/*
+data/CHROME
+data/14_test_images/
+data/mathwriting-2024/
 logs/
+test.bmp
+
+# Deployment temporary files
+/tmp/
+*.tmp
+dist-config*.json
+bucket-policy.json
+
+# Frontend build output
+frontend/www/
+frontend/dist/
+frontend/build/
+
+# Node modules
+node_modules/
+
+# Environment files (if any are created)
+.env
+.env.local
+.env.production

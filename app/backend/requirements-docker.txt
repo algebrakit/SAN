@@ -1,0 +1,23 @@
+# Optimized requirements for Docker deployment
+# Using CPU-only PyTorch to reduce image size
+
+# Core dependencies
+numpy==1.24.3
+PyYAML==6.0
+tqdm==4.64.0
+
+# PyTorch CPU-only versions
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# OpenCV headless (smaller than full opencv-python)
+opencv-python-headless==4.8.1.78
+
+# Flask and web dependencies
+Flask==3.0.0
+flask-cors==4.0.0
+gunicorn==21.2.0  # Production WSGI server
+requests==2.31.0
+
+# Note: tensorboardX removed as it's not needed for inference

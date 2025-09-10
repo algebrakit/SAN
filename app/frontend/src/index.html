@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
+    <title>Math Expression Drawer</title>
+    
+    <script type="module" src="/build/math-expression-drawer.esm.js"></script>
+    <script nomodule src="/build/math-expression-drawer.js"></script>
+    
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true,
+          processEnvironments: true
+        },
+        options: {
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          typeset: false
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+        min-height: 100vh;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+      }
+      
+      .header {
+        background-color: #2c3e50;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 300;
+      }
+      
+      .header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+      }
+      
+      .footer {
+        background-color: #34495e;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        margin-top: 40px;
+      }
+      
+      .footer p {
+        margin: 5px 0;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Math Expression Drawer</h1>
+      <p>Draw mathematical expressions and convert them to LaTeX using AI</p>
+    </div>
+    
+    <math-drawer></math-drawer>
+    
+    <div class="footer">
+      <p>Powered by SAN (Syntax-Aware Network) for Handwritten Mathematical Expression Recognition</p>
+      <p>Built with StencilJS and TypeScript</p>
+    </div>
+    
+    <script>
+      // Initialize MathJax and handle dynamic content
+      document.addEventListener('DOMContentLoaded', function() {
+        // Function to render MathJax in a specific element
+        window.renderMathJax = function(element) {
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([element || document.body]).catch(function (err) {
+              console.warn('MathJax typeset failed: ', err.message);
+            });
+          }
+        };
+
+        // Wait for MathJax to be ready, then perform initial typesetting
+        window.MathJax = window.MathJax || {};
+        window.MathJax.startup = window.MathJax.startup || {};
+        window.MathJax.startup.promise = window.MathJax.startup.promise || Promise.resolve();
+
+        window.MathJax.startup.promise.then(function() {
+          // Initial render
+          if (window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise();
+          }
+        });
+
+        // Observer to re-render MathJax when content changes
+        const observer = new MutationObserver(function(mutations) {
+          let shouldRerender = false;
+          mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+              for (let node of mutation.addedNodes) {
+                if (node.nodeType === Node.ELEMENT_NODE &&
+                    (node.textContent.includes('$') || node.textContent.includes('\\('))) {
+                  shouldRerender = true;
+                  break;
+                }
+              }
+            }
+          });
+
+          if (shouldRerender && window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise().catch(function (err) {
+              console.warn('MathJax re-render failed: ', err.message);
+            });
+          }
+        });
+
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+
+        // Prevent default touch behaviors that cause zooming and selection
+        document.addEventListener('touchstart', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        document.addEventListener('gesturestart', function(e) {
+          e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gesturechange', function(e) {
+          e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('gestureend', function(e) {
+          e.preventDefault();
+        }, { passive: false });
+      });
+    </script>
+  </body>
+</html>

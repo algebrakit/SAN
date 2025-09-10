@@ -1,0 +1,97 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+*.md
+docs/
+README*
+
+# Test files
+tests/
+test*.py
+*_test.py
+pytest_cache/
+.coverage
+htmlcov/
+
+# Development files
+*.log
+*.pid
+*.seed
+*.pid.lock
+logs/
+
+# Notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Training-specific files (not needed for inference)
+train.py
+training.py
+data/CHROME/
+data/HME100K/
+data/*.txt
+data/*.pkl
+data/*.json
+
+# Keep only necessary data files
+!data/word.txt
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker files (avoid recursive copy)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# AWS/deployment configs (will be external)
+apprunner.yaml
+buildspec.yml
+.ebextensions/
+
+# Large unnecessary directories
+checkpoints/*/checkpoint*
+checkpoints/*/epoch*
+!checkpoints/SAN_decoder/best.pth
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

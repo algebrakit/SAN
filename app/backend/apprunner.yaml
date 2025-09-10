@@ -1,0 +1,54 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "No build commands"
+run:
+  runtime-version: latest
+  command: python server.py 8080
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
+    - name: FLASK_ENV
+      value: "production"
+    - name: CONFIG_PATH
+      value: "/app/config.yaml"
+  
+# Instance configuration for demo/testing
+instance:
+  cpu: 0.25               # 0.25 vCPU (sufficient for demo)
+  memory: 0.5              # 0.5 GB RAM (your model is only 31MB)
+
+# Auto-scaling configuration
+auto_scaling_configuration:
+  min_size: 0              # Scale to zero when idle
+  max_size: 1              # Only 1 instance for demo
+  max_concurrency: 10      # Concurrent requests per instance
+  scale_in_cooldown: 300   # 5 minutes idle before scaling down
+  scale_out_cooldown: 60   # 1 minute before scaling up
+
+# Health check configuration
+health_check:
+  path: "/health"
+  interval: 30             # Check every 30 seconds
+  timeout: 10              # 10 second timeout
+  healthy_threshold: 2     # 2 successful checks to be healthy
+  unhealthy_threshold: 3   # 3 failed checks to be unhealthy
+
+# Observability
+observability_configuration:
+  observability_enabled: true
+  observability_configuration_arn: null  # Use default
+
+# Tags for organization
+tags:
+  - key: Environment
+    value: demo
+  - key: Project
+    value: SAN-Backend
+  - key: Purpose
+    value: testing

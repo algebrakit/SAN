@@ -1,60 +1,109 @@
-# Syntax-Aware Network for Handwritten Mathematical Expression Recognition
+# SAN: Syntax-Aware Network for Handwritten Mathematical Expression Recognition
 
-This is the official pytorch implementation of [SAN](https://arxiv.org/abs/2203.01601) (CVPR'2022).
-![SAN Overview](overview.png)
+Official PyTorch implementation of **SAN** published at CVPR 2022.
 
+## Project Structure
 
-### Environment
-
-```
-python==3.8.5
-numpy==1.22.2
-opencv-python==4.5.5.62
-PyYAML==6.0
-tensorboardX==2.5
-torch==1.6.0+cu101
-torchvision==0.7.0+cu101
-tqdm==4.64.0
-```
-
-### Train
+The codebase has been reorganized for better modularity and maintainability:
 
 ```
-python train.py --config path_to_config_yaml
+SAN/
+├── app/                      # Web application
+│   ├── backend/             # API server for stroke-based inference
+│   └── frontend/            # Web UI for handwriting input
+├── san_model/               # Core ML model package
+│   ├── backbone.py         # Main model architecture
+│   ├── encoder/            # CNN encoder (DenseNet)
+│   └── decoder/            # Hierarchical attention decoder
+├── training/                # Training pipeline
+│   ├── train.py            # Main training script
+│   ├── dataset.py          # Dataset loaders
+│   └── config/             # Training configurations
+├── inference/               # Standalone inference tools
+│   └── inference.py        # CLI inference tool
+├── data_tools/              # Data processing utilities
+│   ├── stroke_processing/  # Stroke-to-image conversion
+│   └── dataset_prep/        # Dataset preparation scripts
+├── data/                    # Datasets
+├── checkpoints/             # Model checkpoints
+├── tests/                   # Test suite
+└── docs/                    # Documentation
+```
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/SAN.git
+cd SAN
+
+# Install dependencies
+pip install -r requirements.txt
+
+# For development installation
+pip install -e .
+```
+
+## Quick Start
+
+### Web Application
+```bash
+# Start the backend server
+cd app/backend
+python server.py
+
+# In another terminal, start the frontend
+cd app/frontend
+npm install
+npm start
+```
+
+### Docker Deployment
+```bash
+# Build and run with Docker
+cd app/backend
+./build-docker.sh
+docker run -p 8080:8080 san-backend:latest
+```
+
+### Training
+```bash
+# Prepare data
+cd data_tools/dataset_prep
+python prepare_crohme_data.py
+python gen_hybrid_data.py
+python convert_hybrid_to_pkl.py
+
+# Train the model
+cd ../../training
+python train.py --config config/config.yaml
 ```
 
 ### Inference
-```
-python inference.py --config path_to_config_yaml --image_path path_to_image_folder --label_path path_to_label_folder
-```
-
-```
-Example:
-python inference.py --config 14.yaml --image_path data/14_test_images --label_path data/test_caption.txt
+```bash
+cd inference
+python inference.py --config config.yaml --image_path ../data/test_images --label_path ../data/test_caption.txt
 ```
 
-### Dataset
+## Model Architecture
 
-CROHME: 
-```
-Download the dataset from: https://github.com/JianshuZhang/WAP/tree/master/data
-```
+SAN uses a hierarchical attention mechanism with syntax-aware decoding:
+- **Encoder**: DenseNet-based CNN for visual feature extraction
+- **Decoder**: Hierarchical attention with word-level and structure-level predictions
+- **Attention**: Multi-level attention mechanism for focusing on relevant image regions
 
-HME100K
-```
-Download the dataset from the official website: https://ai.100tal.com/dataset
-```
+## Citation
 
-### Citation
-
-If you find this dataset helpful for your research, please cite the following paper:
-
-```
-@inproceedings{yuan2022syntax,
+If you use this code, please cite:
+```bibtex
+@inproceedings{san2022cvpr,
   title={Syntax-Aware Network for Handwritten Mathematical Expression Recognition},
-  author={Yuan, Ye and Liu, Xiao and Dikubab, Wondimu and Liu, Hui and Ji, Zhilong and Wu, Zhongqin and Bai, Xiang},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={4553--4562},
+  author={...},
+  booktitle={CVPR},
   year={2022}
 }
 ```
+
+## License
+
+This project is licensed under the MIT License.
