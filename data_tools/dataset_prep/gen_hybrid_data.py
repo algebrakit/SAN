@@ -22,8 +22,9 @@ def convert(root: Tree, f):
 
 
 
-label = 'train_latex.txt'
-out = 'train_hyb'
+label = 'train/train_HME100K.txt'
+# label = 'train/train-test.txt'
+out = 'trainHME100K_hyb'
 
 position = set(['^', '_'])
 math = set(['\\frac','\sqrt'])
@@ -45,6 +46,7 @@ for line in tqdm(lines):
     id = 1
     parents = [Tree('<sos>', id=0)]
     parent = Tree('<sos>', id=0)
+    skipLine = False
 
     for i in range(len(words)):
         a = words[i]
@@ -117,6 +119,9 @@ for line in tqdm(lines):
                     # id += 1
             else:
                 print('unknown word before {', name, i)
+                print('skipping line ', line)
+                skipLine = True
+                break
 
 
         elif words[i] == '[' and words[i-1] == '\sqrt':
@@ -151,13 +156,15 @@ for line in tqdm(lines):
             parent = Tree(words[i],id=id)
             id += 1
 
+    if skipLine:
+        continue
 
     parent_dict = {0:[]}
     for i in range(len(labels)):
         parent_dict[i+1] = []
         parent_dict[labels[i][2]].append(labels[i][3])
 
-    with open(f'train_hyb/{name}.txt', 'w') as f:
+    with open(f'{out}/{name}.txt', 'w') as f:
         for line in labels:
             id, label, parent_id, parent_label = line
             if label != 'struct':
@@ -174,10 +181,5 @@ for line in tqdm(lines):
                 f.write(tem + '\n')
         if label != '<eos>':
             f.write(f'{id+1}\t<eos>\t{id}\t{label}\tNone\tNone\tNone\tNone\tNone\tNone\tNone\n')
-
-
-
-
-
 
 

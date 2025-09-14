@@ -86,7 +86,7 @@ class Inference:
             image, image_mask = image.to(device), image_mask.to(device)
 
             prediction = self.model(image, image_mask)
-
             latex_list = self.convert(1, prediction)
             latex_string = ' '.join(latex_list)
+            print('prediction=', prediction, 'latex_string=', latex_string)
             return latex_string

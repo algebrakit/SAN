@@ -2,7 +2,7 @@ import os
 import glob
 from tqdm import tqdm
 
-label_path = 'test-bak'
+label_path = 'train_hyb'
 
 labels = glob.glob(os.path.join(label_path, '*.txt'))
 
