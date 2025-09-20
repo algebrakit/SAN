@@ -233,6 +233,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self.length = len(tokens)
+        self.brace_stack = []  # Track brace nesting for validation
 
     def current_token(self) -> Token:
         """Get the current token."""
@@ -255,8 +256,10 @@ class Parser:
     def parse_group(self) -> ParseNode:
         """Parse a group enclosed in braces."""
         if self.current_token().type != TokenType.LBRACE:
-            raise ValueError(f"Expected '{{' at position {self.current_token().position}")
+            raise LaTeXError(f"Expected '{{' at position {self.current_token().position}")
 
+        brace_pos = self.current_token().position
+        self.brace_stack.append(brace_pos)
         self.advance()  # Skip opening brace
         group_node = ParseNode(NodeType.GROUP, "", [])
 
@@ -267,8 +270,9 @@ class Parser:
                 group_node.add_child(child)
 
         if self.current_token().type != TokenType.RBRACE:
-            raise ValueError(f"Missing closing brace '}}' at position {self.current_token().position}")
+            raise LaTeXError(f"Unmatched opening brace '{{' at position {brace_pos}")
 
+        self.brace_stack.pop()
         self.advance()  # Skip closing brace
         return group_node
 
@@ -282,7 +286,7 @@ class Parser:
         self.advance()
 
         # Handle commands that expect arguments
-        if token.value in ['\\frac', '\\binom']:
+        if token.value in ['\\frac']:
             # These commands expect two arguments
             for _ in range(2):
                 if self.current_token().type == TokenType.LBRACE:
@@ -421,7 +425,16 @@ class Parser:
             if expr:
                 root.add_child(expr)
 
+        # Check for unmatched braces
+        if self.brace_stack:
+            raise LaTeXError(f"Unmatched opening brace at position {self.brace_stack[0]}")
+
         return root
+
+
+class LaTeXError(ValueError):
+    """Custom exception for LaTeX parsing errors."""
+    pass
 
 
 class Normalizer:
@@ -431,7 +444,8 @@ class Normalizer:
         # Font/styling commands to remove
         self.font_commands = {
             '\\mathbf', '\\mathrm', '\\mathit', '\\mathcal', '\\mathbb',
-            '\\boldsymbol', '\\textbf', '\\scriptstyle', '\\textstyle', '\\mbox'
+            '\\boldsymbol', '\\textbf', '\\scriptstyle', '\\textstyle', '\\mbox',
+            '\\operatorname', '\\text', '\\rm', '\\bf', '\\it', '\\displaystyle'
         }
 
         # Accent commands to remove
@@ -455,11 +469,96 @@ class Normalizer:
             '\\left', '\\right'
         }
 
+        # Unsupported constructs that should cause errors
+        self.unsupported_commands = {
+            '\\limits', '\\nolimits', '\\begin', '\\end', '\\binom'
+        }
+
+        # Matrix environments (unsupported)
+        self.matrix_environments = {
+            'matrix', 'pmatrix', 'bmatrix', 'Bmatrix', 'vmatrix', 'Vmatrix', 'array'
+        }
+
     def normalize(self, node: ParseNode) -> ParseNode:
         """Apply normalization rules to the parse tree."""
-        return self._normalize_node(node)
+        # First validate the tree for errors
+        self._validate_tree(node)
 
-    def _normalize_node(self, node: ParseNode) -> ParseNode:
+        result = self._normalize_node(node)
+        if result is None:
+            # If root gets normalized to None, return empty root
+            return ParseNode(NodeType.ROOT, "", [])
+        return result
+
+    def _validate_tree(self, node: ParseNode) -> None:
+        """Validate the parse tree for errors and unsupported constructs."""
+        if node.type == NodeType.COMMAND:
+            self._validate_command(node)
+        elif node.type == NodeType.GROUP:
+            self._validate_group(node)
+
+        # Recursively validate children
+        for child in node.children:
+            self._validate_tree(child)
+
+    def _validate_command(self, node: ParseNode) -> None:
+        """Validate a command node."""
+        command = node.value
+
+        # Check for unsupported commands
+        if command in self.unsupported_commands:
+            raise LaTeXError(f"Unsupported command: {command}")
+
+        # Check for matrix environments
+        if command == '\\begin' and len(node.children) > 0:
+            first_child = node.children[0]
+            if (first_child.type == NodeType.GROUP and
+                len(first_child.children) > 0 and
+                first_child.children[0].type == NodeType.TEXT):
+                env_name = first_child.children[0].value
+                if env_name in self.matrix_environments:
+                    raise LaTeXError(f"Matrix environments are not supported: \\begin{{{env_name}}}")
+
+        # Validate command arguments
+        if command in ['\\frac']:
+            if len(node.children) != 2:
+                raise LaTeXError(f"Command {command} requires exactly 2 arguments, got {len(node.children)}")
+            # Check for empty arguments
+            for i, child in enumerate(node.children):
+                if self._is_empty_group(child):
+                    raise LaTeXError(f"Command {command} has empty argument {i+1}")
+
+        elif command == '\\sqrt':
+            if len(node.children) == 0:
+                raise LaTeXError("Command \\sqrt requires at least 1 argument")
+            # Check for empty main argument (last one)
+            main_arg = node.children[-1]
+            if self._is_empty_group(main_arg):
+                raise LaTeXError("Command \\sqrt has empty main argument")
+
+    def _validate_group(self, node: ParseNode) -> None:
+        """Validate a group node."""
+        # Currently no specific group validation needed
+        pass
+
+    def _is_empty_group(self, node: ParseNode) -> bool:
+        """Check if a group is empty or contains only whitespace."""
+        if node.type != NodeType.GROUP:
+            return False
+
+        if len(node.children) == 0:
+            return True
+
+        # Check if all children are empty text nodes
+        for child in node.children:
+            if child.type == NodeType.TEXT and child.value.strip():
+                return False
+            elif child.type != NodeType.TEXT:
+                return False
+
+        return True
+
+    def _normalize_node(self, node: ParseNode) -> Optional[ParseNode]:
         """Recursively normalize a node and its children."""
         if node.type == NodeType.COMMAND:
             return self._normalize_command(node)
@@ -588,13 +687,14 @@ class Normalizer:
                     norm_next = self._normalize_node(next_child)
 
                     # If normalization simplified a group to text, wrap it back in a group
-                    if norm_prev.type != NodeType.GROUP:
+                    if norm_prev and norm_prev.type != NodeType.GROUP:
                         norm_prev = ParseNode(NodeType.GROUP, "", [norm_prev])
-                    if norm_next.type != NodeType.GROUP:
+                    if norm_next and norm_next.type != NodeType.GROUP:
                         norm_next = ParseNode(NodeType.GROUP, "", [norm_next])
 
-                    frac_node.add_child(norm_prev)
-                    frac_node.add_child(norm_next)
+                    if norm_prev and norm_next:
+                        frac_node.add_child(norm_prev)
+                        frac_node.add_child(norm_next)
 
                     normalized_children.append(frac_node)
                     i += 2  # Skip the next child as we've consumed it
@@ -626,9 +726,11 @@ class LaTeXGenerator:
                 if i > 0:
                     prev_part = parts[i-1]
                     # Add space if both parts are "words" (not commands starting with \)
+                    # But don't add space between single characters (like x y -> xy)
                     if (not part.startswith('\\') and not prev_part.startswith('\\') and
                         not part in '(){}[]' and not prev_part in '(){}[]' and
-                        not part in '+-=^_' and not prev_part in '+-=^_'):
+                        not part in '+-=^_' and not prev_part in '+-=^_' and
+                        not (len(part) == 1 and len(prev_part) == 1)):
                         result += " "
                 result += part
             return result
@@ -696,8 +798,12 @@ def normalize_latex(latex_str: str) -> str:
         Normalized LaTeX string
 
     Raises:
-        ValueError: For malformed LaTeX
+        LaTeXError: For malformed LaTeX or unsupported constructs
+        ValueError: For other parsing errors
     """
+    if not latex_str or not latex_str.strip():
+        raise LaTeXError("Input LaTeX expression is empty")
+
     try:
         # Tokenize
         tokenizer = Tokenizer(latex_str)
@@ -707,7 +813,7 @@ def normalize_latex(latex_str: str) -> str:
         parser = Parser(tokens)
         tree = parser.parse()
 
-        # Normalize (Phase 2)
+        # Normalize (includes validation)
         normalizer = Normalizer()
         normalized_tree = normalizer.normalize(tree)
 
@@ -717,14 +823,18 @@ def normalize_latex(latex_str: str) -> str:
 
         return result.strip()
 
+    except LaTeXError:
+        # Re-raise LaTeX-specific errors as-is
+        raise
     except Exception as e:
-        raise ValueError(f"Error parsing LaTeX: {e}")
+        # Wrap other errors with more context
+        raise LaTeXError(f"Error processing LaTeX expression '{latex_str}': {e}")
 
 
-# Basic validation function
+# Validation function
 def validate_latex(latex_str: str) -> bool:
     """
-    Basic validation of LaTeX syntax.
+    Validate LaTeX syntax without normalizing.
 
     Args:
         latex_str: LaTeX expression to validate
@@ -735,27 +845,112 @@ def validate_latex(latex_str: str) -> bool:
     try:
         normalize_latex(latex_str)
         return True
-    except ValueError:
+    except (LaTeXError, ValueError):
+        return False
+
+
+def get_latex_errors(latex_str: str) -> List[str]:
+    """
+    Get detailed error messages for invalid LaTeX.
+
+    Args:
+        latex_str: LaTeX expression to check
+
+    Returns:
+        List of error messages (empty if valid)
+    """
+    try:
+        normalize_latex(latex_str)
+        return []
+    except (LaTeXError, ValueError) as e:
+        return [str(e)]
+
+
+def run_test_suite():
+    """Run the basic test suite for the LaTeX normalizer."""
+
+    # Phase 4: Basic test cases covering all requirements
+    test_cases = [
+        # Requirements examples - normalization
+        ("{x+1}\\over{4}", "\\frac{x+1}{4}", "Command synonym: \\over → \\frac"),
+        ("{n}", "n", "Remove unnecessary brackets"),
+        ("\\frac{{x+2}n}{2x}", "\\frac{x+2n}{2x}", "Simplify nested brackets"),
+        ("\\frac12", "\\frac{1}{2}", "Add missing brackets for commands"),
+        ("\\sqrt[n]3", "\\sqrt[n]{3}", "Add missing brackets for optional args"),
+        ("\\mathbf{1+x}", "1+x", "Remove font styling"),
+        ("\\frac{\\scriptstyle{WF}}{2}", "\\frac{WF}{2}", "Remove nested styling"),
+
+        # Additional normalization
+        ("x^2", "x^{2}", "Normalize exponents"),
+        ("\\left(x+1\\right)", "(x+1)", "Remove \\left/\\right"),
+        ("\\vec{x}+y", "x+y", "Remove accents"),
+        ("x\\,+\\;y", "x+y", "Remove spacing"),
+        ("\\mbox{hello}", "hello", "Remove text styling"),
+
+        # Edge cases
+        ("\\sqrt{x}", "\\sqrt{x}", "Valid sqrt unchanged"),
+        ("\\frac{\\text{top}}{\\text{bottom}}", "\\frac{top}{bottom}", "Nested text removal"),
+        ("a_n", "a_{n}", "Normalize subscripts"),
+        ("\\sqrt[3]{x^2}", "\\sqrt[3]{x^{2}}", "Complex nested expression"),
+        ("\\rm{x}\\bf{y}", "xy", "Multiple font commands"),
+        ("x\\quad y\\quad z", "xyz", "Multiple spacing commands"),
+    ]
+
+    # Error cases
+    error_cases = [
+        ("\\frac{}{}", "Empty fraction arguments"),
+        ("{x+1", "Unmatched braces"),
+        ("\\limits", "Unsupported command"),
+        ("", "Empty input"),
+        ("\\begin{matrix}1\\end{matrix}", "Matrix environment"),
+        ("\\sqrt{}", "Empty sqrt"),
+        ("\\binom{n}{k}", "Unsupported binom"),
+    ]
+
+    print("=== LATEX NORMALIZER TEST SUITE ===")
+    print(f"Testing {len(test_cases)} normalization cases...")
+
+    passed = 0
+    for input_expr, expected, description in test_cases:
+        try:
+            result = normalize_latex(input_expr)
+            if result == expected:
+                print(f"✓ {description}")
+                passed += 1
+            else:
+                print(f"✗ {description}")
+                print(f"  Expected: {expected}")
+                print(f"  Got:      {result}")
+        except Exception as e:
+            print(f"✗ {description} - Error: {e}")
+
+    print(f"\nTesting {len(error_cases)} error cases...")
+    error_passed = 0
+    for input_expr, description in error_cases:
+        try:
+            result = normalize_latex(input_expr)
+            print(f"✗ {description} - Should have failed but got: {result}")
+        except (LaTeXError, ValueError):
+            print(f"✓ {description}")
+            error_passed += 1
+        except Exception as e:
+            print(f"✗ {description} - Unexpected error: {e}")
+
+    total_tests = len(test_cases) + len(error_cases)
+    total_passed = passed + error_passed
+
+    print(f"\n=== RESULTS ===")
+    print(f"Normalization: {passed}/{len(test_cases)} passed")
+    print(f"Error handling: {error_passed}/{len(error_cases)} passed")
+    print(f"Overall: {total_passed}/{total_tests} tests passed")
+
+    if total_passed == total_tests:
+        print("🎉 ALL TESTS PASSED - LaTeX Normalizer is ready!")
+        return True
+    else:
+        print(f"❌ {total_tests - total_passed} tests failed")
         return False
 
 
 if __name__ == "__main__":
-    # Basic test
-    test_expressions = [
-        "x^2",
-        "\\frac{a}{b}",
-        "\\sqrt{x}",
-        "x^{2}+y",
-        "\\frac{x+1}{y-2}"
-    ]
-
-    print("Testing LaTeX Normalizer (Phase 1):")
-    for expr in test_expressions:
-        try:
-            result = normalize_latex(expr)
-            print(f"Input:  {expr}")
-            print(f"Output: {result}")
-            print()
-        except Exception as e:
-            print(f"Error with '{expr}': {e}")
-            print()
+    run_test_suite()
