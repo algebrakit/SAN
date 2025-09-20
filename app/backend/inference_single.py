@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 import sys
 sys.path.append('../..')
-from san_model.utils import load_config, load_checkpoint
+from utils import load_config, load_checkpoint
 from inference.Backbone import Backbone
 from training.dataset import Words
 
@@ -90,3 +90,8 @@ class Inference:
             latex_string = ' '.join(latex_list)
             print('prediction=', prediction, 'latex_string=', latex_string)
             return latex_string
+
+# inf = Inference()
+# img = cv2.imread('/Users/martijnslob/Downloads/0b51625937d5ea2e.bmp', cv2.IMREAD_GRAYSCALE)
+# latex = inf.convert2latex(img)
+# print(latex)

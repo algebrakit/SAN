@@ -6,8 +6,8 @@ import json
 from tqdm import tqdm
 
 from utils import load_config, load_checkpoint
-from infer.Backbone import Backbone
-from dataset import Words
+from inference.Backbone import Backbone
+from training.dataset import Words
 
 parser = argparse.ArgumentParser(description='Spatial channel attention')
 parser.add_argument('--config', default='config.yaml', type=str, help='config file path')
@@ -88,12 +88,12 @@ def convert(nodeid, gtd_list):
 
 with torch.no_grad():
     bad_case = {}
+    count = 0
     for item in tqdm(labels):
         name, *label = item.split()
         label = ' '.join(label)
-        if name.endswith('.jpg'):
-            name = name.split('.')[0]
-        img = cv2.imread(os.path.join(args.image_path, name + '_0.bmp'))
+        #name = name + '_0.bmp'
+        img = cv2.imread(os.path.join(args.image_path, name))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         image = torch.Tensor(img) / 255
         image = image.unsqueeze(0).unsqueeze(0)
@@ -113,6 +113,12 @@ with torch.no_grad():
                 'predi': latex_string,
                 'list': prediction
             }
+
+        count += 1
+        if count % 100 == 0:
+            print('Current ExpRate: ', exp_right / count)    
+            with open('bad_case.json', 'w') as f:
+                json.dump(bad_case, f, ensure_ascii=False)
 
     print(exp_right / len(labels))
 

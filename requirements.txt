@@ -1,0 +1,10 @@
+numpy==1.24.3
+opencv-python==4.8.1.78
+PyYAML==6.0
+tensorboardX==2.5
+torch==2.0.1
+torchvision==0.15.2
+tqdm==4.64.0
+Flask==3.0.0
+flask-cors==4.0.0
+requests==2.31.0

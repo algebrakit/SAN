@@ -20,12 +20,12 @@ from typing import List, Tuple, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 
-# Add the backend directory to the path so we can import the stroke processing modules
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'backend'))
+# Add the stroke processing directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'stroke_processing'))
 
-from strokes.stroke_preprocessor import StrokePreprocessor
-from strokes.scale_strokes import rescale_strokes
-from strokes.stroke2img import strokes_to_image, save_as_bmp
+from stroke_preprocessor import StrokePreprocessor
+from scale_strokes import rescale_strokes
+from stroke2img import strokes_to_image, save_as_bmp
 
 
 @dataclass

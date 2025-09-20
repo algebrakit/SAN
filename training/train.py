@@ -8,7 +8,7 @@ from tensorboardX import SummaryWriter
 
 import sys
 sys.path.append('..')
-from san_model.utils import load_config, save_checkpoint, load_checkpoint
+from utils import load_config, save_checkpoint, load_checkpoint
 from .dataset import get_dataset
 from san_model import Backbone
 from .training import train, eval

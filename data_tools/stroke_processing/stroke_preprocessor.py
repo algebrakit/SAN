@@ -46,7 +46,7 @@ class StrokePreprocessor:
             # Extract label
             label = None
             for annotation in root.findall('.//{http://www.w3.org/2003/InkML}annotation'):
-                if annotation.get('type') == 'label':
+                if annotation.get('type') in ['label', 'truth']:
                     label = annotation.text
                     break
             

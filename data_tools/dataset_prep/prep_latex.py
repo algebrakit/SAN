@@ -9,9 +9,24 @@ import sys
 from typing import List
 
 
+def should_skip_line(latex_str: str) -> bool:
+    """
+    Check if a line should be skipped entirely (e.g., contains matrices).
+
+    Args:
+        latex_str: The LaTeX expression string
+
+    Returns:
+        True if the line should be skipped
+    """
+    matrix_commands = ['\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}']
+    return any(cmd in latex_str for cmd in matrix_commands)
+
+
 def tokenize_latex(latex_str: str) -> List[str]:
     """
     Tokenize a LaTeX expression into individual commands and symbols.
+    Filters out font style commands.
 
     Args:
         latex_str: The LaTeX expression string
@@ -19,6 +34,8 @@ def tokenize_latex(latex_str: str) -> List[str]:
     Returns:
         List of tokens
     """
+    # Font style commands to filter out (remove command but keep content)
+
     tokens = []
     i = 0
 
@@ -38,25 +55,23 @@ def tokenize_latex(latex_str: str) -> List[str]:
                 j += 1
 
             if j > i + 1:  # We found a command
-                tokens.append(latex_str[i:j])
+                command = latex_str[i:j]
+                if not command in ['\\left', '\\right', '\\big', '\\Big', '\\bigg', '\\Bigg']:
+                    tokens.append(command)
                 i = j
-            else:  # Just a backslash followed by non-alpha
+
+            elif i < len(latex_str) - 1:
+                two_char = latex_str[i:i+2]
+                if two_char in ['\\\\', '\\{', '\\}', '\\$', '\\&', '\\%', '\\#', '\\_', '\\^', '\\~', '\\|']:
+                    tokens.append(two_char)
+                    i += 2
+                else:
+                    tokens.append('illegal')
+                    i += 2
+            else:  
                 tokens.append(char)
                 i += 1
 
-        # Handle multi-character operators
-        elif i < len(latex_str) - 1:
-            two_char = latex_str[i:i+2]
-            if two_char in ['\\\\', '\\{', '\\}', '\\$', '\\&', '\\%', '\\#', '\\_', '\\^', '\\~']:
-                tokens.append(two_char)
-                i += 2
-            elif two_char in ['\\ne', '\\le', '\\ge', '\\ll', '\\gg', '\\pm', '\\mp', '\\to', '\\in', '\\ni']:
-                # These should be handled by the backslash case above, but just in case
-                tokens.append(two_char)
-                i += 2
-            else:
-                tokens.append(char)
-                i += 1
         else:
             # Single character
             tokens.append(char)
@@ -64,6 +79,63 @@ def tokenize_latex(latex_str: str) -> List[str]:
 
     return tokens
 
+def handle_groups(tokens: List[str]) -> List[str]:
+    """
+    Ensure that groups enclosed in braces are properly spaced.
+
+    examples:
+    Input: ['x', '^', '1'] --> Output: ['x', '^', '{', '1', '}']
+    Input: ['\\frac', 'a', 'b'] --> Output: ['\\frac', '{', 'a', '}', '{', 'b', '}']
+    Input: ['\\sqrt', '[', 'b', ']', '2'] --> Output: ['\\sqrt', '[', 'b', ']', '{', '2', '}']
+    """
+    output_tokens = []
+    ii = 0
+    n = len(tokens)
+    while ii < n:
+        token = tokens[ii]
+        expect_groups = 0
+        # commands that expect one group
+        if token in ['^', '_']:
+            expect_groups = 1
+            output_tokens.append(token)
+            ii += 1
+        # commands that expect two groups    
+        elif token in ['\\frac', '\\binom']:
+            expect_groups = 2
+            output_tokens.append(token)
+            ii += 1
+        # commands with an optional argument    
+        elif token in ['\\sqrt']:
+            expect_groups = 1    
+            output_tokens.append(token)
+            ii += 1
+            # Check for optional argument
+            if ii < n and tokens[ii] == '[':
+                # Skip the optional argument
+                while ii < n and tokens[ii] != ']':
+                    output_tokens.append(tokens[ii])
+                    ii += 1
+                if ii < n:
+                    output_tokens.append(tokens[ii])  # Append the closing ']'
+                    ii += 1
+        else:
+            output_tokens.append(token)
+            ii += 1
+
+        while(expect_groups > 0 and ii<n and tokens[ii]!='{'):
+            output_tokens.append('{')
+            output_tokens.append(tokens[ii])
+            output_tokens.append('}')
+            ii += 1
+            expect_groups -= 1
+    return output_tokens
+
+def special_cases(latex_str: str) -> str:
+    # x ^ {'}  --> x'
+    # x ^ {''}  --> x''
+    # x ^ {''' }  --> x'''
+    latex_str = re.sub(r"\^\s*\{(\s*')+\s*\}", lambda m: "' " * (m.group(0).count("'")), latex_str)
+    return latex_str
 
 def process_file(input_file: str, output_file: str):
     """
@@ -76,6 +148,7 @@ def process_file(input_file: str, output_file: str):
     with open(input_file, 'r', encoding='utf-8') as infile:
         with open(output_file, 'w', encoding='utf-8') as outfile:
             for line_num, line in enumerate(infile, 1):
+                print(line)
                 line = line.strip()
                 if not line:
                     continue
@@ -94,9 +167,10 @@ def process_file(input_file: str, output_file: str):
 
                 # Tokenize the LaTeX expression
                 tokens = tokenize_latex(latex_expr)
-
+                tokens = handle_groups(tokens)
                 # Write the result
                 tokenized_latex = ' '.join(tokens)
+                tokenized_latex = special_cases(tokenized_latex)
                 outfile.write(f"{filename}\t{tokenized_latex}\n")
 
 

@@ -1,5 +1,7 @@
 *.DS_Store
 .idea/
+.vscode
+.serena
 __pycache__/
 backend/data/*
 data/CHROME

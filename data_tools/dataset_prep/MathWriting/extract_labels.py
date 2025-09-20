@@ -96,6 +96,8 @@ class MathWritingLabelExtractor:
 
             # Clean up label (remove extra whitespace)
             clean_label = label.strip()
+            if label[0] == '$' and label[-1] == '$':
+                clean_label = label[1:-1].strip()
 
             return True, output_filename, clean_label
 
