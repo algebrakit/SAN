@@ -4,6 +4,7 @@
 import os
 import glob
 import pickle as pkl
+import sys
 from tqdm import tqdm
 
 def convert_hybrid_to_pkl(hybrid_dir, output_file):
@@ -29,16 +30,19 @@ def convert_hybrid_to_pkl(hybrid_dir, output_file):
     return len(label_dict)
 
 def main():
+    if len(sys.argv) != 3:
+        print("Usage: python convert_hybrid_to_pkl.py <hyb folder> <output_file>")
+        print("Example: python convert_hybrid_to_pkl.py train_hyb train_label.pkl")
+        sys.exit(1)
+
+    hyb_folder = sys.argv[1]
+    output_file = sys.argv[2]
+
     # Convert training labels
-    train_count = convert_hybrid_to_pkl('train_hyb', 'train_label.pkl')
+    train_count = convert_hybrid_to_pkl(hyb_folder, output_file)
     
-    # If test hybrid data exists, convert it too
-    if os.path.exists('test_hyb'):
-        test_count = convert_hybrid_to_pkl('test_hyb', 'test_label.pkl')
-        print(f"\nTotal: {train_count} training labels, {test_count} test labels")
-    else:
-        print(f"\nTotal: {train_count} training labels")
-        print("Note: Test labels not found. You'll need to generate test_hyb first.")
+    print(f"\nTotal: {train_count} training labels")
+
 
 if __name__ == '__main__':
     main()

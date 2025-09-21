@@ -16,9 +16,10 @@ class SAN_decoder(nn.Module):
         self.dropout_prob = params['dropout']
         self.device = params['device']
         self.word_num = params['word_num']
-        self.struct_num = params['struct_num']
-        self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
-
+        self.struct_num = params['struct_num'] # 7: below, above, inside, right, sub, sup, L-sup
+        # self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
+        self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
+        self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
         self.threshold = params['hybrid_tree']['threshold']
@@ -105,7 +106,7 @@ class SAN_decoder(nn.Module):
                 word_prob = self.word_convert(word_out_state)
                 p_word = word
                 _, word = word_prob.max(1)
-                if word.item() and word.item() != 2:
+                if word.item() and word.item() != self.STRUCT_ID:
                     cid += 1
                     p_id = cid
                     result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])

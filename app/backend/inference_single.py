@@ -22,7 +22,9 @@ class Inference:
         self.params['word_num'] = len(words)
         self.params['struct_num'] = 7
         self.params['words'] = words
-
+        # structs = ['below', 'above', 'sub', 'sup', 'inside', 'L-sup', 'right']
+        # struct_idx = words.encode(structs)
+        # self.params['struct_dict'] = {structs[i]: struct_idx[i] for i in range(len(structs))}
         self.model = Backbone(self.params)
         self.model = self.model.to(device)
 
@@ -45,33 +47,33 @@ class Inference:
             if gtd_list[nodeid][0] == '\\frac':
                 return_string = [gtd_list[nodeid][0]]
                 for i in range(len(child_list)):
-                    if child_list[i][2] == 'Above':
+                    if child_list[i][2].lower() == 'above':
                         return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
                 for i in range(len(child_list)):
-                    if child_list[i][2] == 'Below':
+                    if child_list[i][2].lower() == 'below':
                         return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
                 for i in range(len(child_list)):
-                    if child_list[i][2] == 'Right':
+                    if child_list[i][2].lower() == 'right':
                         return_string += self.convert(child_list[i][1], gtd_list)
                 for i in range(len(child_list)):
-                    if child_list[i][2] not in ['Right','Above','Below']:
+                    if child_list[i][2].lower() not in ['right','above','below']:
                         return_string += ['illegal']
             else:
                 return_string = [gtd_list[nodeid][0]]
                 for i in range(len(child_list)):
-                    if child_list[i][2] in ['l_sup']:
+                    if child_list[i][2].lower() in ['l_sup']:
                         return_string += ['['] + self.convert(child_list[i][1], gtd_list) + [']']
                 for i in range(len(child_list)):
-                    if child_list[i][2] == 'Inside':
+                    if child_list[i][2].lower() == 'inside':
                         return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
                 for i in range(len(child_list)):
-                    if child_list[i][2] in ['Sub','Below']:
+                    if child_list[i][2].lower() in ['sub','below']:
                         return_string += ['_','{'] + self.convert(child_list[i][1], gtd_list) + ['}']
                 for i in range(len(child_list)):
-                    if child_list[i][2] in ['Sup','Above']:
+                    if child_list[i][2].lower() in ['sup','above']:
                         return_string += ['^','{'] + self.convert(child_list[i][1], gtd_list) + ['}']
                 for i in range(len(child_list)):
-                    if child_list[i][2] in ['Right']:
+                    if child_list[i][2].lower() == 'right':
                         return_string += self.convert(child_list[i][1], gtd_list)
             return return_string
 

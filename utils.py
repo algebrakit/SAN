@@ -68,6 +68,10 @@ def save_checkpoint(model, optimizer, word_score, struct_score, ExpRate_score, e
 
     torch.save(state, filename)
     print(f'Save checkpoint: {filename}\n')
+
+    # Clear state dict from memory after saving
+    del state
+
     return filename
 
 

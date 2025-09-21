@@ -7,6 +7,7 @@ Removes lines with matrices and strips font style commands from expressions.
 import re
 import sys
 
+from LatexParser.latex_normalizer import normalize_latex, LaTeXError
 
 def should_skip_line(latex_str: str) -> bool:
     """
@@ -172,6 +173,18 @@ def process_file(input_file: str, output_file: str):
                     continue
 
                 filename, latex_expr = parts
+
+                # Normalize LaTeX expression with error handling
+                try:
+                    latex_expr = normalize_latex(latex_expr)
+                except LaTeXError as e:
+                    skipped_count += 1
+                    print(f"Skipped line {line_num}: normalization error - {e}", file=sys.stderr)
+                    continue
+                except Exception as e:
+                    skipped_count += 1
+                    print(f"Skipped line {line_num}: unexpected normalization error - {e}", file=sys.stderr)
+                    continue
 
                 # Skip lines with matrices
                 if should_skip_line(latex_expr):

@@ -172,7 +172,7 @@ def process_folder(fnameIn:str, folderOut:str):
     with open(fnameIn) as f:
         lines = f.readlines()
 
-    newlines = []
+    filtered = []
 
     for line in tqdm(lines):
         # line = 'RIT_2014_178.jpg x ^ { \\frac { p } { q } } = \sqrt [ q ] { x ^ { p } } = \sqrt [ q ] { x ^ { p } }'
@@ -201,13 +201,14 @@ def process_folder(fnameIn:str, folderOut:str):
                 print(f"Skipping")
                 continue
 
+        filtered.append(line)
         with open(f'{folderOut}/{name}.txt', 'w') as f:
             for line in newlines:
                 f.write(' '.join(map(str, line))+'\n')
 
     with open(f'{fnameIn}.filtered', 'w') as f:
-        for line in newlines:
-            f.write('\t'.join(map(str, line)) + '\n')
+        for line in filtered:
+            f.write(line)
 
 
 # label = '/Users/martijnslob/github/SAN/data_tools/dataset_prep/train/train-test.txt'

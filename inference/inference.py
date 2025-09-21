@@ -55,33 +55,33 @@ def convert(nodeid, gtd_list):
         if gtd_list[nodeid][0] == '\\frac':
             return_string = [gtd_list[nodeid][0]]
             for i in range(len(child_list)):
-                if child_list[i][2] == 'Above':
+                if child_list[i][2].lower() == 'above':
                     return_string += ['{'] + convert(child_list[i][1], gtd_list) + ['}']
             for i in range(len(child_list)):
-                if child_list[i][2] == 'Below':
+                if child_list[i][2].lower() == 'below':
                     return_string += ['{'] + convert(child_list[i][1], gtd_list) + ['}']
             for i in range(len(child_list)):
-                if child_list[i][2] == 'Right':
+                if child_list[i][2].lower() == 'right':
                     return_string += convert(child_list[i][1], gtd_list)
             for i in range(len(child_list)):
-                if child_list[i][2] not in ['Right','Above','Below']:
+                if child_list[i][2].lower() not in ['right','above','below']:
                     return_string += ['illegal']
         else:
             return_string = [gtd_list[nodeid][0]]
             for i in range(len(child_list)):
-                if child_list[i][2] in ['l_sup']:
+                if child_list[i][2].lower() in ['l_sup']:
                     return_string += ['['] + convert(child_list[i][1], gtd_list) + [']']
             for i in range(len(child_list)):
-                if child_list[i][2] == 'Inside':
+                if child_list[i][2].lower() == 'inside':
                     return_string += ['{'] + convert(child_list[i][1], gtd_list) + ['}']
             for i in range(len(child_list)):
-                if child_list[i][2] in ['Sub','Below']:
+                if child_list[i][2].lower() in ['sub','below']:
                     return_string += ['_','{'] + convert(child_list[i][1], gtd_list) + ['}']
             for i in range(len(child_list)):
-                if child_list[i][2] in ['Sup','Above']:
+                if child_list[i][2].lower() in ['sup','above']:
                     return_string += ['^','{'] + convert(child_list[i][1], gtd_list) + ['}']
             for i in range(len(child_list)):
-                if child_list[i][2] in ['Right']:
+                if child_list[i][2].lower() == 'right':
                     return_string += convert(child_list[i][1], gtd_list)
         return return_string
 

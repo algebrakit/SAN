@@ -16,8 +16,10 @@ class SAN_decoder(nn.Module):
         self.dropout_prob = params['dropout']
         self.device = params['device']
         self.word_num = params['word_num']
-        self.struct_num = params['struct_num']
-        self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
+        self.struct_num = params['struct_num'] # 7: below, above, inside, right, sub, sup, L-sup
+        # self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
+        self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
+        self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
 
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
@@ -110,10 +112,10 @@ class SAN_decoder(nn.Module):
                 child_embedding = self.embedding(labels[:, -(i + 1), 1])
                 relation = labels[:, -(i + 1), 3].clone()
                 for num in range(relation.shape[0]):
-                    if labels[num, -(i + 1), 1] == 2:
+                    if labels[num, -(i + 1), 1] == self.STRUCT_ID: # struct
                         relation[num] = 2
                     elif relation[num].item() not in self.struct_dict and relation[num].item() != 0:
-                        relation[num] = 114
+                        relation[num] = 114 # Right
                 relation_embedding = self.embedding(relation)
 
                 c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
@@ -173,7 +175,7 @@ class SAN_decoder(nn.Module):
 
                 _, word = word_prob.max(1)
 
-                if word.item() == 2:
+                if word.item() == self.STRUCT_ID: # struct
 
                     struct_prob = self.struct_convert(word_out_state)
                     struct_probs[0][i, :] = struct_prob
@@ -189,7 +191,7 @@ class SAN_decoder(nn.Module):
                     word, parent_hidden, word_alpha_sum = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
 
-                elif word == 0:
+                elif word == 0: # <eos>
                     if len(struct_list) == 0:
                         break
                     word, parent_hidden, word_alpha_sum = struct_list.pop()

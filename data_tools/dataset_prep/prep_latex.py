@@ -170,7 +170,7 @@ def process_file(input_file: str, output_file: str):
                 tokens = handle_groups(tokens)
                 # Write the result
                 tokenized_latex = ' '.join(tokens)
-                tokenized_latex = special_cases(tokenized_latex)
+                tokenized_latex = special_cases(tokenized_latex).strip()
                 outfile.write(f"{filename}\t{tokenized_latex}\n")
 
 
