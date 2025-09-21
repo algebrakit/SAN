@@ -5,7 +5,7 @@ import random
 import gc
 import torch
 import numpy as np
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 import sys
 sys.path.append('..')
@@ -32,7 +32,13 @@ np.random.seed(params['seed'])
 torch.manual_seed(params['seed'])
 torch.cuda.manual_seed(params['seed'])
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# Device selection: CUDA > MPS > CPU
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+    device = torch.device('mps')
+else:
+    device = torch.device('cpu')
 params['device'] = device
 words = Words(params['word_path'])
 params['word_num'] = len(words)
@@ -101,6 +107,12 @@ for epoch in range(params['epoches']):
 
                 min_step = 0
 
+    # Clean up memory after each epoch
+    if writer:
+        writer.flush()
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 

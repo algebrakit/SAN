@@ -17,10 +17,10 @@ class Bottleneck(nn.Module):
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+        out = F.relu(self.bn1(self.conv1(x)), )
         if self.use_dropout:
             out = self.dropout(out)
-        out = F.relu(self.bn2(self.conv2(out)), inplace=True)
+        out = F.relu(self.bn2(self.conv2(out)), )
         if self.use_dropout:
             out = self.dropout(out)
         out = torch.cat((x, out), 1)
@@ -37,7 +37,7 @@ class SingleLayer(nn.Module):
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, x):
-        out = self.conv1(F.relu(x, inplace=True))
+        out = self.conv1(F.relu(x, ))
         if self.use_dropout:
             out = self.dropout(out)
         out = torch.cat((x, out), 1)
@@ -54,7 +54,7 @@ class Transition(nn.Module):
         self.dropout = nn.Dropout(p=0.2)
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)), inplace=True)
+        out = F.relu(self.bn1(self.conv1(x)), )
         if self.use_dropout:
             out = self.dropout(out)
         out = F.avg_pool2d(out, 2, ceil_mode=True)
@@ -98,7 +98,7 @@ class DenseNet(nn.Module):
 
     def forward(self, x):
         out = self.conv1(x)
-        out = F.relu(out, inplace=True)
+        out = F.relu(out, )
         out = F.max_pool2d(out, 2, ceil_mode=True)
         out = self.dense1(out)
         out = self.trans1(out)

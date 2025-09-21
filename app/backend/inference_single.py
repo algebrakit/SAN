@@ -15,7 +15,13 @@ class Inference:
     def __init__(self, confPath='config.yaml'):
         self.params = load_config(confPath)
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # Device selection: CUDA > MPS > CPU
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            device = torch.device('mps')
+        else:
+            device = torch.device('cpu')
         self.params['device'] = device
 
         words = Words(self.params['word_path'])

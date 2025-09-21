@@ -22,7 +22,13 @@ if not args.config:
 """Load config file"""
 params = load_config(args.config)
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# Device selection: CUDA > MPS > CPU
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+    device = torch.device('mps')
+else:
+    device = torch.device('cpu')
 params['device'] = device
 
 words = Words(params['word_path'])
