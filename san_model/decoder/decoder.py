@@ -20,7 +20,10 @@ class SAN_decoder(nn.Module):
         # self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
         self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
         self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
-
+        self.RIGHT_ID = self.params['words'].encode(['right'])[0]
+        self.EOS_ID = self.params['words'].encode(['<eos>'])[0]
+        self.SUB_ID = self.params['words'].encode(['sub'])[0]
+        self.SUP_ID = self.params['words'].encode(['sup'])[0]
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
         self.threshold = params['hybrid_tree']['threshold']
@@ -71,7 +74,7 @@ class SAN_decoder(nn.Module):
         word_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
         struct_probs = torch.zeros((batch_size, num_steps, self.struct_num)).to(device=self.device)
         c2p_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
-        images_mask = images_mask[:, :, ::self.ratio, ::self.ratio]
+        images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
 
         word_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
         c2p_alpha_sum = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
@@ -89,8 +92,8 @@ class SAN_decoder(nn.Module):
                 parent_ids = labels[:,i,2].clone()
                 for item in range(len(parent_ids)):
                     parent_ids[item] = parent_ids[item] * batch_size + item
-                parent_hidden = parent_hiddens[parent_ids,:]
-                word_alpha_sum = word_alpha_sums[parent_ids, :, :, :]
+                parent_hidden = parent_hiddens[parent_ids,:].contiguous()
+                word_alpha_sum = word_alpha_sums[parent_ids, :, :, :].contiguous()
 
                 word_embedding = self.embedding(labels[:, i, 3])
 
@@ -113,9 +116,11 @@ class SAN_decoder(nn.Module):
                 relation = labels[:, -(i + 1), 3].clone()
                 for num in range(relation.shape[0]):
                     if labels[num, -(i + 1), 1] == self.STRUCT_ID: # struct
-                        relation[num] = 2
-                    elif relation[num].item() not in self.struct_dict and relation[num].item() != 0:
-                        relation[num] = 114 # Right
+                        # struct line, set parent to struct (original parent is symbol, like \frac)
+                        relation[num] = self.STRUCT_ID 
+                    elif relation[num].item() not in self.struct_dict and relation[num].item() != self.EOS_ID:
+                        # if parent is symbol, the relation is 'right'
+                        relation[num] = self.RIGHT_ID
                 relation_embedding = self.embedding(relation)
 
                 c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
@@ -191,7 +196,7 @@ class SAN_decoder(nn.Module):
                     word, parent_hidden, word_alpha_sum = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
 
-                elif word == 0: # <eos>
+                elif word == self.EOS_ID: 
                     if len(struct_list) == 0:
                         break
                     word, parent_hidden, word_alpha_sum = struct_list.pop()

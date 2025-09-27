@@ -5,10 +5,10 @@ import cv2
 import pickle as pkl
 
 
-image_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/images'
-image_out = 'test_image.pkl'
-laebl_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/hyb'
-label_out = 'test_label.pkl'
+image_path = '/Users/martijnslob/github/SAN/data/mathwriting/train/images'
+image_out = 'train_image.pkl'
+label_path = '/Users/martijnslob/github/SAN/data/mathwriting/train/hyb'
+label_out = 'train_label.pkl'
 
 images = glob.glob(os.path.join(image_path, '*.bmp'))
 image_dict = {}
@@ -22,7 +22,7 @@ for item in tqdm(images):
 with open(image_out,'wb') as f:
     pkl.dump(image_dict, f)
 
-labels = glob.glob(os.path.join(laebl_path, '*.txt'))
+labels = glob.glob(os.path.join(label_path, '*.txt'))
 label_dict = {}
 
 for item in tqdm(labels):

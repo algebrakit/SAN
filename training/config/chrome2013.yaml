@@ -69,8 +69,8 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
-# checkpoint: "checkpoints/chrome2013/best.pth"
+finetune: True
+checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

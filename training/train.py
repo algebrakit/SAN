@@ -32,14 +32,17 @@ np.random.seed(params['seed'])
 torch.manual_seed(params['seed'])
 torch.cuda.manual_seed(params['seed'])
 
-# Device selection: CUDA > MPS > CPU
+# Device selection: CUDA > CPU > MPS (MPS has tensor stride issues with this model)
 if torch.cuda.is_available():
     device = torch.device('cuda')
-elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-    device = torch.device('mps')
 else:
+    # Note: MPS backend has compatibility issues with complex tensor operations in this model
+    # Use CPU for now until PyTorch MPS backend improves
     device = torch.device('cpu')
+    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        print("Note: MPS is available but CPU is being used due to known tensor stride compatibility issues.")
 params['device'] = device
+print(f'Using device: {device}')
 words = Words(params['word_path'])
 params['word_num'] = len(words)
 params['struct_num'] = 7
@@ -72,7 +75,6 @@ if not args.check:
     if not os.path.exists(os.path.join(params['checkpoint_dir'], model.name)):
         os.makedirs(os.path.join(params['checkpoint_dir'], model.name), exist_ok=True)
     os.system(f'cp {args.config} {os.path.join(params["checkpoint_dir"], model.name, model.name)}.yaml')
-
 
 min_score = 0
 min_step = 0

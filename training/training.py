@@ -28,13 +28,20 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             word_loss, struct_loss, parent_loss, kl_loss = loss
             loss = (word_loss + struct_loss + parent_loss + kl_loss)
 
-            loss.backward()
-            if params['gradient_clip']:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), params['gradient'])
+            with torch.no_grad():
+                loss.backward()
+                if params['gradient_clip']:
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), params['gradient'])
 
-            optimizer.step()
+                optimizer.step()
 
-            loss_meter.add(loss.item())
+            loss_dt = loss.item()
+            word_loss_dt = word_loss.item()
+            struct_loss_dt = struct_loss.item()
+            parent_loss_dt = parent_loss.item()
+            kl_loss_dt = kl_loss.item()
+
+            loss_meter.add(loss_dt)
 
             wordRate, structRate, ExpRate = cal_score(probs, labels, label_masks)
 
@@ -46,20 +53,22 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
 
             if writer:
                 current_step = epoch * len(train_loader) + batch_idx + 1
-                writer.add_scalar('train/loss', loss.item(), current_step)
-                writer.add_scalar('train/word_loss', word_loss.item(), current_step)
-                writer.add_scalar('train/struct_loss', struct_loss.item(), current_step)
+                writer.add_scalar('train/loss', loss_dt, current_step)
+                writer.add_scalar('train/word_loss', word_loss_dt, current_step)
+                writer.add_scalar('train/struct_loss', struct_loss_dt, current_step)
                 writer.add_scalar('train/WordRate', wordRate, current_step)
-                writer.add_scalar('train/parent_loss', parent_loss.item(), current_step)
-                writer.add_scalar('train/kl_loss', kl_loss.item(), current_step)
+                writer.add_scalar('train/parent_loss', parent_loss_dt, current_step)
+                writer.add_scalar('train/kl_loss', kl_loss_dt, current_step)
                 writer.add_scalar('train/structRate', structRate, current_step)
                 writer.add_scalar('train/ExpRate', ExpRate, current_step)
                 writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], current_step)
 
-            pbar.set_description(f'Epoch: {epoch+1} train loss: {loss.item():.4f} word loss: {word_loss:.4f} '
-                                 f'struct loss: {struct_loss:.4f} parent loss: {parent_loss:.4f} '
-                                 f'kl loss: {kl_loss:.4f} WordRate: {word_right / length:.4f} '
+            pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} WordRate: {word_right / length:.4f} '
                                  f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+            # pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
+            #                      f'struct loss: {struct_loss_dt:.4f} parent loss: {parent_loss_dt:.4f} '
+            #                      f'kl loss: {kl_loss_dt:.4f} WordRate: {word_right / length:.4f} '
+            #                      f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
 
         if writer:
             writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
@@ -100,17 +109,21 @@ def eval(params, model, epoch, eval_loader, writer=None):
             length = length + time
             cal_num = cal_num + batch
 
+            loss_dt = loss.item()
+            word_loss_dt = word_loss.item()
+            struct_loss_dt = struct_loss.item()
+
             if writer:
                 current_step = epoch * len(eval_loader) + batch_idx + 1
-                writer.add_scalar('eval/loss', loss.item(), current_step)
-                writer.add_scalar('eval/word_loss', word_loss.item(), current_step)
-                writer.add_scalar('eval/struct_loss', struct_loss.item(), current_step)
+                writer.add_scalar('eval/loss', loss_dt, current_step)
+                writer.add_scalar('eval/word_loss', word_loss_dt, current_step)
+                writer.add_scalar('eval/struct_loss', struct_loss_dt, current_step)
                 writer.add_scalar('eval/WordRate', wordRate, current_step)
                 writer.add_scalar('eval/structRate', structRate, current_step)
                 writer.add_scalar('eval/ExpRate', ExpRate, current_step)
 
-            pbar.set_description(f'Epoch: {epoch + 1} eval loss: {loss.item():.4f} word loss: {word_loss:.4f} '
-                                 f'struct loss: {struct_loss:.4f} WordRate: {word_right / length:.4f} '
+            pbar.set_description(f'Epoch: {epoch + 1} eval loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
+                                 f'struct loss: {struct_loss_dt:.4f} WordRate: {word_right / length:.4f} '
                                  f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
 
         if writer:

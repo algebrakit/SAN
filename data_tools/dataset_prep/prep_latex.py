@@ -135,9 +135,46 @@ def special_cases(latex_str: str) -> str:
     # x ^ {''}  --> x''
     # x ^ {''' }  --> x'''
     latex_str = re.sub(r"\^\s*\{(\s*')+\s*\}", lambda m: "' " * (m.group(0).count("'")), latex_str)
+
     return latex_str
 
-def process_file(input_file: str, output_file: str):
+def filter_to_words(tokens: List[str], valid_words: set) -> bool:
+    """
+    Filter tokens to only include those in the valid words set.
+
+    Args:
+        tokens: List of tokens
+        valid_words: Set of valid words
+    """
+    skip = False
+    for token in tokens:
+        if token not in valid_words:
+            skip = True
+            break
+    return skip
+
+def handle_synonymous_tokens(tokens: List[str]) -> List[str]:
+    """
+    Replace synonymous tokens with a standard representation.
+
+    Args:
+        tokens: List of tokens
+
+    Returns:
+        List of tokens with synonyms replaced
+    """
+    synonym_map = {
+        '>': '\\gt',
+        '<': '\\lt'
+        }
+    # replace tokens based on the synonym map
+    for i, token in enumerate(tokens):
+        if token in synonym_map:
+            tokens[i] = synonym_map[token]
+
+    return tokens
+
+def process_file(input_file: str, output_file: str, valid_words: set = None):
     """
     Process the input file and write tokenized output.
 
@@ -168,6 +205,13 @@ def process_file(input_file: str, output_file: str):
                 # Tokenize the LaTeX expression
                 tokens = tokenize_latex(latex_expr)
                 tokens = handle_groups(tokens)
+                tokens = handle_synonymous_tokens(tokens)
+                if valid_words is not None:
+                    skip = filter_to_words(tokens, valid_words)
+                    if skip:
+                        print(f"Skipping file {input_file} due to unknown tokens", file=sys.stderr)
+                        continue
+
                 # Write the result
                 tokenized_latex = ' '.join(tokens)
                 tokenized_latex = special_cases(tokenized_latex).strip()
@@ -175,16 +219,22 @@ def process_file(input_file: str, output_file: str):
 
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python prep_latex.py <input_file> <output_file>")
+    if len(sys.argv) < 4:
+        print("Usage: python prep_latex.py <input_file> <output_file> <word_file>(optional)")
         print("Example: python prep_latex.py labels.txt labels_tokenized.txt")
         sys.exit(1)
 
     input_file = sys.argv[1]
     output_file = sys.argv[2]
-
+    if len(sys.argv) > 3:
+        word_file = sys.argv[3]
+        with open(word_file, 'r', encoding='utf-8') as wf:
+            valid_words = set(line.strip() for line in wf if line.strip())
+            valid_words.update(['{', '}', '[', ']', '^', '_'])  # Always allow these
+    else:
+        valid_words = None
     try:
-        process_file(input_file, output_file)
+        process_file(input_file, output_file, valid_words)
         print(f"Successfully processed {input_file} -> {output_file}")
     except FileNotFoundError:
         print(f"Error: Input file '{input_file}' not found")

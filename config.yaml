@@ -27,12 +27,12 @@ gradient_clip: True
 use_label_mask: False
 
 # Training data
-train_image_path: 'data/train_image.pkl'
-train_label_path: 'data/train_label.pkl'
-eval_image_path: 'data/test_image.pkl'
-eval_label_path: 'data/test_label.pkl'
+train_image_path: 'data/chrome2013/train/train_image.pkl'
+train_label_path: 'data/chrome2013/train/train_label.pkl'
+eval_image_path: 'data/chrome2013/test/test_image.pkl'
+eval_label_path: 'data/chrome2013/test/test_label.pkl'
 
-word_path: 'data/word.txt'
+word_path: 'data/chrome2013/word.txt'
 
 # Encoder selection
 encoder:
@@ -67,9 +67,9 @@ hybrid_tree:
 
 # Training weights save path
 optimizer_save: False
-checkpoint_dir: 'checkpoints'
+checkpoint_dir: 'training/checkpoints'
 finetune: False
-checkpoint: "checkpoints/SAN_decoder/best.pth"
+checkpoint: "training/checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

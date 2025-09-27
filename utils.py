@@ -108,13 +108,13 @@ def cal_score(probs, labels, mask):
     batch_size = probs[0].shape[0]
     word_probs, struct_probs = probs
     word_label, struct_label = labels[:,:,1], labels[:,:,4:]
-    struct_label = struct_label.contiguous().view(batch_size, -1)
+    struct_label = struct_label.contiguous().reshape(batch_size, -1)
     line_right = 0
     _, word_pred = word_probs.max(2)
 
     struct_mask = mask[:,:,1]
     struct_probs = struct_probs * struct_mask[:,:,None]
-    struct_probs = struct_probs.contiguous().view(batch_size, -1)
+    struct_probs = struct_probs.contiguous().reshape(batch_size, -1)
     struct_pred = struct_probs > 0.5
 
     word_scores = [SequenceMatcher(None, s1[:int(np.sum(s3))], s2[:int(np.sum(s3))], autojunk=False).ratio() * (len(s1[:int(np.sum(s3))]) + len(s2[:int(np.sum(s3))])) / len(s1[:int(np.sum(s3))]) / 2
