@@ -108,89 +108,88 @@ class SAN_decoder(nn.Module):
                 _, word = word_prob.max(1)
                 word_str = self.params['words'].words_index_dict[word.item()]
 
-                match word_str:
-                    case 'struct':
-                        # this follows a symbol or construct (frac, sum, etc.)
-                        struct_prob = self.struct_convert(word_out_state)
+                if word_str == 'struct':
+                    # this follows a symbol or construct (frac, sum, etc.)
+                    struct_prob = self.struct_convert(word_out_state)
 
-                        structs = torch.sigmoid(struct_prob)
+                    structs = torch.sigmoid(struct_prob)
 
-                        for num in range(structs.shape[1]-1, -1, -1):
-                            if structs[0][num] > self.threshold:
-                                struct_list.append((self.struct_dict[num], hidden, p_word, p_id, word_alpha_sum))
-                        if len(struct_list) == 0:
-                            break
-                        word, parent_hidden, p_word, pid, word_alpha_sum = struct_list.pop()
-                        word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
-                        word_str = self.params['words'].words_index_dict[word]
-                        p_word_str = self.params['words'].words_index_dict[p_word.item()]
-                        if p_word_str == '\\frac':
-                            if word_str == 'above':
-                                p_re = 'Above'
-                            elif word_str == 'below':
-                                p_re = 'Below'
-                            else:
-                                # illegal relation for fraction, neglect
-                                pass
-                        elif p_word_str == '\\sqrt':
-                            if word_str == 'L-sup':
-                                p_re = 'l_sup'
-                            elif word_str == 'inside':
-                                p_re = 'Inside'
-                            elif word_str == 'sup':
-                                p_re = 'Sup'
-                            else:
-                                # illegal relation for sqrt, neglect
-                                pass
-                        elif p_word_str in ['\\sum', '\\prod', '\\int']:
-                            if word_str in ['below', 'sub']:
-                                p_re = 'Below'
-                            elif word_str in ['above', 'sup']:
-                                p_re = 'Above'
-                            else:
-                                # illegal relation for sum/prod, neglect
-                                pass
-                        else:
-                            if word_str == 'sub':
-                                p_re = 'Sub'
-                            elif word_str == 'sup':
-                                p_re = 'Sup'
-                    case '<eos>':
-                        if len(struct_list) == 0:
-                            break
-
-                        word, parent_hidden, p_word, pid, word_alpha_sum = struct_list.pop()
-                        word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
-                        word_str = self.params['words'].words_index_dict[word]
-                        p_word_str = self.params['words'].words_index_dict[p_word.item()]
-
-                        if word_str == 'inside':
-                            p_re = 'Inside'
-                        elif word_str == 'sub' or (word_str == 'below' and p_word_str in ['\\sum', '\\prod']):
-                            p_re = 'Sub'
-                        elif word_str == 'sup' or (word_str == 'above' and p_word_str in ['\\sum', '\\prod']):
-                            p_re = 'Sup'
-                        elif word_str == 'above':
+                    for num in range(structs.shape[1]-1, -1, -1):
+                        if structs[0][num] > self.threshold:
+                            struct_list.append((self.struct_dict[num], hidden, p_word, p_id, word_alpha_sum))
+                    if len(struct_list) == 0:
+                        break
+                    word, parent_hidden, p_word, pid, word_alpha_sum = struct_list.pop()
+                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
+                    word_str = self.params['words'].words_index_dict[word]
+                    p_word_str = self.params['words'].words_index_dict[p_word.item()]
+                    if p_word_str == '\\frac':
+                        if word_str == 'above':
                             p_re = 'Above'
                         elif word_str == 'below':
                             p_re = 'Below'
-                        elif word_str == 'L-sup':
+                        else:
+                            # illegal relation for fraction, neglect
+                            pass
+                    elif p_word_str == '\\sqrt':
+                        if word_str == 'L-sup':
                             p_re = 'l_sup'
                         elif word_str == 'inside':
                             p_re = 'Inside'
-                        elif word_str == 'right':
-                            p_re = 'Right'
-                    case _: 
-                        # symbol or construct head (e.g. \frac, \sum, etc.)
-                        if word.item():
-                            cid += 1
-                            p_id = cid
-                            result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
+                        elif word_str == 'sup':
+                            p_re = 'Sup'
+                        else:
+                            # illegal relation for sqrt, neglect
+                            pass
+                    elif p_word_str in ['\\sum', '\\prod', '\\int']:
+                        if word_str in ['below', 'sub']:
+                            p_re = 'Below'
+                        elif word_str in ['above', 'sup']:
+                            p_re = 'Above'
+                        else:
+                            # illegal relation for sum/prod, neglect
+                            pass
+                    else:
+                        if word_str == 'sub':
+                            p_re = 'Sub'
+                        elif word_str == 'sup':
+                            p_re = 'Sup'
+                elif word_str == '<eos>':
+                    if len(struct_list) == 0:
+                        break
 
+                    word, parent_hidden, p_word, pid, word_alpha_sum = struct_list.pop()
+                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
+                    word_str = self.params['words'].words_index_dict[word]
+                    p_word_str = self.params['words'].words_index_dict[p_word.item()]
+
+                    if word_str == 'inside':
+                        p_re = 'Inside'
+                    elif word_str == 'sub' or (word_str == 'below' and p_word_str in ['\\sum', '\\prod']):
+                        p_re = 'Sub'
+                    elif word_str == 'sup' or (word_str == 'above' and p_word_str in ['\\sum', '\\prod']):
+                        p_re = 'Sup'
+                    elif word_str == 'above':
+                        p_re = 'Above'
+                    elif word_str == 'below':
+                        p_re = 'Below'
+                    elif word_str == 'L-sup':
+                        p_re = 'l_sup'
+                    elif word_str == 'inside':
+                        p_re = 'Inside'
+                    elif word_str == 'right':
                         p_re = 'Right'
-                        pid = cid
-                        word_embedding = self.embedding(word)
-                        parent_hidden = hidden.clone()
+                else:
+                    # symbol or construct head (e.g. \frac, \sum, etc.)
+                    if word.item():
+                        cid += 1
+                        p_id = cid
+                        result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
+
+                    p_re = 'Right'
+                    pid = cid
+                    word_embedding = self.embedding(word)
+                    parent_hidden = hidden.clone()
 
         return result
 

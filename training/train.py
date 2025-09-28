@@ -39,8 +39,7 @@ else:
     # Note: MPS backend has compatibility issues with complex tensor operations in this model
     # Use CPU for now until PyTorch MPS backend improves
     device = torch.device('cpu')
-    if hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-        print("Note: MPS is available but CPU is being used due to known tensor stride compatibility issues.")
+
 params['device'] = device
 print(f'Using device: {device}')
 words = Words(params['word_path'])
@@ -64,6 +63,10 @@ else:
 
 optimizer = getattr(torch.optim, params['optimizer'])(model.parameters(), lr=float(params['lr']),
                                                       eps=float(params['eps']), weight_decay=float(params['weight_decay']))
+
+# Initialize mixed precision scaler
+scaler = torch.amp.GradScaler('cuda', enabled=params.get('use_amp', False))
+params['scaler'] = scaler
 
 if params['finetune']:
 

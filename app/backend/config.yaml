@@ -32,8 +32,8 @@ train_label_path: 'data/train_label.pkl'
 eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
-#word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/chrome2013/word.txt'
+word_path: 'resources/word.txt'
+# word_path: '/Users/martijnslob/github/SAN/data/chrome2013/word.txt'
 
 # Encoder selection
 encoder:
@@ -70,8 +70,8 @@ hybrid_tree:
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: False
-# checkpoint: "resources/model.pth"
-checkpoint: "../../training/checkpoints/best.pth"
+checkpoint: "resources/model.pth"
+# checkpoint: "../../training/checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

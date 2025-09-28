@@ -11,6 +11,10 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
     loss_meter = Meter()
 
     word_right, struct_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
+    loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt = 0, 0, 0, 0, 0
+
+    accumulation_steps = params.get('gradient_accumulation_steps', 1)
+    scaler = params['scaler']
 
     with tqdm(train_loader, total=len(train_loader)) as pbar:
         for batch_idx, (images, image_masks, labels, label_masks) in enumerate(pbar):
@@ -21,27 +25,26 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             batch, time = labels.shape[:2]
             if not 'lr_decay' in params or params['lr_decay'] == 'cosine':
                 updata_lr(optimizer, epoch, batch_idx, len(train_loader), params['epoches'], params['lr'])
-            optimizer.zero_grad()
 
-            probs, loss = model(images, image_masks, labels, label_masks)
+            # Only zero gradients at the start of accumulation
+            if batch_idx % accumulation_steps == 0:
+                optimizer.zero_grad()
 
-            word_loss, struct_loss, parent_loss, kl_loss = loss
-            loss = (word_loss + struct_loss + parent_loss + kl_loss)
+            # Mixed precision forward pass
+            with torch.amp.autocast('cuda', enabled=params.get('use_amp', False)):
+                probs, loss = model(images, image_masks, labels, label_masks)
 
-            with torch.no_grad():
-                loss.backward()
-                if params['gradient_clip']:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), params['gradient'])
+                word_loss, struct_loss, parent_loss, kl_loss = loss
+                loss = (word_loss + struct_loss + parent_loss + kl_loss)
 
-                optimizer.step()
+                # Scale loss by accumulation steps for averaging
+                loss = loss / accumulation_steps
 
-            loss_dt = loss.item()
-            word_loss_dt = word_loss.item()
-            struct_loss_dt = struct_loss.item()
-            parent_loss_dt = parent_loss.item()
-            kl_loss_dt = kl_loss.item()
-
-            loss_meter.add(loss_dt)
+            loss_dt += loss.item()
+            word_loss_dt += word_loss.item() / accumulation_steps
+            struct_loss_dt += struct_loss.item() / accumulation_steps
+            parent_loss_dt += parent_loss.item() / accumulation_steps
+            kl_loss_dt += kl_loss.item() / accumulation_steps
 
             wordRate, structRate, ExpRate = cal_score(probs, labels, label_masks)
 
@@ -51,30 +54,46 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             length = length + time
             cal_num = cal_num + batch
 
-            if writer:
-                current_step = epoch * len(train_loader) + batch_idx + 1
-                writer.add_scalar('train/loss', loss_dt, current_step)
-                writer.add_scalar('train/word_loss', word_loss_dt, current_step)
-                writer.add_scalar('train/struct_loss', struct_loss_dt, current_step)
-                writer.add_scalar('train/WordRate', wordRate, current_step)
-                writer.add_scalar('train/parent_loss', parent_loss_dt, current_step)
-                writer.add_scalar('train/kl_loss', kl_loss_dt, current_step)
-                writer.add_scalar('train/structRate', structRate, current_step)
-                writer.add_scalar('train/ExpRate', ExpRate, current_step)
-                writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], current_step)
+            # Mixed precision backward pass
+            scaler.scale(loss).backward()
 
-            pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} WordRate: {word_right / length:.4f} '
-                                 f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
-            # pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
-            #                      f'struct loss: {struct_loss_dt:.4f} parent loss: {parent_loss_dt:.4f} '
-            #                      f'kl loss: {kl_loss_dt:.4f} WordRate: {word_right / length:.4f} '
-            #                      f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+            # Only step optimizer every accumulation_steps
+            if (batch_idx + 1) % accumulation_steps == 0 or (batch_idx + 1) == len(train_loader):
+                if params['gradient_clip']:
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(model.parameters(), params['gradient'])
 
-        if writer:
-            writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
-            writer.add_scalar('epoch/train_WordRate', word_right / length, epoch+1)
-            writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
-            writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
+                scaler.step(optimizer)
+                scaler.update()
+
+                loss_meter.add(loss_dt)
+
+                if writer:
+                    current_step = epoch * len(train_loader) + batch_idx + 1
+                    writer.add_scalar('train/loss', loss_dt, current_step)
+                    writer.add_scalar('train/word_loss', word_loss_dt, current_step)
+                    writer.add_scalar('train/struct_loss', struct_loss_dt, current_step)
+                    writer.add_scalar('train/WordRate', wordRate, current_step)
+                    writer.add_scalar('train/parent_loss', parent_loss_dt, current_step)
+                    writer.add_scalar('train/kl_loss', kl_loss_dt, current_step)
+                    writer.add_scalar('train/structRate', structRate, current_step)
+                    writer.add_scalar('train/ExpRate', ExpRate, current_step)
+                    writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], current_step)
+                    writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
+                    writer.add_scalar('epoch/train_WordRate', word_right / length, epoch+1)
+                    writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
+                    writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
+
+                pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} WordRate: {word_right / length:.4f} '
+                                    f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+                # pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
+                #                      f'struct loss: {struct_loss_dt:.4f} parent loss: {parent_loss_dt:.4f} '
+                #                      f'kl loss: {kl_loss_dt:.4f} WordRate: {word_right / length:.4f} '
+                #                      f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+
+                loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt = 0, 0, 0, 0, 0
+
+
         return loss_meter.mean, word_right / length, struct_right / length, exp_right / cal_num
 
 
@@ -95,7 +114,9 @@ def eval(params, model, epoch, eval_loader, writer=None):
 
             batch, time = labels.shape[:2]
 
-            probs, loss = model(images, image_masks, labels, label_masks, is_train=False)
+            # Mixed precision forward pass for evaluation
+            with torch.amp.autocast('cuda', enabled=params.get('use_amp', False)):
+                probs, loss = model(images, image_masks, labels, label_masks, is_train=False)
 
             word_loss, struct_loss = loss
             loss = word_loss + struct_loss

@@ -219,7 +219,7 @@ def process_file(input_file: str, output_file: str, valid_words: set = None):
 
 
 def main():
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 3 or len(sys.argv) > 4:
         print("Usage: python prep_latex.py <input_file> <output_file> <word_file>(optional)")
         print("Example: python prep_latex.py labels.txt labels_tokenized.txt")
         sys.exit(1)

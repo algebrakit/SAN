@@ -56,6 +56,9 @@ RUN chown -R appuser:appuser /home/appuser/.local
 # Copy application code
 COPY --chown=appuser:appuser app/backend/*.py app/backend/*.yaml ./
 
+# Copy utils.py from project root
+COPY --chown=appuser:appuser utils.py ./
+
 # Copy the entire project structure for imports
 COPY --chown=appuser:appuser san_model/ ./san_model/
 COPY --chown=appuser:appuser data_tools/ ./data_tools/

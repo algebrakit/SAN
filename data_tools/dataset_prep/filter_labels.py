@@ -22,11 +22,11 @@ def should_skip_line(latex_str: str) -> bool:
     matrix_list = ['\\begin{matrix}', '\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}',
                    '\\begin{vmatrix}', '\\begin{Vmatrix}', '\\begin{array}']
     command_list = [
-        '\\over', '\\binom', '\\tbinom', '\\choose', '\\atop', '\\brace', '\\brack', '\\cfrac','\\limits',
+        '\\binom', '\\tbinom', '\\choose', '\\atop', '\\brace', '\\brack', '\\cfrac','\\limits',
         '\\aleph','\\cong','\\oplus','\\mapsto', '\\bot', '\\vdash', '\\lnot', '\\models', '\\doteq', '*',
         '\\bigcap', '\\bigcup', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', '\\bigoplus', '\\bigcirc',
         '\\propto', '\\setminus', '\\langle', '\\rangle','\\Z', '\\R', '\\N', '\\Im', '\\Re', '\\wp', '\\Lambda',
-        ';', '\\xi', '\\zeta', '\\mp', '\\dagger', '\\star', '\\simeq'
+        ';', '\\xi', '\\zeta', '\\mp', '\\dagger', '\\star', '\\simeq', '\\bullet', '\\oint', '\\ominus', '\\mathfrak'
         ]
     accents_list = ['\\vec', '\\dot', '\\ddot', '\\tilde', '\\hat', '\\bar', '\\breve', '\\acute', '\\grave', 
                     '\\mathring', '\\underline', '\\overline', '\\widehat', '\\widetilde','\\odot','\\hbar']
@@ -83,6 +83,9 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\vartheta': r'\\theta',
         r'\\varepsilon': r'\\epsilon',
         r'\\varphi': r'\\phi',
+        r'\\varpi': r'\\pi',
+        r'\\varrho': r'\\rho',
+        r'\\varnothing': r'\\emptyset',
         r'\\kappa': r'k',
         r'\\Upsilon': r'Y',
         r'\\neq': r'\\ne',
@@ -136,9 +139,10 @@ def detect_commands(latex_str: str) -> str:
 
     """
     cmd_list = ['log', 'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh',
-                'tanh', 'coth', 'ln', 'exp']
+                'tanh', 'coth', 'ln', 'exp', 'sum', 'prod', 'lim', 'max', 'min', 'inf', 'sup', 'det', 'dim', 'gcd', 'lcm',
+                'mod', 'arg', 'div']
     for cmd in cmd_list:
-        pattern = r'(?<![\\a-zA-Z\s])' + cmd + r'(?![a-zA-Z])'
+        pattern = r'(?<![\\a-zA-Z])' + cmd + r'(?![a-zA-Z])'
         latex_str = re.sub(pattern, r'\\' + cmd + ' ', latex_str)
 
     return latex_str

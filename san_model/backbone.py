@@ -22,7 +22,7 @@ class Backbone(nn.Module):
         else:
             self.decoder = getattr(decoder, params['decoder']['net'])(params=self.params)
         self.cross = nn.CrossEntropyLoss()
-        self.bce = nn.BCELoss(reduction='none')
+        self.bce = nn.BCEWithLogitsLoss(reduction='none')
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet'][
             'conv1_stride']
 
@@ -33,8 +33,9 @@ class Backbone(nn.Module):
 
         word_average_loss = self.cross(word_probs.contiguous().reshape(-1, word_probs.shape[-1]), labels[:,:,1].reshape(-1))
 
-        struct_probs = torch.sigmoid(struct_probs)
+        # BCEWithLogitsLoss includes sigmoid internally, so don't apply it manually
         struct_average_loss = self.bce(struct_probs, labels[:,:,4:].float())
+        struct_probs = torch.sigmoid(struct_probs)  # Apply sigmoid for output/evaluation
         if labels_mask is not None:
             struct_average_loss = (struct_average_loss * labels_mask[:,:,0][:, :, None]).sum() / (labels_mask[:,:,0].sum() + 1e-10)
 

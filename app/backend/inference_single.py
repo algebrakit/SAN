@@ -6,7 +6,8 @@ import json
 from tqdm import tqdm
 
 import sys
-sys.path.append('../..')
+
+# sys.path.append('../..') # only for local testing
 from utils import load_config, load_checkpoint
 from inference.Backbone import Backbone
 from training.dataset import Words
