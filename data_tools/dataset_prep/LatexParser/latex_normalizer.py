@@ -11,6 +11,9 @@ from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
 
+ACCENT_COMMANDS = set(['\\vec', '\\dot', '\\ddot', '\\bar', '\\tilde', '\\hat',
+                       '\\overline', '\\widehat', '\\widetilde'])
+COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS
 
 class TokenType(Enum):
     """Token types for LaTeX parsing."""
@@ -24,10 +27,6 @@ class TokenType(Enum):
     RPAREN = "rparen"         # )
     CARET = "caret"           # ^
     UNDERSCORE = "underscore"  # _
-    EQUALS = "equals"         # =
-    PLUS = "plus"             # +
-    MINUS = "minus"           # -
-    MULTIPLY = "multiply"     # *
     EOF = "eof"               # end of input
 
 
@@ -93,17 +92,6 @@ class Tokenizer:
 
         return command
 
-    def read_text(self) -> str:
-        """Read consecutive text characters (letters, digits)."""
-        text = ""
-        char = self.current_char()
-        while (char and
-               (char.isalnum() or char in ".,;:!?")):
-            text += char
-            self.advance()
-            char = self.current_char()
-        return text
-
     def tokenize(self) -> List[Token]:
         """Tokenize the LaTeX expression."""
         tokens = []
@@ -165,26 +153,10 @@ class Tokenizer:
                 tokens.append(Token(TokenType.UNDERSCORE, char, start_pos))
                 self.advance()
 
-            elif char == '=':
-                tokens.append(Token(TokenType.EQUALS, char, start_pos))
-                self.advance()
-
-            elif char == '+':
-                tokens.append(Token(TokenType.PLUS, char, start_pos))
-                self.advance()
-
-            elif char == '-':
-                tokens.append(Token(TokenType.MINUS, char, start_pos))
-                self.advance()
-
-            elif char == '*':
-                tokens.append(Token(TokenType.MULTIPLY, char, start_pos))
-                self.advance()
-
-            elif char and (char.isalnum() or char in ".,;:!?"):
+            elif char and (char.isalnum() or char in ".,;:!?=+-*"):
                 # Text content
-                text = self.read_text()
-                tokens.append(Token(TokenType.TEXT, text, start_pos))
+                tokens.append(Token(TokenType.TEXT, char, start_pos))
+                self.advance()
 
             else:
                 # Treat unknown characters as text for now
@@ -286,7 +258,7 @@ class Parser:
         self.advance()
 
         # Handle commands that expect arguments
-        if token.value in ['\\frac']:
+        if token.value in ['\\frac','\\binom']:
             # These commands expect two arguments
             for _ in range(2):
                 if self.current_token().type == TokenType.LBRACE:
@@ -350,6 +322,18 @@ class Parser:
                 if single_arg:
                     group = ParseNode(NodeType.GROUP, "", [single_arg])
                     command_node.add_child(group)
+        elif token.value in COMMAND_SINGLE_ARGUMENT:
+            if self.current_token().type == TokenType.LBRACE:
+                arg = self.parse_group()
+                command_node.add_child(arg)
+            else:
+                # Single character argument
+                next_node = self.parse_primary()
+                if next_node:
+                    group = ParseNode(NodeType.GROUP, "", [next_node])
+                    command_node.add_child(group)
+                else:
+                    raise LaTeXError(f"Expected argument for command {token.value} at position {token.position}")    
 
         return command_node
 
@@ -371,8 +355,7 @@ class Parser:
             self.advance()
             return node
 
-        elif token.type in [TokenType.EQUALS, TokenType.PLUS, TokenType.MINUS,
-                           TokenType.MULTIPLY, TokenType.LPAREN, TokenType.RPAREN,
+        elif token.type in [TokenType.LPAREN, TokenType.RPAREN,
                            TokenType.LBRACKET, TokenType.RBRACKET]:
             node = ParseNode(NodeType.OPERATOR, token.value, [])
             self.advance()
@@ -491,10 +474,10 @@ class Normalizer:
         }
 
         # Accent commands to remove
-        self.accent_commands = {
-            '\\vec', '\\dot', '\\ddot', '\\bar', '\\tilde', '\\hat',
-            '\\overline', '\\underline', '\\widehat', '\\widetilde'
-        }
+        # self.accent_commands = {
+        #     '\\vec', '\\dot', '\\ddot', '\\bar', '\\tilde', '\\hat',
+        #     '\\overline', '\\underline', '\\widehat', '\\widetilde'
+        # }
 
         # Spacing commands to remove
         self.spacing_commands = {
@@ -503,7 +486,8 @@ class Normalizer:
 
         # Command synonyms to replace
         self.command_synonyms = {
-            '\\over': '\\frac'
+            '\\le': '\\leq',
+            '\\ge': '\\geq'
         }
 
         # Commands that should be replaced with brackets only
@@ -538,7 +522,6 @@ class Normalizer:
             self._validate_command(node)
         elif node.type == NodeType.GROUP:
             self._validate_group(node)
-
         # Recursively validate children
         for child in node.children:
             self._validate_tree(child)
@@ -577,11 +560,54 @@ class Normalizer:
             main_arg = node.children[-1]
             if self._is_empty_group(main_arg):
                 raise LaTeXError("Command \\sqrt has empty main argument")
+            
 
-    def _validate_group(self, node: ParseNode) -> None:
+    def _validate_group(self, node: ParseNode) -> ParseNode | None:
         """Validate a group node."""
-        # Currently no specific group validation needed
         pass
+
+    def _check_group_commands(self, node: ParseNode) -> ParseNode | None:
+        # some commands operate on the group in which they are contained
+        # e.g. {a \over b} -> \frac{a}{b}
+        group_commands = {'\\over', '\\atop', '\\choose'}
+        if node.children:
+            # Check if the group contains any of the group commands
+            for child in node.children:
+                if child.type == NodeType.COMMAND and child.value in group_commands:
+                    return self._transform_group_command(node, child.value)
+        return None
+
+    def _transform_group_command(self, group_node: ParseNode, command: str) -> ParseNode:
+        """Transform a group containing a group command into a structured command node."""
+        if command == '\\over':
+            command_name = '\\frac'
+        elif command == '\\choose':
+            command_name = '\\binom'
+        else:
+            raise LaTeXError(f"Unknown group command: {command}")
+
+        # Split the group children at the command
+        # find the index of the group command
+        index = next((i for i, child in enumerate(group_node.children)
+                       if child.type == NodeType.COMMAND and child.value == command), None)
+        if index is None:
+            raise LaTeXError(f"Group command {command} not found")
+        # Split into 2 parts
+        parts = [group_node.children[:index], group_node.children[index + 1:]]
+
+        # Create the new command node
+        command_node = ParseNode(NodeType.COMMAND, command_name, [])
+
+        # Create groups for each part
+        for part in parts:
+            if len(part) == 1 and part[0].type == NodeType.GROUP:
+                # If the part is already a group, use it directly
+                arg_group = part[0]
+            else:
+                arg_group = ParseNode(NodeType.GROUP, "", part)
+            command_node.add_child(arg_group)
+
+        return command_node         
 
     def _is_empty_group(self, node: ParseNode) -> bool:
         """Check if a group is empty or contains only whitespace."""
@@ -638,16 +664,16 @@ class Normalizer:
                 return ParseNode(NodeType.GROUP, "", normalized_children)
 
         # Remove accent commands - return only their content
-        if command in self.accent_commands:
-            if len(node.children) == 1:
-                return self._normalize_node(node.children[0])
-            else:
-                normalized_children = []
-                for child in node.children:
-                    normalized_child = self._normalize_node(child)
-                    if normalized_child:
-                        normalized_children.append(normalized_child)
-                return ParseNode(NodeType.GROUP, "", normalized_children)
+        # if command in self.accent_commands:
+        #     if len(node.children) == 1:
+        #         return self._normalize_node(node.children[0])
+        #     else:
+        #         normalized_children = []
+        #         for child in node.children:
+        #             normalized_child = self._normalize_node(child)
+        #             if normalized_child:
+        #                 normalized_children.append(normalized_child)
+        #         return ParseNode(NodeType.GROUP, "", normalized_children)
 
         # Remove spacing commands entirely
         if command in self.spacing_commands:
@@ -694,15 +720,13 @@ class Normalizer:
                     continue
                 normalized_children.append(normalized_child)
 
-        # Check if this group can be simplified
-        # Simplify groups with a single text node, unless it's part of a command argument
-        if (len(normalized_children) == 1 and
-            normalized_children[0].type == NodeType.TEXT and
-            node.parent and node.parent.type != NodeType.COMMAND):
-            # Return the text node directly (remove unnecessary braces)
-            return normalized_children[0]
-
-        return ParseNode(NodeType.GROUP, node.value, normalized_children)
+        res = ParseNode(NodeType.GROUP, node.value, normalized_children)
+        # Check for group commands like \over, \atop, \choose
+        transformed_node = self._check_group_commands(res)
+        if transformed_node:
+            res = transformed_node
+        
+        return res
 
     def _normalize_root(self, node: ParseNode) -> ParseNode:
         """Normalize the root node."""
@@ -712,49 +736,19 @@ class Normalizer:
 
         while i < len(children):
             child = children[i]
-
-            # Check for \over pattern: {a} \over {b}
-            if (child.type == NodeType.COMMAND and child.value == '\\over' and
-                i > 0 and i < len(children) - 1):
-
-                # Look for preceding group
-                prev_child = children[i - 1]
-                next_child = children[i + 1]
-
-                if (prev_child.type == NodeType.GROUP and
-                    next_child.type == NodeType.GROUP):
-
-                    # Remove the previous child (we'll replace it)
-                    if normalized_children:
-                        normalized_children.pop()
-
-                    # Create \frac{a}{b} - ensure both arguments stay as groups
-                    frac_node = ParseNode(NodeType.COMMAND, '\\frac', [])
-
-                    # Normalize the children but keep them as groups
-                    norm_prev = self._normalize_node(prev_child)
-                    norm_next = self._normalize_node(next_child)
-
-                    # If normalization simplified a group to text, wrap it back in a group
-                    if norm_prev and norm_prev.type != NodeType.GROUP:
-                        norm_prev = ParseNode(NodeType.GROUP, "", [norm_prev])
-                    if norm_next and norm_next.type != NodeType.GROUP:
-                        norm_next = ParseNode(NodeType.GROUP, "", [norm_next])
-
-                    if norm_prev and norm_next:
-                        frac_node.add_child(norm_prev)
-                        frac_node.add_child(norm_next)
-
-                    normalized_children.append(frac_node)
-                    i += 2  # Skip the next child as we've consumed it
-                    continue
-
             normalized_child = self._normalize_node(child)
             if normalized_child:
                 normalized_children.append(normalized_child)
             i += 1
 
-        return ParseNode(NodeType.ROOT, "", normalized_children)
+        res = ParseNode(NodeType.ROOT, "", normalized_children)
+
+        # Check for group commands like \over, \atop, \choose
+        transformed_node = self._check_group_commands(res)
+        if transformed_node:
+            res = transformed_node
+
+        return res
 
 
 class LaTeXGenerator:
@@ -850,7 +844,7 @@ class LaTeXGenerator:
                         result += " "
                 
                 result += part
-            return result
+            return result + ' '
 
         elif node.type == NodeType.TEXT:
             return node.value
@@ -903,7 +897,6 @@ def normalize_latex(latex_str: str) -> str:
         # Generate LaTeX
         generator = LaTeXGenerator()
         result = generator.generate(normalized_tree)
-
         return result.strip()
 
     except LaTeXError:
@@ -1059,4 +1052,6 @@ def run_test_suite():
 
 
 if __name__ == "__main__":
-    run_test_suite()
+    result = normalize_latex('\\hat\\nu_i')
+    print("Normalized LaTeX:", result)
+    # run_test_suite()

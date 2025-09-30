@@ -5,7 +5,7 @@ import torch
 import json
 from tqdm import tqdm
 
-from utils import load_config, load_checkpoint
+from utils.utils import load_config, load_checkpoint
 from inference.Backbone import Backbone
 from training.dataset import Words
 

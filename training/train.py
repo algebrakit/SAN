@@ -9,7 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import sys
 sys.path.append('..')
-from utils import load_config, save_checkpoint, load_checkpoint
+from utils.utils import load_config, save_checkpoint, load_checkpoint
 from dataset import Words, get_dataset
 from san_model import Backbone
 from training import train, eval

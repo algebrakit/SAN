@@ -4,6 +4,10 @@ from tqdm import tqdm
 
 from hybrid_to_latex import hybrid_to_latex
 
+ABOVE_BELOW_COMMANDS = set(['\\sum', '\\prod', '\\bigcup', '\\bigcap'])  # Commands that can have both above and below components
+ACCENT_COMMANDS = set(['\\vec', '\\dot', '\\ddot', '\\bar', '\\tilde', '\\hat',
+                       '\\overline', '\\widehat', '\\widetilde'])
+
 class Tree:
     def __init__(self, label, parent_label='None', id=0, parent_id=0, op='none', brackets_open=0):
         self.children = []
@@ -68,7 +72,7 @@ def convertLine(words:list[str], name:str):
 
             elif words[i-1] == '^':
                 if words[i-2] != '}':
-                    if words[i-2] == '\sum' or words[i-2] == '\prod':
+                    if words[i-2] in ABOVE_BELOW_COMMANDS:
                         labels.append([id, 'struct', parent.id, parent.label])
                         parents.append(Tree(words[i-2], id=parent.id))
                         parent = Tree('above', id=id)
@@ -82,7 +86,7 @@ def convertLine(words:list[str], name:str):
 
                 else:
                     # labels.append([id, 'struct', parents[-1].id, parents[-1].label])
-                    if parents[-1].label == '\sum' or parents[-1].label == '\prod':
+                    if parents[-1].label in ABOVE_BELOW_COMMANDS:
                         parent = Tree('above', id=parents[-1].id+1)
                     else:
                         parent = Tree('sup', id=parents[-1].id + 1)
@@ -90,7 +94,7 @@ def convertLine(words:list[str], name:str):
 
             elif words[i-1] == '_':
                 if words[i-2] != '}':
-                    if words[i-2] == '\sum' or words[i-2] == '\prod':
+                    if words[i-2] in ABOVE_BELOW_COMMANDS:
                         labels.append([id, 'struct', parent.id, parent.label])
                         parents.append(Tree(words[i-2], id=parent.id))
                         parent = Tree('below', id=id)
@@ -104,11 +108,16 @@ def convertLine(words:list[str], name:str):
 
                 else:
                     # labels.append([id, 'struct', parents[-1].id, parents[-1].label])
-                    if parents[-1].label == '\sum' or parents[-1].label == '\prod':
+                    if parents[-1].label in ABOVE_BELOW_COMMANDS:
                         parent = Tree('below', id=parents[-1].id+1)
                     else:
                         parent = Tree('sub', id=parents[-1].id+1)
                     # id += 1
+            elif words[i-1] in ACCENT_COMMANDS:
+                labels.append([id, 'struct', parent.id, parent.label])
+                parents.append(Tree(words[i-1], id=parent.id, op='below', brackets_open=brackets_count-1))
+                id += 1
+                parent = Tree('below', id=parents[-1].id+1)
             else:
                 print('unknown word before {', name, i)
                 valid = False

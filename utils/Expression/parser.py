@@ -1,0 +1,209 @@
+"""LaTeX parser for converting LaTeX strings to Expression objects."""
+
+from typing import List, Optional
+
+from .base import LatexItem
+from .expression import Expression
+from .constructs import Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
+
+
+def parse_latex(latex: str) -> Optional[Expression]:
+    """Parse an Expression object from LaTeX syntax.
+
+    Args:
+        latex: LaTeX string with space-separated tokens and braced arguments
+
+    Returns:
+        Expression object or None if parsing fails
+    """
+    if not latex or not latex.strip():
+        return Expression([])
+
+    tokens = latex.strip().split()
+
+    class Parser:
+        def __init__(self, tokens: List[str]):
+            self.tokens = tokens
+            self.pos = 0
+
+        def current(self) -> Optional[str]:
+            if self.pos < len(self.tokens):
+                return self.tokens[self.pos]
+            return None
+
+        def advance(self) -> None:
+            self.pos += 1
+
+        def parse_expression(self, stop_at_brace: bool = False) -> Expression:
+            """Parse a sequence of items until end or closing brace."""
+            items = []
+
+            while self.pos < len(self.tokens):
+                token = self.current()
+
+                if token == '}':
+                    if stop_at_brace:
+                        break
+                    else:
+                        # Unexpected closing brace
+                        self.advance()
+                        continue
+
+                item = self.parse_item()
+                if item:
+                    items.append(item)
+
+            return Expression(items)
+
+        def parse_item(self) -> Optional[LatexItem]:
+            """Parse a single LaTeX item (symbol or construct)."""
+            token = self.current()
+            if not token:
+                return None
+
+            # Handle opening brace - creates nested expression
+            if token == '{':
+                self.advance()
+                self.parse_expression(stop_at_brace=True)
+                if self.current() == '}':
+                    self.advance()
+                # Braces are structural, not items
+                return None
+
+            # Handle constructs
+            if token == '\\frac':
+                return self.parse_frac()
+            elif token == '\\sqrt':
+                return self.parse_sqrt()
+            elif token in ('\\sum', '\\prod', '\\int', '\\lim', '\\bigcup', '\\bigcap'):
+                return self.parse_above_below(token)
+
+            # Regular symbol
+            self.advance()
+            symbol = Symbol(token)
+
+            # Check for subscript or superscript
+            symbol = self.apply_sub_sup(symbol)
+
+            return symbol
+
+        def apply_sub_sup(self, item):
+            """Apply subscript and/or superscript to an item."""
+            sub_expr = None
+            sup_expr = None
+
+            while self.current() in ('_', '^'):
+                op = self.current()
+                self.advance()
+
+                # Expect opening brace
+                if self.current() == '{':
+                    self.advance()
+                    expr = self.parse_expression(stop_at_brace=True)
+                    if self.current() == '}':
+                        self.advance()
+
+                    if op == '_':
+                        sub_expr = expr
+                    else:  # '^'
+                        sup_expr = expr
+
+            # Apply to Symbol
+            if isinstance(item, Symbol):
+                if sub_expr:
+                    item.sub = sub_expr
+                    sub_expr.parent = item
+                if sup_expr:
+                    item.sup = sup_expr
+                    sup_expr.parent = item
+            # Apply to Construct
+            elif isinstance(item, Construct):
+                if sup_expr:
+                    item.sup = sup_expr
+                    sup_expr.parent = item
+
+            return item
+
+        def parse_braced_expression(self) -> Optional[Expression]:
+            """Parse a braced expression { ... }."""
+            if self.current() != '{':
+                return None
+
+            self.advance()
+            expr = self.parse_expression(stop_at_brace=True)
+
+            if self.current() == '}':
+                self.advance()
+
+            return expr
+
+        def parse_frac(self):
+            """Parse \\frac { above } { below }."""
+            self.advance()  # skip '\frac'
+
+            above = self.parse_braced_expression()
+            below = self.parse_braced_expression()
+
+            frac = FractionConstruct(above=above, below=below)
+
+            # Check for superscript on the fraction
+            return self.apply_sub_sup(frac)
+
+        def parse_sqrt(self):
+            """Parse \\sqrt { inside } or \\sqrt [ degree ] { inside }."""
+            self.advance()  # skip '\sqrt'
+
+            l_sup = None
+
+            # Check for optional degree in brackets
+            if self.current() == '[':
+                self.advance()
+                # Parse content until ]
+                items = []
+                while self.current() and self.current() != ']':
+                    item = self.parse_item()
+                    if item:
+                        items.append(item)
+                l_sup = Expression(items)
+
+                if self.current() == ']':
+                    self.advance()
+
+            inside = self.parse_braced_expression()
+
+            sqrt = SqrtConstruct(inside=inside, l_sup=l_sup)
+
+            # Check for superscript on the sqrt
+            return self.apply_sub_sup(sqrt)
+
+        def parse_above_below(self, construct_type: str):
+            """Parse constructs like \\sum, \\prod, \\int with optional limits."""
+            self.advance()  # skip construct token
+
+            below = None
+            above = None
+
+            # Check for subscript (lower limit)
+            if self.current() == '_':
+                self.advance()
+                below = self.parse_braced_expression()
+
+            # Check for superscript (upper limit)
+            if self.current() == '^':
+                self.advance()
+                above = self.parse_braced_expression()
+
+            construct = AboveBelowConstruct(
+                construct_type=construct_type,
+                below=below,
+                above=above
+            )
+
+            # Check for additional superscript
+            return self.apply_sub_sup(construct)
+
+    try:
+        parser = Parser(tokens)
+        return parser.parse_expression()
+    except Exception:
+        return None

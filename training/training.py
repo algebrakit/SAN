@@ -1,7 +1,7 @@
 import torch
 from tqdm import tqdm
 
-from utils import updata_lr, Meter, cal_score
+from utils.utils import updata_lr, Meter, cal_score
 
 
 def train(params, model, optimizer, epoch, train_loader, writer=None):

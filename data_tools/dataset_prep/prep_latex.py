@@ -9,21 +9,8 @@ import sys
 from typing import List
 
 
-def should_skip_line(latex_str: str) -> bool:
-    """
-    Check if a line should be skipped entirely (e.g., contains matrices).
 
-    Args:
-        latex_str: The LaTeX expression string
-
-    Returns:
-        True if the line should be skipped
-    """
-    matrix_commands = ['\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}']
-    return any(cmd in latex_str for cmd in matrix_commands)
-
-
-def tokenize_latex(latex_str: str) -> List[str]:
+def tokenize_latex(latex_str: str) -> List[str] | None:
     """
     Tokenize a LaTeX expression into individual commands and symbols.
     Filters out font style commands.
@@ -66,8 +53,7 @@ def tokenize_latex(latex_str: str) -> List[str]:
                     tokens.append(two_char)
                     i += 2
                 else:
-                    tokens.append('illegal')
-                    i += 2
+                    return None  # Invalid command
             else:  
                 tokens.append(char)
                 i += 1
@@ -78,57 +64,6 @@ def tokenize_latex(latex_str: str) -> List[str]:
             i += 1
 
     return tokens
-
-def handle_groups(tokens: List[str]) -> List[str]:
-    """
-    Ensure that groups enclosed in braces are properly spaced.
-
-    examples:
-    Input: ['x', '^', '1'] --> Output: ['x', '^', '{', '1', '}']
-    Input: ['\\frac', 'a', 'b'] --> Output: ['\\frac', '{', 'a', '}', '{', 'b', '}']
-    Input: ['\\sqrt', '[', 'b', ']', '2'] --> Output: ['\\sqrt', '[', 'b', ']', '{', '2', '}']
-    """
-    output_tokens = []
-    ii = 0
-    n = len(tokens)
-    while ii < n:
-        token = tokens[ii]
-        expect_groups = 0
-        # commands that expect one group
-        if token in ['^', '_']:
-            expect_groups = 1
-            output_tokens.append(token)
-            ii += 1
-        # commands that expect two groups    
-        elif token in ['\\frac', '\\binom']:
-            expect_groups = 2
-            output_tokens.append(token)
-            ii += 1
-        # commands with an optional argument    
-        elif token in ['\\sqrt']:
-            expect_groups = 1    
-            output_tokens.append(token)
-            ii += 1
-            # Check for optional argument
-            if ii < n and tokens[ii] == '[':
-                # Skip the optional argument
-                while ii < n and tokens[ii] != ']':
-                    output_tokens.append(tokens[ii])
-                    ii += 1
-                if ii < n:
-                    output_tokens.append(tokens[ii])  # Append the closing ']'
-                    ii += 1
-        else:
-            output_tokens.append(token)
-            ii += 1
-
-        while(expect_groups > 0 and ii<n and tokens[ii]!='{'):
-            output_tokens.append('{')
-            output_tokens.append(tokens[ii])
-            output_tokens.append('}')
-            ii += 1
-            expect_groups -= 1
-    return output_tokens
 
 def special_cases(latex_str: str) -> str:
     # x ^ {'}  --> x'
@@ -152,27 +87,6 @@ def filter_to_words(tokens: List[str], valid_words: set) -> bool:
             skip = True
             break
     return skip
-
-def handle_synonymous_tokens(tokens: List[str]) -> List[str]:
-    """
-    Replace synonymous tokens with a standard representation.
-
-    Args:
-        tokens: List of tokens
-
-    Returns:
-        List of tokens with synonyms replaced
-    """
-    synonym_map = {
-        '>': '\\gt',
-        '<': '\\lt'
-        }
-    # replace tokens based on the synonym map
-    for i, token in enumerate(tokens):
-        if token in synonym_map:
-            tokens[i] = synonym_map[token]
-
-    return tokens
 
 def process_file(input_file: str, output_file: str, valid_words: set = None):
     """
@@ -204,8 +118,8 @@ def process_file(input_file: str, output_file: str, valid_words: set = None):
 
                 # Tokenize the LaTeX expression
                 tokens = tokenize_latex(latex_expr)
-                tokens = handle_groups(tokens)
-                tokens = handle_synonymous_tokens(tokens)
+                if tokens is None:
+                    continue
                 if valid_words is not None:
                     skip = filter_to_words(tokens, valid_words)
                     if skip:

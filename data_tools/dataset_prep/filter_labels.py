@@ -21,19 +21,21 @@ def should_skip_line(latex_str: str) -> bool:
     """
     matrix_list = ['\\begin{matrix}', '\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}',
                    '\\begin{vmatrix}', '\\begin{Vmatrix}', '\\begin{array}']
-    command_list = [
-        '\\binom', '\\tbinom', '\\choose', '\\atop', '\\brace', '\\brack', '\\cfrac','\\limits',
-        '\\aleph','\\cong','\\oplus','\\mapsto', '\\bot', '\\vdash', '\\lnot', '\\models', '\\doteq', '*',
-        '\\bigcap', '\\bigcup', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', '\\bigoplus', '\\bigcirc',
-        '\\propto', '\\setminus', '\\langle', '\\rangle','\\Z', '\\R', '\\N', '\\Im', '\\Re', '\\wp', '\\Lambda',
-        ';', '\\xi', '\\zeta', '\\mp', '\\dagger', '\\star', '\\simeq', '\\bullet', '\\oint', '\\ominus', '\\mathfrak'
-        ]
-    accents_list = ['\\vec', '\\dot', '\\ddot', '\\tilde', '\\hat', '\\bar', '\\breve', '\\acute', '\\grave', 
-                    '\\mathring', '\\underline', '\\overline', '\\widehat', '\\widetilde','\\odot','\\hbar']
-    
-    filter_list = matrix_list + command_list + accents_list
+    accents_list_above = ['\\vec', '\\dot', '\\ddot', '\\tilde', '\\hat', '\\bar', '\\breve', '\\acute', '\\grave', 
+                    '\\mathring', '\\overline']
 
-    return any(cmd in latex_str for cmd in filter_list)
+    accents_list_below = ['\\utilde', '\\ubar', '\\underaccent'] 
+
+    forbidden_command_list = [
+        '\\limits', '\\aleph','\\oplus', '\\models', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', 
+        '\\bigoplus', '\\propto', '\\Im', '\\Re', '\\wp', '\\xi', '\\zeta', '\\mp', '\\dagger', '\\star', '\\bullet', 
+        '\\oint', '\\ominus', '\\mathfrak','\\odot','\\hbar','\\triangleleft','\\triangleq','\\triangleleft',
+        '\\supseteq','\\subsetneq','\\sqsubseteq','\\rightleftharpoons', '\\Vdash','\\lg','\\pmod','\\tbinom',
+        '\\\\', '\\choose', # to handle later
+        # forbidden accents
+        '\\breve', '\\acute', '\\grave', '\\mathring'   
+        ]
+    return any(cmd in latex_str for cmd in forbidden_command_list)
 
 
 def remove_font_commands(latex_str: str) -> str:
@@ -48,7 +50,8 @@ def remove_font_commands(latex_str: str) -> str:
     """
     # Font style commands to remove
     font_commands = [r'\\boldsymbol', r'\\mathbf', r'\\mathrm', r'\\mathbb', r'\\operatorname', r'\\boldsymbol',
-                     r'\\textstyle', r'\\scriptstyle', r'\\mbox']
+                     r'\\mathtt',r'\\mathsf', r'\\bold',
+                     r'\\textstyle', r'\\scriptstyle', r'\\scriptscriptstyle', r'\\mbox']
 
     result = latex_str
     for cmd in font_commands:
@@ -85,15 +88,31 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\varphi': r'\\phi',
         r'\\varpi': r'\\pi',
         r'\\varrho': r'\\rho',
-        r'\\varnothing': r'\\emptyset',
         r'\\kappa': r'k',
         r'\\Upsilon': r'Y',
         r'\\neq': r'\\ne',
+        r'\\varnothing': r'\\emptyset',
+        r'\\backslash': r'\\emptyset',
+        r'\\lnot': r'\\neg',
+        r'\\mapsto': r'\\rightarrow',
+        r'\\cong': r'\\simeq',
+        r'\\bigcirc': r'\\circ',
+        r'\\smallsetminus': r'\\setminus',
         r'\\ell': r'l',
         r'\\nu': r'v',
         r'\\eta': r'n',
         r'\\chi': r'x',
         r'\\iint': r'\\int\\int',
+        r'\\ll': r'< < ',
+        r'\\gg': r'> > ',
+        r'\\widehat': r'\\hat',
+        r'\\widetilde': r'\\tilde',
+        r'\\Vert': r'| | ',
+        r'\\rVert': r'| | ',
+        r'\\lVert': r'| | ',
+        r'\\parallel': r'| | ',
+        r'\\mid': r'| ',
+        r'\\vert': r'| ',
         r'\\prime': "'",
         r'\\big': r'',
         r'\\bigl': r'',
@@ -105,27 +124,54 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\biggl': r'',
         r'\\biggr': r'',
         r'\\Bigg': r'',
+        r'\\vee': r'\\lor',
+        r'\\wedge': r'\\land',
         r'\\tfrac': r'\\frac',
+        r'\\dfrac': r'\\frac',
+        r'\\cfrac': r'\\frac',
+        r'\\dbinom': r'\\binom',
+        r'\\tbinom': r'\\binom',
+        r'\\bmod': r'\\mod',
+        r'\\hookrightarrow': r'\\rightarrow',
+        r'\\longrightarrow': r'\\rightarrow',
         r'\\to': r'\\rightarrow',
+        r'\\gets': r'\\leftarrow',
+        r'\\iff': r'\\Leftrightarrow',
+        r'\\lbrack': r'[',
+        r'\\rbrack': r']',
+        r'\\dots': r'. . . ',
+        r'\\cdots': r'. . . ',
+        r'\\ldots': r'. . . ',
+        r'\\dotsb': r'. . . ',
+        r'\\dotsc': r'. . . ',
+        r'\\colon': r': ',
         r'\\,': r' ',
         r'\\;': r' ',
         r'\\:': r' ',
         r'\\>': r' ',
         r'\\!': r' ',
         r'\\ ': r' ',
+        r'<': r'\\lt',
+        r'>': r'\\gt',
         r'~': r' ',
 
     }
 
+    # first get all keys in order from longest to shortest to avoid partial replacements
+    sorted_keys = sorted(replacements.keys(), key=len, reverse=True)
+
     result = latex_str
-    for variant, standard in replacements.items():
-        if variant[-1].isalpha():            
+    for key in sorted_keys:
+
+        if key[-1].isalpha():            
             # Add negative lookahead to prevent matching within longer commands
-            pattern = variant + r'(?![a-zA-Z])'
+            pattern = key + r'(?![a-zA-Z])'
         else:
-            pattern = variant
+            pattern = key
+        value = replacements[key] + ' '
+        if(value[0].isalpha()): value = ' ' + value
         # add space to prevent concatenation with next token .e.g \scriptstyle\mathbf{E} --> \scriptstyleE
-        result = re.sub(pattern, standard+' ', result)
+        result = re.sub(pattern, value, result)
 
     return result
 
@@ -140,7 +186,8 @@ def detect_commands(latex_str: str) -> str:
     """
     cmd_list = ['log', 'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh',
                 'tanh', 'coth', 'ln', 'exp', 'sum', 'prod', 'lim', 'max', 'min', 'inf', 'sup', 'det', 'dim', 'gcd', 'lcm',
-                'mod', 'arg', 'div']
+                'mod', 'arg', 'div','alpha','beta','gamma','delta','epsilon','theta','pi','rho','sigma','tau','phi','omega',
+                'Gamma','Delta','Theta','Lambda','Sigma','Phi','Omega','over']
     for cmd in cmd_list:
         pattern = r'(?<![\\a-zA-Z])' + cmd + r'(?![a-zA-Z])'
         latex_str = re.sub(pattern, r'\\' + cmd + ' ', latex_str)
