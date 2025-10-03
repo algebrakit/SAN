@@ -33,11 +33,17 @@ The `struct` symbol is used to define spatial regions for sub-expressions:
 - Symbols within a region reference each other normally (parent = previous symbol)
 - Each declared region ends with `<eos>` that references the last symbol in that region
 
-### 4. End of Sequence (`<eos>`)
-- Each active region ends with `<eos>`
-- **If struct has "right" region**: Final `<eos>` appears after the right region completes
-- **If struct has NO "right" region**: The last region's `<eos>` ends the expression (no additional `<eos>`)
-- Top-level expressions end with `<eos>` referencing the last symbol
+### 4. Default Left-to-Right Mode and Termination
+
+**Default behavior**: Symbols are added left-to-right until an `<eos>` symbol is encountered.
+
+**Constructs and `struct`**:
+- A construct uses an explicit `struct` element to indicate which regions accept input (above, below, sub, sup, L-sup, inside, right)
+- Each region operates in default left-to-right mode and ends with `<eos>` **or** a struct without "right" region
+- **Important**: A construct terminates the default left-to-right mode **without** an `<eos>`
+- If content exists after the construct, this must be indicated with a **"right"** sub-region
+- The "right" region continues in default left-to-right mode and ends with `<eos>` **or** a struct (without "right")
+- If there is NO "right" region, the line simply ends at the construct (no `<eos>` needed)
 
 ## Examples
 
@@ -138,3 +144,25 @@ The `struct` symbol is used to define spatial regions for sub-expressions:
 - Lines 3-6: "L-sup" and "inside" regions as before
 - Lines 7-9: "right" region contains `+ 1`
 - Line 9: Final `<eos>` ends expression (appears after "right" region completes)
+
+---
+
+### Example 5: Nested Structs
+**LaTeX**: `l_{d_{A}}`
+
+**Hybrid**:
+```
+1 l 0 <sos>       None None None None None None None
+2 struct 1 l      None None sub None None None None
+3 d 2 sub         None None None None None None None
+4 struct 3 d      None None sub None None None None
+5 A 4 sub         None None None None None None None
+6 <eos> 5 A       None None None None None None None
+```
+
+**Explanation**:
+- Line 1-2: `l` with subscript region
+- Line 3-4: `d` (in the sub region) also has a subscript region
+- Line 5-6: `A` in the innermost sub region, ends with `<eos>`
+- **No line 7**: The outer sub region ends with the inner struct (which has no "right"), so no additional `<eos>` is needed
+- This demonstrates: a region ending with a struct (without "right") terminates without `<eos>`

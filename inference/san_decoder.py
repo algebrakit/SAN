@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from .attention import Attention
-
+from utils.Expression.defs import ABOVE_BELOW_COMMANDS, ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
 
 class SAN_decoder(nn.Module):
 
@@ -141,7 +141,7 @@ class SAN_decoder(nn.Module):
                         else:
                             # illegal relation for sqrt, neglect
                             pass
-                    elif p_word_str in ['\\sum', '\\prod', '\\int']:
+                    elif p_word_str in ABOVE_BELOW_COMMANDS:
                         if word_str in ['below', 'sub']:
                             p_re = 'Below'
                         elif word_str in ['above', 'sup']:
@@ -149,6 +149,26 @@ class SAN_decoder(nn.Module):
                         else:
                             # illegal relation for sum/prod, neglect
                             pass
+                    elif p_word_str in ACCENT_COMMANDS_ABOVE:
+                        if word_str == 'sup':
+                            p_re = 'Sup'
+                        elif word_str == 'sub':
+                            p_re = 'Sub'
+                        elif word_str == 'below':
+                            p_re = 'Below'
+                        else:
+                            # illegal relation for accent above, neglect
+                            pass    
+                    elif p_word_str in ACCENT_COMMANDS_BELOW:
+                        if word_str == 'sup':
+                            p_re = 'Sup'
+                        elif word_str == 'sub':
+                            p_re = 'Sub'
+                        elif word_str == 'above':
+                            p_re = 'Above'
+                        else:
+                            # illegal relation for accent above, neglect
+                            pass    
                     else:
                         if word_str == 'sub':
                             p_re = 'Sub'
@@ -165,9 +185,9 @@ class SAN_decoder(nn.Module):
 
                     if word_str == 'inside':
                         p_re = 'Inside'
-                    elif word_str == 'sub' or (word_str == 'below' and p_word_str in ['\\sum', '\\prod']):
+                    elif word_str == 'sub' or (word_str == 'below' and p_word_str in ABOVE_BELOW_COMMANDS):
                         p_re = 'Sub'
-                    elif word_str == 'sup' or (word_str == 'above' and p_word_str in ['\\sum', '\\prod']):
+                    elif word_str == 'sup' or (word_str == 'above' and p_word_str in ABOVE_BELOW_COMMANDS):
                         p_re = 'Sup'
                     elif word_str == 'above':
                         p_re = 'Above'

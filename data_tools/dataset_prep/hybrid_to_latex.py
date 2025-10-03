@@ -1,4 +1,6 @@
 
+from utils.Expression.defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
+
 def _convert_to_gtd(lines):
     gtd_list = [ ['<sos>', 0, -1, '<sos>'] ]
     for i in range(len(lines)):
@@ -52,6 +54,28 @@ def _iter(nodeid, gtd_list, swapSubSup:bool):
             for i in range(len(child_list)):
                 if child_list[i][2] not in ['right','above','below']:
                     return_string += ['illegal']
+        elif gtd_list[nodeid][0] in ACCENT_COMMANDS_ABOVE or gtd_list[nodeid][0] in ACCENT_COMMANDS_BELOW:
+            return_string = [gtd_list[nodeid][0]]
+            for i in range(len(child_list)):
+                if child_list[i][2] in ['above', 'below']:
+                    return_string += ['{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+            if swapSubSup:
+                for i in range(len(child_list)):
+                    if child_list[i][2] == 'sub':
+                        return_string += ['_','{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+                for i in range(len(child_list)):
+                    if child_list[i][2] == 'sup':
+                        return_string += ['^','{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+            else:
+                for i in range(len(child_list)):
+                    if child_list[i][2] == 'sup':
+                        return_string += ['^','{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+                for i in range(len(child_list)):
+                    if child_list[i][2] == 'sub':
+                        return_string += ['_','{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+            for i in range(len(child_list)):
+                if child_list[i][2] in ['right']:
+                    return_string += _iter(child_list[i][1], gtd_list,swapSubSup)
         else:
             return_string = [gtd_list[nodeid][0]]
             for i in range(len(child_list)):

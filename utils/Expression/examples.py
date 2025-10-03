@@ -11,8 +11,10 @@ def main():
     print("Example 1: Fraction with square root")
     expr1 = Expression([
         FractionConstruct(
+            construct_type='\\frac',
             above=Expression([
                 SqrtConstruct(
+                    construct_type='\\sqrt',
                     inside=Expression([Symbol('x')]),
                     l_sup=Expression([Symbol('2')])
                 ),

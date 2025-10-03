@@ -2,6 +2,7 @@ import torch
 
 # import sys
 # sys.path.append('../..') # only for local testing
+from utils.Expression.gtd_parser import parse_gtd
 from utils.utils import load_config, load_checkpoint
 from inference.Backbone import Backbone
 from training.dataset import Words
@@ -33,51 +34,6 @@ class Inference:
 
         self.model.eval()
 
-        word_right, node_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
-
-    def convert(self, nodeid, gtd_list):
-        isparent = False
-        child_list = []
-        for i in range(len(gtd_list)):
-            if gtd_list[i][2] == nodeid:
-                isparent = True
-                child_list.append([gtd_list[i][0],gtd_list[i][1],gtd_list[i][3]])
-        if not isparent:
-            return [gtd_list[nodeid][0]]
-        else:
-            if gtd_list[nodeid][0] == '\\frac':
-                return_string = [gtd_list[nodeid][0]]
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() == 'above':
-                        return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() == 'below':
-                        return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() == 'right':
-                        return_string += self.convert(child_list[i][1], gtd_list)
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() not in ['right','above','below']:
-                        return_string += ['illegal']
-            else:
-                return_string = [gtd_list[nodeid][0]]
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() in ['l_sup']:
-                        return_string += ['['] + self.convert(child_list[i][1], gtd_list) + [']']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() == 'inside':
-                        return_string += ['{'] + self.convert(child_list[i][1], gtd_list) + ['}']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() in ['sub','below']:
-                        return_string += ['_','{'] + self.convert(child_list[i][1], gtd_list) + ['}']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() in ['sup','above']:
-                        return_string += ['^','{'] + self.convert(child_list[i][1], gtd_list) + ['}']
-                for i in range(len(child_list)):
-                    if child_list[i][2].lower() == 'right':
-                        return_string += self.convert(child_list[i][1], gtd_list)
-            return return_string
-
     def convert2latex(self, img):
         with torch.no_grad():
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -89,8 +45,13 @@ class Inference:
             image, image_mask = image.to(device), image_mask.to(device)
 
             prediction = self.model(image, image_mask)
-            latex_list = self.convert(1, prediction)
-            latex_string = ' '.join(latex_list)
+            expr = parse_gtd(prediction)
+            if expr is None:
+                return None
+            else:
+                latex_string = expr.toLatex()
+            # latex_list = self.convert(1, prediction)
+            # latex_string = ' '.join(latex_list)
             print('prediction=', prediction, 'latex_string=', latex_string)
             return latex_string
 

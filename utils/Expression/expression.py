@@ -1,6 +1,6 @@
 """Expression container class."""
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .base import LatexItem
 
@@ -28,18 +28,42 @@ class Expression:
         from .parser import parse_latex
         return parse_latex(latex)
 
-    def add_item(self, item: LatexItem) -> None:
+    def from_gtd_list(self, gtd_list) -> 'Expression':
+        """Create an Expression from a GTD list representation.
+        Args:
+            gtd_list: List of GTD entries, where each entry is:
+                [symbol, id, parent_id, parent_symbol] if parent is a symbol
+                [symbol, id, parent_id, region] if parent is a construct (e.g., '\\frac', '\\underline', etc)
+        """
+    
         """Add an item to this expression."""
-        item.parent = self
-        self.items.append(item)
+        return parse_gtd(gtd_list
+                         )
 
     def toLatex(self) -> str:
         """Convert this expression to LaTeX by concatenating all items."""
         return ' '.join(item.toLatex() for item in self.items)
 
-    def to_hybrid(self) -> str[]:
-        pass
-    
+    def to_hybrid(self) -> List[List[Union[int, str, None]]]:
+        """Convert this expression to hybrid syntax representation.
+
+        Returns:
+            List of hybrid lines, where each line is:
+            [id, symbol, parent_id, parent_symbol, above, below, sub, sup, L-sup, inside, right]
+
+        Example:
+            >>> expr = Expression.fromLatex('x ^ { 2 }')
+            >>> lines = expr.to_hybrid()
+            >>> # Returns:
+            >>> # [[1, 'x', 0, '<sos>', None, None, None, None, None, None, None],
+            >>> #  [2, 'struct', 1, 'x', None, None, None, 'sup', None, None, None],
+            >>> #  [3, '2', 2, 'sup', None, None, None, None, None, None, None],
+            >>> #  [4, '<eos>', 3, '2', None, None, None, None, None, None, None],
+            >>> #  [5, '<eos>', 4, '<eos>', None, None, None, None, None, None, None]]
+        """
+        from .hybrid import expression_to_hybrid
+        return expression_to_hybrid(self)
+
     def get_children(self) -> List[LatexItem]:
         """Get all items contained in this expression."""
         return self.items

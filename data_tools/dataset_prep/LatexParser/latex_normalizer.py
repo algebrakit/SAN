@@ -10,10 +10,8 @@ applies normalization rules, and reconstructs the normalized expression.
 from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
-
-ACCENT_COMMANDS = set(['\\vec', '\\dot', '\\ddot', '\\bar', '\\tilde', '\\hat',
-                       '\\overline', '\\widehat', '\\widetilde'])
-COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS
+from utils.Expression.defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
+COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS_ABOVE.union(ACCENT_COMMANDS_BELOW)
 
 class TokenType(Enum):
     """Token types for LaTeX parsing."""
@@ -258,7 +256,7 @@ class Parser:
         self.advance()
 
         # Handle commands that expect arguments
-        if token.value in ['\\frac','\\binom']:
+        if token.value in ['\\frac','\\binom','\\tfrac','\\dfrac','\\cfrac']:
             # These commands expect two arguments
             for _ in range(2):
                 if self.current_token().type == TokenType.LBRACE:
@@ -367,19 +365,22 @@ class Parser:
             return None
 
     def parse_expression(self) -> Optional[ParseNode]:
-        """Parse an expression with operators like ^ and _."""
+        """Parse an expression with operators like ^ and _.
+        
+        For multiple superscripts/subscripts (e.g., a^{b}^{c}), they are nested
+        right-to-left: the rightmost becomes a superscript of the previous one.
+        """
         left = self.parse_primary()
         if not left:
             return None
 
+        # Collect all superscript/subscript operators and their arguments
+        ops_and_args = []
+        
         # Handle superscript (^) and subscript (_)
         while self.current_token().type in [TokenType.CARET, TokenType.UNDERSCORE]:
             op_token = self.current_token()
             self.advance()
-
-            # Create operator node
-            op_node = ParseNode(NodeType.OPERATOR, op_token.value, [])
-            op_node.add_child(left)
 
             # Parse right side
             if self.current_token().type == TokenType.LBRACE:
@@ -423,11 +424,57 @@ class Parser:
                 right = None
 
             if right:
-                op_node.add_child(right)
+                ops_and_args.append((op_token.value, right))
 
-            left = op_node
+        # If no operators found, just return the base
+        if not ops_and_args:
+            return left
 
-        return left
+        # For multiple operators of the same type (e.g., ^{a}^{b}), nest them right-to-left
+        # Group consecutive operators of the same type
+        i = 0
+        while i < len(ops_and_args):
+            op_type = ops_and_args[i][0]
+            
+            # Find all consecutive operators of the same type
+            j = i + 1
+            while j < len(ops_and_args) and ops_and_args[j][0] == op_type:
+                j += 1
+            
+            # If we have multiple consecutive operators of the same type (e.g., ^{a}^{b})
+            if j > i + 1:
+                # Nest them right-to-left: the rightmost arg gets attached to the previous arg
+                # Start from the rightmost and work backwards
+                for k in range(j - 1, i, -1):
+                    current_arg = ops_and_args[k][1]  # e.g., {b}
+                    prev_arg = ops_and_args[k-1][1]   # e.g., {a}
+                    
+                    # Find the last child in prev_arg's group and attach current_arg as its superscript
+                    if prev_arg.type == NodeType.GROUP and prev_arg.children:
+                        last_child = prev_arg.children[-1]
+                        
+                        # Create an operator node for the nested superscript
+                        nested_op = ParseNode(NodeType.OPERATOR, op_type, [])
+                        nested_op.add_child(last_child)
+                        nested_op.add_child(current_arg)
+                        
+                        # Replace the last child with the operator node
+                        prev_arg.children[-1] = nested_op
+                
+                # Remove the extra operators (keep only the first one)
+                del ops_and_args[i+1:j]
+            
+            i += 1
+
+        # Now build the final tree with the base and the (potentially nested) operators
+        result = left
+        for op_type, arg in ops_and_args:
+            op_node = ParseNode(NodeType.OPERATOR, op_type, [])
+            op_node.add_child(result)
+            op_node.add_child(arg)
+            result = op_node
+
+        return result
     
     def _find_subscript_split_position(self, text: str) -> int:
         """Find where to split a text token for subscript/superscript parsing.
@@ -487,7 +534,10 @@ class Normalizer:
         # Command synonyms to replace
         self.command_synonyms = {
             '\\le': '\\leq',
-            '\\ge': '\\geq'
+            '\\ge': '\\geq',
+            '\\tfrac': '\\frac',
+            '\\dfrac': '\\frac',
+            '\\cfrac': '\\frac'
         }
 
         # Commands that should be replaced with brackets only
@@ -545,7 +595,7 @@ class Normalizer:
                     raise LaTeXError(f"Matrix environments are not supported: \\begin{{{env_name}}}")
 
         # Validate command arguments
-        if command in ['\\frac']:
+        if command in ['\\frac','\\tfrac','\\dfrac','\\cfrac']:
             if len(node.children) != 2:
                 raise LaTeXError(f"Command {command} requires exactly 2 arguments, got {len(node.children)}")
             # Check for empty arguments
@@ -768,11 +818,17 @@ class LaTeXGenerator:
             for i, part in enumerate(parts):
                 if i > 0:
                     prev_part = parts[i-1]
+                    # Check last char of previous part for better spacing decisions
+                    prev_last_char = prev_part[-1] if prev_part else ''
+                    curr_first_char = part[0] if part else ''
                     
                     # Always add space around operators
-                    if part in ['=', '\\neq', '\\ne', '\\leq', '\\geq', '\\lt', '\\gt', '<', '>', '\\pm', '\\mp']:
+                    if part in ['=', '\\neq', '\\ne', '\\leq', '\\geq', '\\lt', '\\gt', '<', '>', '\\pm', '\\mp', '+', '-']:
                         result += " "
-                    elif prev_part in ['=', '\\neq', '\\ne', '\\leq', '\\geq', '\\lt', '\\gt', '<', '>', '\\pm', '\\mp']:
+                    elif prev_part in ['=', '\\neq', '\\ne', '\\leq', '\\geq', '\\lt', '\\gt', '<', '>', '\\pm', '\\mp', '+', '-']:
+                        result += " "
+                    # Add space after } before operators or commands
+                    elif prev_last_char == '}' and curr_first_char in '+-=\\':
                         result += " "
                     # Add space between commands and text/other elements
                     elif prev_part.startswith('\\') and not part.startswith('\\') and not part in '(){}[]^_+-=':
@@ -795,25 +851,25 @@ class LaTeXGenerator:
                 first_child = node.children[0]
                 if first_child.type == NodeType.GROUP and first_child.value == "optional":
                     # This is an optional argument - use brackets
-                    result += "[" + self.generate(first_child) + "]"
+                    result += " [ " + self.generate(first_child) + " ] "
                     # Add remaining children as regular arguments
                     for child in node.children[1:]:
                         if child.type == NodeType.GROUP:
-                            result += "{" + self.generate(child) + "}"
+                            result += " { " + self.generate(child) + " }"
                         else:
                             result += self.generate(child)
                 else:
                     # No optional argument - treat all as regular arguments
                     for child in node.children:
                         if child.type == NodeType.GROUP:
-                            result += "{" + self.generate(child) + "}"
+                            result += " { " + self.generate(child) + " }"
                         else:
                             result += self.generate(child)
             else:
                 # Regular command handling
                 for child in node.children:
                     if child.type == NodeType.GROUP:
-                        result += "{" + self.generate(child) + "}"
+                        result += " { " + self.generate(child) + " }"
                     else:
                         result += self.generate(child)
             return result
@@ -842,20 +898,24 @@ class LaTeXGenerator:
                         result += " "
                     elif not prev_part.startswith('\\') and part.startswith('\\') and not prev_part in '(){}[]^_+-=':
                         result += " "
+                    # Add space between text elements (numbers, letters, etc.)
+                    elif (not part.startswith('\\') and not prev_part.startswith('\\') and
+                          not part in '(){}[]^_+-=' and not prev_part in '(){}[]^_+-='):
+                        result += " "
                 
                 result += part
-            return result + ' '
+            return result
 
         elif node.type == NodeType.TEXT:
             return node.value
 
         elif node.type == NodeType.OPERATOR:
             if node.value in ['^', '_']:
-                # Handle superscript/subscript
+                # Handle superscript/subscript with spaces
                 if len(node.children) >= 2:
                     base = self.generate(node.children[0])
                     exp = self.generate(node.children[1])
-                    return f"{base}{node.value}{{{exp}}}"
+                    return f"{base} {node.value} {{ {exp} }}"
                 else:
                     return node.value
             else:
@@ -993,6 +1053,9 @@ def run_test_suite():
         
         # Escaped braces
         ("\\{ T \\}", "\\{ T \\}", "Escaped braces preserved"),
+
+        # Fixed spacing in groups
+        ("\\frac { f } { \\sum f }", "\\frac{f}{\\sum f}", "No trailing spaces in groups"),
     ]
 
     # Error cases

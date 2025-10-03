@@ -4,8 +4,10 @@ Filter script for removing unsupported LaTeX expressions from label files.
 Removes lines with matrices and strips font style commands from expressions.
 """
 
+import os
 import re
 import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from LatexParser.latex_normalizer import normalize_latex, LaTeXError
 
@@ -90,6 +92,8 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\varrho': r'\\rho',
         r'\\kappa': r'k',
         r'\\Upsilon': r'Y',
+        r'\\Pi': r'\\prod',
+        r'\\Sigma': r'\\sum',
         r'\\neq': r'\\ne',
         r'\\varnothing': r'\\emptyset',
         r'\\backslash': r'\\emptyset',
@@ -105,12 +109,13 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\iint': r'\\int\\int',
         r'\\ll': r'< < ',
         r'\\gg': r'> > ',
+        r'\\bar': r'\\overline',
+        r'\\vec': r'\\overrightarrow',
         r'\\widehat': r'\\hat',
         r'\\widetilde': r'\\tilde',
-        r'\\Vert': r'| | ',
-        r'\\rVert': r'| | ',
-        r'\\lVert': r'| | ',
-        r'\\parallel': r'| | ',
+        r'\\rVert': r'\\Vert',
+        r'\\lVert': r'\\Vert',
+        r'\\parallel': r'\\Vert',
         r'\\mid': r'| ',
         r'\\vert': r'| ',
         r'\\prime': "'",

@@ -5,6 +5,7 @@ import torch
 import json
 from tqdm import tqdm
 
+from utils.Expression.gtd_parser import parse_gtd
 from utils.utils import load_config, load_checkpoint
 from inference.Backbone import Backbone
 from training.dataset import Words
@@ -108,9 +109,14 @@ with torch.no_grad():
         image, image_mask = image.to(device), image_mask.to(device)
 
         prediction = model(image, image_mask)
+        expr = parse_gtd(prediction)
+        if expr is None:
+            latex_string = 'illegal'
+        else:
+            latex_string = expr.toLatex()
 
-        latex_list = convert(1, prediction)
-        latex_string = ' '.join(latex_list)
+        # latex_list = convert(1, prediction)
+        # latex_string = ' '.join(latex_list)
         if latex_string == label.strip():
             exp_right += 1
         else:

@@ -5,9 +5,9 @@ import cv2
 import pickle as pkl
 
 
-image_path = '/Users/martijnslob/github/SAN/data/mathwriting/train/images'
+image_path = '/Users/martijnslob/github/SAN/data/mathwriting-accents/train/images'
 image_out = 'train_image.pkl'
-label_path = '/Users/martijnslob/github/SAN/data/mathwriting/train/hyb'
+label_path = '/Users/martijnslob/github/SAN/data/mathwriting-accents/train/hyb'
 label_out = 'train_label.pkl'
 
 images = glob.glob(os.path.join(image_path, '*.bmp'))

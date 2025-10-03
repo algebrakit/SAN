@@ -4,6 +4,7 @@ from .base import LatexItem
 from .expression import Expression
 from .constructs import Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
 from .parser import parse_latex
+from .hybrid import expression_to_hybrid
 
 __all__ = [
     'LatexItem',
@@ -14,4 +15,5 @@ __all__ = [
     'SqrtConstruct',
     'AboveBelowConstruct',
     'parse_latex',
+    'expression_to_hybrid',
 ]

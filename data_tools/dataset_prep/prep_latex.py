@@ -129,6 +129,8 @@ def process_file(input_file: str, output_file: str, valid_words: set = None):
                 # Write the result
                 tokenized_latex = ' '.join(tokens)
                 tokenized_latex = special_cases(tokenized_latex).strip()
+                # replace any multiple spaces with a single space
+                tokenized_latex = re.sub(r'\s+', ' ', tokenized_latex)
                 outfile.write(f"{filename}\t{tokenized_latex}\n")
 
 
