@@ -9,6 +9,8 @@ export namespace Components {
     interface MathDrawer {
         "clearCanvas": () => Promise<void>;
         "convertToLatex": () => Promise<void>;
+        "redo": () => Promise<void>;
+        "undo": () => Promise<void>;
     }
 }
 declare global {

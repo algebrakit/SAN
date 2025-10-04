@@ -40,6 +40,8 @@ export class MathDrawer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private strokeCounter: number = 0;
+  private undoStack: Stroke[][] = [];
+  private redoStack: Stroke[][] = [];
   // Use relative URL in production to avoid CORS
   private apiUrl: string = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
 
@@ -127,18 +129,22 @@ export class MathDrawer {
 
   private stopDrawing = (event: PointerEvent) => {
     if (!this.isDrawing) return;
-    
+
     event.preventDefault();
     this.isDrawing = false;
-    
+
     if (this.currentStroke.length > 1) {
+      // Save current state to undo stack before adding new stroke
+      this.undoStack.push([...this.strokes]);
+      this.redoStack = []; // Clear redo stack when new action is performed
+
       const newStroke: Stroke = {
         points: [...this.currentStroke],
         id: this.strokeCounter++
       };
       this.strokes = [...this.strokes, newStroke];
     }
-    
+
     this.currentStroke = [];
   };
 
@@ -148,7 +154,56 @@ export class MathDrawer {
     this.currentStroke = [];
     this.latexResult = '';
     this.error = '';
+    this.undoStack = [];
+    this.redoStack = [];
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  @Method()
+  async undo() {
+    if (this.undoStack.length === 0) return;
+
+    // Save current state to redo stack
+    this.redoStack.push([...this.strokes]);
+
+    // Restore previous state from undo stack
+    this.strokes = this.undoStack.pop();
+
+    // Redraw canvas
+    this.redrawCanvas();
+  }
+
+  @Method()
+  async redo() {
+    if (this.redoStack.length === 0) return;
+
+    // Save current state to undo stack
+    this.undoStack.push([...this.strokes]);
+
+    // Restore state from redo stack
+    this.strokes = this.redoStack.pop();
+
+    // Redraw canvas
+    this.redrawCanvas();
+  }
+
+  private redrawCanvas() {
+    // Clear canvas
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Redraw all strokes
+    this.strokes.forEach(stroke => {
+      if (stroke.points.length > 0) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+
+        for (let i = 1; i < stroke.points.length; i++) {
+          this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+
+        this.ctx.stroke();
+      }
+    });
   }
 
   @Method()
@@ -220,6 +275,12 @@ export class MathDrawer {
         </div>
         
         <div class="controls">
+          <button onClick={() => this.undo()} disabled={this.isProcessing || this.undoStack.length === 0}>
+            Undo
+          </button>
+          <button onClick={() => this.redo()} disabled={this.isProcessing || this.redoStack.length === 0}>
+            Redo
+          </button>
           <button onClick={() => this.clearCanvas()} disabled={this.isProcessing}>
             Clear
           </button>
