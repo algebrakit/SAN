@@ -50,17 +50,67 @@ aws s3api put-bucket-policy \
   --policy file:///tmp/bucket-policy.json \
   --profile $PROFILE
 
-# Upload files
+# Upload files with proper content types
 echo "Uploading files to S3..."
+
+# Upload HTML files with correct content type
 aws s3 sync www/ s3://$BUCKET_NAME/ \
   --delete \
+  --exclude "*" \
+  --include "*.html" \
+  --content-type "text/html" \
+  --cache-control max-age=0,no-cache,no-store,must-revalidate \
+  --profile $PROFILE
+
+# Upload CSS files
+aws s3 sync www/ s3://$BUCKET_NAME/ \
+  --exclude "*" \
+  --include "*.css" \
+  --content-type "text/css" \
   --cache-control max-age=31536000 \
   --profile $PROFILE
 
-# Update index.html to not cache
-aws s3 cp s3://$BUCKET_NAME/index.html s3://$BUCKET_NAME/index.html \
-  --metadata-directive REPLACE \
-  --cache-control max-age=0,no-cache,no-store,must-revalidate \
+# Upload JS files
+aws s3 sync www/ s3://$BUCKET_NAME/ \
+  --exclude "*" \
+  --include "*.js" \
+  --content-type "application/javascript" \
+  --cache-control max-age=31536000 \
+  --profile $PROFILE
+
+# Upload JSON files
+aws s3 sync www/ s3://$BUCKET_NAME/ \
+  --exclude "*" \
+  --include "*.json" \
+  --content-type "application/json" \
+  --cache-control max-age=31536000 \
+  --profile $PROFILE
+
+# Upload images
+aws s3 sync www/ s3://$BUCKET_NAME/ \
+  --exclude "*" \
+  --include "*.png" \
+  --include "*.jpg" \
+  --include "*.jpeg" \
+  --include "*.gif" \
+  --include "*.svg" \
+  --include "*.ico" \
+  --cache-control max-age=31536000 \
+  --profile $PROFILE
+
+# Upload any remaining files
+aws s3 sync www/ s3://$BUCKET_NAME/ \
+  --exclude "*.html" \
+  --exclude "*.css" \
+  --exclude "*.js" \
+  --exclude "*.json" \
+  --exclude "*.png" \
+  --exclude "*.jpg" \
+  --exclude "*.jpeg" \
+  --exclude "*.gif" \
+  --exclude "*.svg" \
+  --exclude "*.ico" \
+  --cache-control max-age=31536000 \
   --profile $PROFILE
 
 # Invalidate CloudFront cache (if distribution ID is set)
