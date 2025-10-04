@@ -32,8 +32,8 @@ train_label_path: 'data/train_label.pkl'
 eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
-# word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/mathwriting-accents/word.txt'
+word_path: 'resources/word.txt'
+# word_path: '/Users/martijnslob/github/SAN/data/mathwriting-accents/word.txt'
 
 # Encoder selection
 encoder:
@@ -69,9 +69,9 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
-# checkpoint: "resources/model.pth"
-checkpoint: "../../training/checkpoints/mathwriting-accents/best.pth"
+finetune: True
+checkpoint: "resources/model.pth"
+# checkpoint: "../../training/checkpoints/mathwriting-accents/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

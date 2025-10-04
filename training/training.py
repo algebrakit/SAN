@@ -19,8 +19,7 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
     with tqdm(train_loader, total=len(train_loader)) as pbar:
         for batch_idx, (images, image_masks, labels, label_masks) in enumerate(pbar):
 
-            images, image_masks, labels, label_masks = images.to(device), image_masks.to(device), labels.to(
-                device), label_masks.to(device)
+            images, image_masks, labels, label_masks = images.to(device), image_masks.to(device), labels.to(device), label_masks.to(device)
 
             batch, time = labels.shape[:2]
             if not 'lr_decay' in params or params['lr_decay'] == 'cosine':

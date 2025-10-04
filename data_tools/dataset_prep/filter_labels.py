@@ -9,7 +9,7 @@ import re
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from LatexParser.latex_normalizer import normalize_latex, LaTeXError
+from LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
 
 def should_skip_line(latex_str: str) -> bool:
     """
@@ -23,10 +23,6 @@ def should_skip_line(latex_str: str) -> bool:
     """
     matrix_list = ['\\begin{matrix}', '\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}',
                    '\\begin{vmatrix}', '\\begin{Vmatrix}', '\\begin{array}']
-    accents_list_above = ['\\vec', '\\dot', '\\ddot', '\\tilde', '\\hat', '\\bar', '\\breve', '\\acute', '\\grave', 
-                    '\\mathring', '\\overline']
-
-    accents_list_below = ['\\utilde', '\\ubar', '\\underaccent'] 
 
     forbidden_command_list = [
         '\\limits', '\\aleph','\\oplus', '\\models', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', 

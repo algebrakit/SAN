@@ -1,10 +1,10 @@
+from typing import Optional, List
 from .base import LatexItem
 from .expression import Expression
 from .constructs import AccentConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
-from .base import LatexItem
 
-def parse_gtd(gtd_list) -> Expression | None:
+def parse_gtd(gtd_list) -> Optional[Expression]:
     """
     Parses a GTD (Gene Tree Description) string into its components.
 
@@ -22,10 +22,10 @@ def parse_gtd(gtd_list) -> Expression | None:
 
  
 
-def convert(nodeid, gtd_list) -> Expression | None:
+def convert(nodeid, gtd_list) -> Optional[Expression]:
     isparent = False
     child_list = []
-    items:list[LatexItem] = []
+    items: List[LatexItem] = []
     item = None
     for i in range(len(gtd_list)):
         if gtd_list[i][2] == nodeid:
