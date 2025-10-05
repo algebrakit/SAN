@@ -4,7 +4,7 @@ from typing import List, Optional
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
 from .base import LatexItem
 from .expression import Expression
-from .constructs import AccentConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
+from .constructs import AccentConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct, StackConstruct
 
 def parse_latex(latex: str) -> Optional[Expression]:
     """Parse an Expression object from LaTeX syntax.
@@ -74,6 +74,8 @@ def parse_latex(latex: str) -> Optional[Expression]:
                 return self.parse_frac()
             elif token == '\\sqrt':
                 return self.parse_sqrt()
+            elif token == '\\stack':
+                return self.parse_stack()
             elif token in ABOVE_BELOW_COMMANDS:
                 return self.parse_above_below(token)
             elif token in ACCENT_COMMANDS_ABOVE:
@@ -184,6 +186,14 @@ def parse_latex(latex: str) -> Optional[Expression]:
 
                 # Check for superscript on the fraction
             return self.apply_sub_sup(frac)
+
+        def parse_stack(self):
+            self.advance()  # skip '\stack'
+            child = self.parse_braced_expression()
+            if child is None:
+                return
+            
+            return StackConstruct(construct_type='\\stack', child=child)
 
         def parse_sqrt(self):
             """Parse \\sqrt { inside } or \\sqrt [ degree ] { inside }."""

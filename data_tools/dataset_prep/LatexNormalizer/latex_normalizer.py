@@ -11,7 +11,7 @@ from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
 from utils.Expression.defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
-COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS_ABOVE.union(ACCENT_COMMANDS_BELOW)
+COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS_ABOVE.union(ACCENT_COMMANDS_BELOW).union({'\\stack'})
 
 class TokenType(Enum):
     """Token types for LaTeX parsing."""
@@ -75,9 +75,9 @@ class Tokenizer:
             command += '\\'
             self.advance()
 
-            # Handle special single-character commands including escaped braces
+            # Handle special single-character commands including escaped braces and backslash
             char = self.current_char()
-            if char in ',;:>! {}':
+            if char in ',;:>! {}\\':
                 command += char
                 self.advance()
                 return command
@@ -547,10 +547,11 @@ class Normalizer:
 
         # Unsupported constructs that should cause errors
         self.unsupported_commands = {
-            '\\limits', '\\nolimits', '\\begin', '\\end', '\\binom'
+            '\\limits', '\\nolimits', '\\begin', '\\end'
         }
 
         # Matrix environments (unsupported)
+        # These should already be converted to the \stack construct
         self.matrix_environments = {
             'matrix', 'pmatrix', 'bmatrix', 'Bmatrix', 'vmatrix', 'Vmatrix', 'array'
         }
@@ -713,21 +714,18 @@ class Normalizer:
                         normalized_children.append(normalized_child)
                 return ParseNode(NodeType.GROUP, "", normalized_children)
 
-        # Remove accent commands - return only their content
-        # if command in self.accent_commands:
-        #     if len(node.children) == 1:
-        #         return self._normalize_node(node.children[0])
-        #     else:
-        #         normalized_children = []
-        #         for child in node.children:
-        #             normalized_child = self._normalize_node(child)
-        #             if normalized_child:
-        #                 normalized_children.append(normalized_child)
-        #         return ParseNode(NodeType.GROUP, "", normalized_children)
-
         # Remove spacing commands entirely
         if command in self.spacing_commands:
             return None  # Remove the command
+
+        # \binom{n}{k} --> (\stack{n \\ k})
+        if command == "\\binom":
+            child0 = self._normalize_node(node.children[0])
+            child1 = self._normalize_node(node.children[1])
+            newchildren = [child0, ParseNode(NodeType.TEXT, r"\\", []), child1]
+            newchild = ParseNode(NodeType.GROUP, "", newchildren)
+            stack_cmd = ParseNode(NodeType.COMMAND, r"\stack", [newchild])
+            return ParseNode(NodeType.GROUP, "", [ParseNode(NodeType.TEXT, "(", []), stack_cmd, ParseNode(NodeType.TEXT, ")", [])])
 
         # Replace command synonyms
         if command in self.command_synonyms:

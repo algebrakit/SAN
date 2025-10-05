@@ -1,10 +1,12 @@
 """LaTeX construct classes (Symbol, Fraction, Sqrt, etc.)."""
 
 from abc import abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
 from .base import LatexItem
-from .expression import Expression
+
+if TYPE_CHECKING:
+    from .expression import Expression
 
 
 class Symbol(LatexItem):
@@ -12,9 +14,9 @@ class Symbol(LatexItem):
 
     def __init__(self,
                  value: str,
-                 sub: Optional[Expression] = None,
-                 sup: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 sub: Optional['Expression'] = None,
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(parent)
         self.value = value
         self.sub = sub
@@ -38,16 +40,7 @@ class Symbol(LatexItem):
 
         return result
 
-    def get_children(self) -> Dict[str, Expression]:
-        """Get subscript and superscript expressions if they exist."""
-        children = {}
-        if self.sub:
-            children['sub'] = self.sub
-        if self.sup:
-            children['sup'] = self.sup
-        return children
-
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
 
         Returns regions in order: sub, sup (only if they exist).
@@ -65,8 +58,8 @@ class Construct(LatexItem):
 
     def __init__(self,
                  construct_type: str,
-                 sup: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(parent)
         self.construct_type = construct_type
         self.sup = sup
@@ -79,8 +72,12 @@ class Construct(LatexItem):
         """Convert construct to LaTeX representation."""
         pass
 
+    def get_region_lists(self) -> Tuple[str, list['Expression']] | None:
+        """Applies to region that occur multiple times, e.g. 'below' in StackConstruct."""
+        return None
+        
     @abstractmethod
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
 
         Returns regions in order: above, below, sup (only if they exist).
@@ -93,10 +90,10 @@ class AccentConstruct(Construct):
     def __init__(self,
                  construct_type: str,
                  is_above: bool,
-                 child: Expression,
-                 sup: Optional[Expression] = None,
-                 sub: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 child: 'Expression',
+                 sup: Optional['Expression'] = None,
+                 sub: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(construct_type, parent)
         self.child = child
         self.sup = sup
@@ -121,22 +118,8 @@ class AccentConstruct(Construct):
             result += f" _ {{ {sub_latex} }}"
 
         return result
-
-    def get_children(self) -> Dict[str, Expression]:
-        """Get numerator, denominator, and optional superscript."""
-        children = {}
-        if self.is_above:
-            children['below'] = self.child
-        else:    
-            children['above'] = self.child
-
-        if self.sub:
-            children['sub'] = self.sub
-        if self.sup:
-            children['sup'] = self.sup
-        return children
         
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
             Returns regions in order: above, below, sup (only if they exist).
         """
@@ -151,17 +134,79 @@ class AccentConstruct(Construct):
             regions.append(('sup', self.sup))
         return regions
     
+class StackConstruct(Construct):
+    """Represents a matrix or vector \\stack{..&.. \\ ..&.. }
+       As a struct with a series of 'below' sequences
+    """
 
+    def __init__(self,
+                 construct_type: str,
+                 child: 'Expression',
+                 parent: Optional['Expression'] = None):
+        super().__init__(construct_type, None, parent)
+        self.child = child
+        child.parent = self
+        self.mtype = None
+
+        # Import at runtime to avoid circular dependency
+        from .expression import Expression
+
+        # split items by '\\' symbol into rows
+        rows = []
+        _items = []
+        for item in self.child.items:
+            if isinstance(item, Symbol) and item.value == '\\\\':
+                rows.append(Expression(_items))
+                _items = []
+            else:
+                _items.append(item)
+
+        if _items:
+            rows.append(Expression(_items))
+        self.rows = rows
+
+    def set_matrix_type(self, mtype:str):
+        self.mtype = mtype
+
+    def toLatex(self) -> str:
+        """Convert stack to LaTeX: \\stack{..&.. \\ ..&.. }^{superscript}"""
+
+        child_latex = self.child.toLatex() if self.child else ""
+        if self.mtype is None:
+            result = f"{self.construct_type} {{ {child_latex} }}"
+        else:
+            result = f"\\begin{{{self.mtype}}} {child_latex} \\end{{{self.mtype}}}"
+            
+        if self.sup:
+            result += f" ^ {{ {self.sup.toLatex()} }}"
+
+        return result
+
+    def get_region_lists(self) -> Tuple[str, list['Expression']] | None:
+        """Applies if multiple row."""
+        if len(self.rows) > 1:
+            return 'below', self.rows[1:]  # all rows except the first
+
+        return None
+    
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
+        """Get numerator, denominator, and optional superscript."""
+        regions = []
+
+        if len(self.rows) > 0:
+            regions.append(('below', self.rows[0]))
+
+        return regions
 
 class FractionConstruct(Construct):
     """Represents a fraction: \\frac{above}{below}"""
 
     def __init__(self,
                  construct_type: str,
-                 above: Optional[Expression] = None,
-                 below: Optional[Expression] = None,
-                 sup: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 above: Optional['Expression'] = None,
+                 below: Optional['Expression'] = None,
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(construct_type, sup, parent)
         self.above = above
         self.below = below
@@ -183,18 +228,7 @@ class FractionConstruct(Construct):
 
         return result
 
-    def get_children(self) -> Dict[str, Expression]:
-        """Get numerator, denominator, and optional superscript."""
-        children = {}
-        if self.above:
-            children['above'] = self.above
-        if self.below:
-            children['below'] = self.below
-        if self.sup:
-            children['sup'] = self.sup
-        return children
-
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
 
         Returns regions in order: above, below, sup (only if they exist).
@@ -215,10 +249,10 @@ class SqrtConstruct(Construct):
 
     def __init__(self,
                  construct_type: str,
-                 inside: Optional[Expression] = None,
-                 l_sup: Optional[Expression] = None,
-                 sup: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 inside: Optional['Expression'] = None,
+                 l_sup: Optional['Expression'] = None,
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(construct_type, sup, parent)
         self.inside = inside
         self.l_sup = l_sup  # degree/index (the [n] in \\sqrt[n])
@@ -243,18 +277,7 @@ class SqrtConstruct(Construct):
 
         return result
 
-    def get_children(self) -> Dict[str, Expression]:
-        """Get radicand, optional degree, and optional superscript."""
-        children = {}
-        if self.inside:
-            children['inside'] = self.inside
-        if self.l_sup:
-            children['l_sup'] = self.l_sup
-        if self.sup:
-            children['sup'] = self.sup
-        return children
-
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
 
         Returns regions in order: L-sup, inside, sup (only if they exist).
@@ -274,10 +297,10 @@ class AboveBelowConstruct(Construct):
 
     def __init__(self,
                  construct_type: str,
-                 below: Optional[Expression] = None,
-                 above: Optional[Expression] = None,
-                 sup: Optional[Expression] = None,
-                 parent: Optional[Expression] = None):
+                 below: Optional['Expression'] = None,
+                 above: Optional['Expression'] = None,
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
         super().__init__(construct_type, sup, parent)
         self.construct_type = construct_type  # e.g., "\\sum", "\\prod", "\\int"
         self.below = below
@@ -305,18 +328,7 @@ class AboveBelowConstruct(Construct):
 
         return result
 
-    def get_children(self) -> Dict[str, Expression]:
-        """Get lower limit, upper limit, and optional superscript."""
-        children = {}
-        if self.below:
-            children['below'] = self.below
-        if self.above:
-            children['above'] = self.above
-        if self.sup:
-            children['sup'] = self.sup
-        return children
-
-    def get_regions(self) -> List[Tuple[str, Expression]]:
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
 
         Returns regions in order: below, above, sup (only if they exist).

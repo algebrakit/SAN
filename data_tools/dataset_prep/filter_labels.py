@@ -13,7 +13,7 @@ from LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
 
 def should_skip_line(latex_str: str) -> bool:
     """
-    Check if a line should be skipped entirely (e.g., contains matrices).
+    Check if a line should be skipped entirely because of forbidden symbols.
 
     Args:
         latex_str: The LaTeX expression string
@@ -21,15 +21,12 @@ def should_skip_line(latex_str: str) -> bool:
     Returns:
         True if the line should be skipped
     """
-    matrix_list = ['\\begin{matrix}', '\\begin{pmatrix}', '\\begin{bmatrix}', '\\begin{Bmatrix}',
-                   '\\begin{vmatrix}', '\\begin{Vmatrix}', '\\begin{array}']
-
     forbidden_command_list = [
         '\\limits', '\\aleph','\\oplus', '\\models', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', 
-        '\\bigoplus', '\\propto', '\\Im', '\\Re', '\\wp', '\\xi', '\\zeta', '\\mp', '\\dagger', '\\star', '\\bullet', 
+        '\\bigoplus', '\\propto', '\\Im', '\\Re', '\\wp', '\\xi', '\\zeta', '\\Xi', '\\iota', '\\mp', '\\dagger', '\\star', '\\bullet', 
         '\\oint', '\\ominus', '\\mathfrak','\\odot','\\hbar','\\triangleleft','\\triangleq','\\triangleleft',
         '\\supseteq','\\subsetneq','\\sqsubseteq','\\rightleftharpoons', '\\Vdash','\\lg','\\pmod','\\tbinom',
-        '\\\\', '\\choose', # to handle later
+        # '\\\\', '\\choose', # to handle later
         # forbidden accents
         '\\breve', '\\acute', '\\grave', '\\mathring'   
         ]
@@ -88,6 +85,7 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\varrho': r'\\rho',
         r'\\kappa': r'k',
         r'\\Upsilon': r'Y',
+        r'\\upsilon': r'v',
         r'\\Pi': r'\\prod',
         r'\\Sigma': r'\\sum',
         r'\\neq': r'\\ne',
@@ -140,6 +138,8 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\iff': r'\\Leftrightarrow',
         r'\\lbrack': r'[',
         r'\\rbrack': r']',
+        r'\\lbrace': r'\{',
+        r'\\rbrace': r'\}',
         r'\\dots': r'. . . ',
         r'\\cdots': r'. . . ',
         r'\\ldots': r'. . . ',
@@ -151,7 +151,7 @@ def replace_variant_symbols(latex_str: str) -> str:
         r'\\:': r' ',
         r'\\>': r' ',
         r'\\!': r' ',
-        r'\\ ': r' ',
+        r'(?<!\\)\\ ': r' ',
         r'<': r'\\lt',
         r'>': r'\\gt',
         r'~': r' ',
@@ -195,6 +195,39 @@ def detect_commands(latex_str: str) -> str:
 
     return latex_str
 
+def handle_matrices(latex_expr: str) -> str:
+    """
+    Transform:
+     -  \begin{pmatrix}..\\..\end{pmatrix} --> ( \stack{.. \\ ...} )
+     -  Similar for bmatrix, Bmatrix, vmatrix, Vmatrix
+     -  \begin{array}{ccc}..\\..\end{array} --> \stack{.. \\ ...}
+     -  \binom{n}{k} into (\stack{a \\ b})
+    """
+    
+    # handle matrices
+    res = latex_expr.replace("\\begin{pmatrix}", "(\\stack{")
+    res = res.replace("\\begin{matrix}", "\\stack{")
+    res = res.replace("\\begin{vmatrix}", "|\\stack{")
+    res = res.replace("\\begin{Vmatrix}", "\\Vert\\stack{")
+    res = res.replace("\\begin{bmatrix}", "[\\stack{")
+    res = res.replace("\\begin{Bmatrix}", "\\{\\stack{")
+    res = res.replace("\\end{matrix}", "}")
+    res = res.replace("\\end{pmatrix}", "})")
+    res = res.replace("\\end{bmatrix}", "}]")
+    res = res.replace("\\end{Bmatrix}", "}\\}")
+    res = res.replace("\\end{vmatrix}", "}|")
+    res = res.replace("\\end{Vmatrix}", "}\\Vert")
+
+    # handle array. Remove first argument block with alignment indicators
+    pattern = r'(\\begin\{array\})\{[^\}]+\}'
+    res = re.sub(pattern, r'\\stack{', res)
+    res = res.replace("\\end{array}", "}")
+
+    # # handle binom
+    # res = re.sub(r'\\binom\{([^}]+)\}\{([^}]+)\}', r'(\\stack{\1 \\\\ \2})', res)
+
+    return res
+
 def process_file(input_file: str, output_file: str):
     """
     Process the input file and write filtered output.
@@ -226,6 +259,8 @@ def process_file(input_file: str, output_file: str):
 
                 filename, latex_expr = parts
 
+                latex_expr = replace_variant_symbols(latex_expr)
+                latex_expr = handle_matrices(latex_expr)
                 # Normalize LaTeX expression with error handling
                 try:
                     latex_expr = normalize_latex(latex_expr)
@@ -238,15 +273,14 @@ def process_file(input_file: str, output_file: str):
                     print(f"Skipped line {line_num}: unexpected normalization error - {e}", file=sys.stderr)
                     continue
 
-                # Skip lines with matrices
+                # Skip lines with forbidden symbols
                 if should_skip_line(latex_expr):
                     skipped_count += 1
-                    print(f"Skipped line {line_num}: contains matrix", file=sys.stderr)
+                    print(f"Skipped line {line_num}: contains forbidden symbol", file=sys.stderr)
                     continue
 
                 # Remove font style commands and replace variant symbols
                 filtered_latex = remove_font_commands(latex_expr)
-                filtered_latex = replace_variant_symbols(filtered_latex)
                 filtered_latex = detect_commands(filtered_latex)
                 filtered_latex = filtered_latex.strip()
                 # Write the result

@@ -121,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument("--train_ratio", type=float, default=0.8, help="Training set ratio")
     parser.add_argument("--val_ratio", type=float, default=0.1, help="Validation set ratio")
     parser.add_argument("--test_ratio", type=float, default=0.1, help="Test set ratio")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
+    parser.add_argument("--seed", type=int, default=7, help="Random seed for reproducibility")
 
     args = parser.parse_args()
 

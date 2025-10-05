@@ -1,8 +1,8 @@
 """Expression container class."""
 
 from typing import List, Optional, Union
-
 from .base import LatexItem
+from .constructs import Symbol, StackConstruct
 
 
 class Expression:
@@ -28,21 +28,50 @@ class Expression:
         from .parser import parse_latex
         return parse_latex(latex)
 
-    def from_gtd_list(self, gtd_list) -> 'Expression':
+    def from_gtd_list(self, gtd_list) -> Optional['Expression']:
         """Create an Expression from a GTD list representation.
         Args:
             gtd_list: List of GTD entries, where each entry is:
                 [symbol, id, parent_id, parent_symbol] if parent is a symbol
                 [symbol, id, parent_id, region] if parent is a construct (e.g., '\\frac', '\\underline', etc)
         """
-    
-        """Add an item to this expression."""
-        return parse_gtd(gtd_list
-                         )
+        from .gtd_parser import parse_gtd
+        return parse_gtd(gtd_list)
 
     def toLatex(self) -> str:
         """Convert this expression to LaTeX by concatenating all items."""
-        return ' '.join(item.toLatex() for item in self.items)
+        _items = self.items.copy()
+        ii = 1
+        while ii < len(_items):
+            item = _items[ii]
+            if isinstance(item, StackConstruct):
+                #get the bracket types to determine the kind of matrix
+                matrix_type = 'matrix'
+                if ii > 0 and ii + 1 < len(_items):
+                    prev_item = self.items[ii - 1]
+                    next_item = self.items[ii + 1]
+                    if isinstance(prev_item, Symbol) and isinstance(next_item, Symbol):
+                        prev_symbol = prev_item.value
+                        next_symbol = next_item.value
+                        if prev_symbol == '(' and next_symbol == ')':
+                            matrix_type = 'pmatrix'
+                        elif prev_symbol == '[' and next_symbol == ']':
+                            matrix_type = 'bmatrix'
+                        elif prev_symbol == r'\{' and next_symbol == r'\}':
+                            matrix_type = 'Bmatrix'
+                        elif prev_symbol == '|' and next_symbol == '|':
+                            matrix_type = 'vmatrix'
+                        elif prev_symbol == r'\Vert' and next_symbol == r'\Vert':
+                            matrix_type = 'Vmatrix'
+                if matrix_type != 'matrix':
+                    _items.pop(ii+1)
+                    _items.pop(ii-1)
+                    item.set_matrix_type(matrix_type)
+                    continue
+
+            ii += 1
+
+        return ' '.join(item.toLatex() for item in _items)
 
     def to_hybrid(self) -> List[List[Union[int, str, None]]]:
         """Convert this expression to hybrid syntax representation.

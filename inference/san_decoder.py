@@ -141,6 +141,12 @@ class SAN_decoder(nn.Module):
                         else:
                             # illegal relation for sqrt, neglect
                             pass
+                    elif p_word_str == '\\stack':
+                        if word_str == 'below':
+                            p_re = 'Below'
+                        else:
+                            # illegal relation for stack, neglect
+                            pass
                     elif p_word_str in ABOVE_BELOW_COMMANDS:
                         if word_str in ['below', 'sub']:
                             p_re = 'Below'

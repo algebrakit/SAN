@@ -29,7 +29,7 @@ class HybridGenerator:
         self.last_id = 0
         self.last_symbol = '<sos>'
 
-        self._process_expression(expression, is_top_level=True)
+        self._process_expression(expression)
 
         return self.lines
 
@@ -54,7 +54,7 @@ class HybridGenerator:
         self.last_symbol = symbol
         self.current_id += 1
 
-    def _process_expression(self, expression: 'Expression', is_top_level: bool = False, in_region: bool = False):
+    def _process_expression(self, expression: 'Expression'):
         """Process an Expression and all its items."""
         from .constructs import Symbol, Construct
 
@@ -80,10 +80,13 @@ class HybridGenerator:
                     # Item with regions - emit the base symbol/construct first
                     if isinstance(item, Symbol):
                         base_symbol = item.value
+                        multiple_region_info = None
                     elif isinstance(item, Construct):
                         base_symbol = item.construct_type
+                        multiple_region_info = item.get_region_lists()
                     else:
                         raise ValueError("Unknown item type")
+                    
                     
                     self._emit(base_symbol, self.last_id, self.last_symbol)
                     construct_id = self.last_id
@@ -101,7 +104,13 @@ class HybridGenerator:
                             self.last_id = struct_id
                             self.last_symbol = region_name
 
-                            self._process_expression(region_expr, is_top_level=False, in_region=True)
+                            self._process_expression(region_expr)
+                        # Handle multiple regions if applicable
+                        if multiple_region_info and region_name == multiple_region_info[0]:
+                            for _expr in multiple_region_info[1]:
+                                self.last_id = struct_id
+                                self.last_symbol = region_name
+                                self._process_expression(_expr)
 
                     # Process "right" region if there are more items
                     if has_right:

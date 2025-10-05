@@ -27,7 +27,7 @@ def process_folder(hyb_folder, words_file):
     with open(words_file, 'w') as writer:
         writer.write('<eos>\n<sos>\nstruct\n')
         writer.write('\n'.join(words) + '\n')
-        writer.write('above\nbelow\nsub\nsup\nl_sup\ninside\nright')
+        writer.write('above\nbelow\nsub\nsup\nL-sup\ninside\nright')
 
     print(i)
 

@@ -99,7 +99,6 @@ def process_file(input_file: str, output_file: str, valid_words: set = None):
     with open(input_file, 'r', encoding='utf-8') as infile:
         with open(output_file, 'w', encoding='utf-8') as outfile:
             for line_num, line in enumerate(infile, 1):
-                print(line)
                 line = line.strip()
                 if not line:
                     continue

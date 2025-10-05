@@ -7,6 +7,12 @@ from .constructs import Symbol, FractionConstruct, SqrtConstruct, AboveBelowCons
 def main():
     """Run example expressions."""
 
+    expr = Expression.fromLatex(r'(\stack{a\\b}})')
+    if expr:
+        print(f"Parsed expression: {expr.toLatex()}")
+    else:
+        print("Failed to parse expression.")    
+
     # Example 1: \\frac{\\sqrt[2]{x}+1}{1-x^2}
     print("Example 1: Fraction with square root")
     expr1 = Expression([
