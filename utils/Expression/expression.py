@@ -48,8 +48,8 @@ class Expression:
                 #get the bracket types to determine the kind of matrix
                 matrix_type = 'matrix'
                 if ii > 0 and ii + 1 < len(_items):
-                    prev_item = self.items[ii - 1]
-                    next_item = self.items[ii + 1]
+                    prev_item = _items[ii - 1]
+                    next_item = _items[ii + 1]
                     if isinstance(prev_item, Symbol) and isinstance(next_item, Symbol):
                         prev_symbol = prev_item.value
                         next_symbol = next_item.value

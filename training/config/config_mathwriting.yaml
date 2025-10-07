@@ -6,9 +6,9 @@ seed: 20200814
 
 # Training parameters
 epoches: 200
-batch_size: 12
-gradient_accumulation_steps: 3
-workers: 4
+batch_size: 2
+gradient_accumulation_steps: 1
+workers: 0
 optimizer: Adadelta
 lr: 0.3
 lr_decay: cosine
@@ -29,12 +29,12 @@ use_label_mask: False
 use_amp: True
 
 # Training data
-train_image_path: '../data/train_image.pkl'
-train_label_path: '../data/train_label.pkl'
-eval_image_path: '../data/test_image.pkl'
-eval_label_path: '../data/test_label.pkl'
+train_image_path: '../data_tools/dataset_prep/debug_image.pkl'
+train_label_path: '../data_tools/dataset_prep/debug_label.pkl'
+eval_image_path: '../data_tools/dataset_prep/test_image.pkl'
+eval_label_path: '../data_tools/dataset_prep/test_label.pkl'
 
-word_path: '../data/word.txt'
+word_path: '../data/mathwriting-matrix/word.txt'
 
 # Encoder selection
 encoder:
@@ -70,8 +70,8 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
-checkpoint: "checkpoints/best.pth"
+finetune: True
+checkpoint: "checkpoints/mathwriting-matrix/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

@@ -27,7 +27,7 @@ def _rescale(strokes, scale, minX, minY):
         new_strokes.append(s.tolist())
     return new_strokes
 
-def rescale_strokes(strokes, stroke_length=25):
+def rescale_strokes(strokes, stroke_length=50):
     # get the average stroke lengths
     stroke_len, minX, minY, maxX, maxY = _strokeLength(strokes)
     scale = stroke_length / stroke_len

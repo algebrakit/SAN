@@ -722,11 +722,43 @@ class Normalizer:
         if command == "\\binom":
             child0 = self._normalize_node(node.children[0])
             child1 = self._normalize_node(node.children[1])
-            newchildren = [child0, ParseNode(NodeType.TEXT, r"\\", []), child1]
+            if not child0 or not child1:
+                raise LaTeXError("\\binom requires two non-empty arguments")
+            row0_cmd = ParseNode(NodeType.COMMAND, r"\row", [child0])
+            row1_cmd = ParseNode(NodeType.COMMAND, r"\row", [child1])
+            newchildren = [row0_cmd, row1_cmd]
             newchild = ParseNode(NodeType.GROUP, "", newchildren)
             stack_cmd = ParseNode(NodeType.COMMAND, r"\stack", [newchild])
             return ParseNode(NodeType.GROUP, "", [ParseNode(NodeType.TEXT, "(", []), stack_cmd, ParseNode(NodeType.TEXT, ")", [])])
 
+        if command == "\\stack":
+            # arguments must be wrapped in \row commands
+            _rows = []
+            _items= []
+            _childgroup = node.children[0]
+            for child in _childgroup.children:
+                if child.type == NodeType.COMMAND and child.value == r"\row":
+                    break # already handled
+                normalized_child = self._normalize_node(child)
+                if normalized_child:
+                    if normalized_child.type == NodeType.COMMAND and normalized_child.value == r'\\':
+                        # start new row
+                        _rows.append(ParseNode(NodeType.GROUP, "", _items))
+                        _items = []
+                    else:
+                        _items.append(normalized_child)
+                else:
+                    continue       
+            if len(_items)>0:
+                _rows.append(ParseNode(NodeType.GROUP, "", _items))
+            newchildren = []
+            for _r in _rows:
+                childrow = ParseNode(NodeType.COMMAND, r"\row", [_r])
+                newchildren.append(childrow)
+            newchild = ParseNode(NodeType.GROUP, "", newchildren)
+            stack_cmd = ParseNode(NodeType.COMMAND, r"\stack", [newchild])
+            return stack_cmd
+        
         # Replace command synonyms
         if command in self.command_synonyms:
             new_command = self.command_synonyms[command]

@@ -80,10 +80,8 @@ class HybridGenerator:
                     # Item with regions - emit the base symbol/construct first
                     if isinstance(item, Symbol):
                         base_symbol = item.value
-                        multiple_region_info = None
                     elif isinstance(item, Construct):
                         base_symbol = item.construct_type
-                        multiple_region_info = item.get_region_lists()
                     else:
                         raise ValueError("Unknown item type")
                     
@@ -105,12 +103,6 @@ class HybridGenerator:
                             self.last_symbol = region_name
 
                             self._process_expression(region_expr)
-                        # Handle multiple regions if applicable
-                        if multiple_region_info and region_name == multiple_region_info[0]:
-                            for _expr in multiple_region_info[1]:
-                                self.last_id = struct_id
-                                self.last_symbol = region_name
-                                self._process_expression(_expr)
 
                     # Process "right" region if there are more items
                     if has_right:

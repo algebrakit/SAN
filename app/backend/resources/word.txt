@@ -2,8 +2,6 @@
 <sos>
 struct
 !
-#
-%
 &
 '
 (
@@ -69,8 +67,9 @@ Z
 \R
 \Rightarrow
 \Theta
-\Xi
+\Vert
 \Z
+\\
 \alpha
 \angle
 \approx
@@ -82,7 +81,6 @@ Z
 \beta
 \bigcap
 \bigcup
-\binom
 \bot
 \cap
 \cdot
@@ -112,11 +110,9 @@ Z
 \inf
 \infty
 \int
-\iota
 \lambda
 \land
 \langle
-\lbrace
 \lceil
 \leftarrow
 \leftrightarrow
@@ -140,6 +136,7 @@ Z
 \omega
 \otimes
 \overline
+\overrightarrow
 \partial
 \perp
 \phi
@@ -148,11 +145,11 @@ Z
 \prod
 \psi
 \rangle
-\rbrace
 \rceil
 \rfloor
 \rho
 \rightarrow
+\row
 \sec
 \setminus
 \sigma
@@ -161,6 +158,7 @@ Z
 \sin
 \sinh
 \sqrt
+\stack
 \subset
 \subseteq
 \sum
@@ -175,8 +173,8 @@ Z
 \top
 \triangle
 \underline
-\upsilon
 \vdash
+\vdots
 \{
 \}
 ]
@@ -207,6 +205,9 @@ x
 y
 z
 |
+reserved1
+reserved2
+reserved3
 above
 below
 sub

@@ -45,11 +45,13 @@ class SAN_decoder(nn.Module):
         self.word_attention = Attention(params)
 
         # state to word/struct
+        # Linear mappings W_p, W_g, W_t in the article, used before aggregation
         self.word_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
         self.word_embedding_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
         self.word_context_weight = nn.Linear(self.out_channel, self.hidden_size // 2)
-        self.word_convert = nn.Linear(self.hidden_size // 2, self.word_num)
 
+        # Linear mappings to output space (word/struct)
+        self.word_convert = nn.Linear(self.hidden_size // 2, self.word_num)
         self.struct_convert = nn.Linear(self.hidden_size // 2, self.struct_num)
 
         """ child to parent """
@@ -81,38 +83,62 @@ class SAN_decoder(nn.Module):
         c2p_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
 
         if is_train:
-
+            # c^{alpha}_0 in the article, for all samples in the batch and all lines in the hybrid tree.
+            # We need to keep history of all parent hidden states to fetch the correct one when a new parent is activated
             parent_hiddens = torch.zeros((batch_size * (num_steps + 1), self.hidden_size)).to(device=self.device)
+            # Initialize with E(X), features from the encoder. c^{alpha}_0 = W E(X), with W a linear transformation to map dimensions (684 to 256)
             parent_hiddens[:batch_size, :] = self.init_hidden(cnn_features, images_mask)
+            # c^{alpha}_p in the article, but for the reversed model (child-to-parent). So the parent state corresponding to the previous relation
             c2p_hidden = torch.zeros((batch_size, self.hidden_size)).to(device=self.device)
+            # Syntax-aware attention vector att_{\alpha}(X) per line, accumulated over the parents
             word_alpha_sums = torch.zeros((batch_size * (num_steps + 1), 1, height, width)).to(device=self.device)
 
+            # Iterate over the lines in the hybrid tree
             for i in range(num_steps):
 
                 parent_ids = labels[:,i,2].clone()
                 for item in range(len(parent_ids)):
                     parent_ids[item] = parent_ids[item] * batch_size + item
+                # retrieve hidden states c^{\alpha}_0 for the current line from the history (parent_hiddens)    
                 parent_hidden = parent_hiddens[parent_ids,:].contiguous()
+                # syntax-aware attention vector, Att_{\alpha}(X)
                 word_alpha_sum = word_alpha_sums[parent_ids, :, :, :].contiguous()
 
+                # Partner state, c^{\alpha}_p in the article. 
+                # Set to the latest generated terminal (teacher forcing strategy)
                 word_embedding = self.embedding(labels[:, i, 3])
 
-                # word
+                # GRU-alpha
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
+                # Attention mechanism. word_context_vec is \Omega in the article
                 word_context_vec, word_alpha, word_alpha_sum = self.word_attention(cnn_features, word_hidden_first,
                                                                                    word_alpha_sum, images_mask)
+                # GRU-beta
+                # hidden is c^{\alpha}_{\beta} in the article
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
                 if i != num_steps - 1:
+                    # update history
                     parent_hiddens[(i+1)*batch_size:(i+2)*batch_size,:] = hidden
                     word_alpha_sums[(i + 1) * batch_size:(i + 2) * batch_size, :, :, :] = word_alpha_sum
 
+                # map c^{\alpha}_{\beta}, c^{\alpha}_p, \Omega before aggregation
                 current_state = self.word_state_weight(hidden)
                 word_weighted_embedding = self.word_embedding_weight(word_embedding)
                 word_context_weighted = self.word_context_weight(word_context_vec)
 
                 """ child to parent """
+                # Walk the hybrid tree backwards to predict parents from (child + relation)
+                # E.g. for expression 2x_0: 
+                # - forward:         ['2'] --> ['x', 'right']
+                # - child-to-parent: ['0', 'sub'] --> 'x' 
+                # So we have 2 estimations for 'x'. We use the attention vector KL and the backward/forward probabilities 
+                # for x as a regulariser when calculating the loss
+
+                # the embedding of the last generated child (teacher forcing strategy)
                 child_embedding = self.embedding(labels[:, -(i + 1), 1])
+
+                # the embedding of the last generated relation (also using teacher forcing strategy)
                 relation = labels[:, -(i + 1), 3].clone()
                 for num in range(relation.shape[0]):
                     if labels[num, -(i + 1), 1] == self.STRUCT_ID: # struct
@@ -123,10 +149,11 @@ class SAN_decoder(nn.Module):
                         relation[num] = self.RIGHT_ID
                 relation_embedding = self.embedding(relation)
 
+                # the partner state of reversed GRU_alpha is concatenation of (child + relation). Like ['0', 'sub'] (but then the embedding vectors)
                 c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
                 c2p_context_vec, c2p_alpha, c2p_alpha_sum = self.c2p_attention(cnn_features, c2p_hidden_first,
                                                                                c2p_alpha_sum, images_mask)
-                c2p_hidden = self.c2p_out_gru(word_context_vec, word_hidden_first)
+                c2p_hidden = self.c2p_out_gru(c2p_context_vec, c2p_hidden_first)
 
                 c2p_state = self.c2p_state_weight(c2p_hidden)
                 c2p_weighted_word = self.c2p_word_weight(child_embedding)

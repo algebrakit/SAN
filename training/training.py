@@ -19,6 +19,10 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
     with tqdm(train_loader, total=len(train_loader)) as pbar:
         for batch_idx, (images, image_masks, labels, label_masks) in enumerate(pbar):
 
+            if batch_idx % 100 == 0:
+                # prevent OOM due to memory fragmentation
+                torch.cuda.empty_cache()
+
             images, image_masks, labels, label_masks = images.to(device), image_masks.to(device), labels.to(device), label_masks.to(device)
 
             batch, time = labels.shape[:2]
@@ -83,8 +87,9 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                     writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
                     writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
 
-                pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} WordRate: {word_right / length:.4f} '
-                                    f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+                pbar.set_description(f'Epoch: {epoch+1} LOSS: train: {loss_dt:.4f} parent: {parent_loss_dt:.4f} '
+                                     f'KL: {kl_loss_dt:.4f} RATE: Word: {word_right / length:.4f}  '
+                                     f'struct: {struct_right / length:.4f} Exp: {exp_right / cal_num:.4f}')
                 # pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
                 #                      f'struct loss: {struct_loss_dt:.4f} parent loss: {parent_loss_dt:.4f} '
                 #                      f'kl loss: {kl_loss_dt:.4f} WordRate: {word_right / length:.4f} '

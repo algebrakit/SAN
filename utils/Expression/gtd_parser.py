@@ -1,7 +1,7 @@
 from typing import Optional, List
 from .base import LatexItem
 from .expression import Expression
-from .constructs import AccentConstruct, StackConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
+from .constructs import AccentConstruct, RowConstruct, StackConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
 
 def parse_gtd(gtd_list) -> Optional[Expression]:
@@ -60,19 +60,25 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup)
 
         elif gtd_list[nodeid][0] == '\\stack':
-            rows:List[Expression] = []
+            inside = None
+            for i in range(len(child_list)):
+                if child_list[i][2].lower() == 'inside':
+                    inside = convert(child_list[i][1], gtd_list)
+            if inside is None:
+                inside = Expression.fromLatex(r'\row { }')
+            item = StackConstruct(construct_type='\\stack', inside=inside)
+
+        elif gtd_list[nodeid][0] == '\\row':
+            inside, below = None, None
+            for i in range(len(child_list)):
+                if child_list[i][2].lower() == 'inside':
+                    inside = convert(child_list[i][1], gtd_list)
             for i in range(len(child_list)):
                 if child_list[i][2].lower() == 'below':
-                    _seq = convert(child_list[i][1], gtd_list)
-                    if _seq:
-                        rows.append(_seq)
-            _items = []
-            for ii, row in enumerate(rows):
-                _items.extend(row.get_children())
-                if ii < len(rows)-1:
-                    _items.append(Symbol(r'\\'))
-            child = Expression(_items)
-            item = StackConstruct(construct_type='\\stack', child=child)
+                    below = convert(child_list[i][1], gtd_list)
+            if inside is None:
+                inside = Expression.fromLatex(' ')
+            item = RowConstruct(inside=inside, below=below)
 
         elif gtd_list[nodeid][0] in ACCENT_COMMANDS_ABOVE or gtd_list[nodeid][0] in ACCENT_COMMANDS_BELOW:
             is_above = gtd_list[nodeid][0] in ACCENT_COMMANDS_ABOVE

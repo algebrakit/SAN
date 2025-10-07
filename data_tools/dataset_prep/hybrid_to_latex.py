@@ -55,18 +55,23 @@ def _iter(nodeid, gtd_list, swapSubSup:bool):
                 if child_list[i][2] not in ['right','above','below']:
                     return_string += ['illegal']
         elif gtd_list[nodeid][0] == '\\stack':
-            return_string = [gtd_list[nodeid][0],'{']
-            rows = []
+            return_string = [gtd_list[nodeid][0]]
             for i in range(len(child_list)):
-                if child_list[i][2] == 'below':
-                    rows.append(' '.join(_iter(child_list[i][1], gtd_list,swapSubSup)))
-            args = r' \\ '.join(rows)
-            return_string.append(args)
-            return_string.append('}')     
-
+                if child_list[i][2] == 'inside':
+                    return_string += ['{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
             for i in range(len(child_list)):
                 if child_list[i][2] == 'right':
                     return_string += _iter(child_list[i][1], gtd_list,swapSubSup)
+
+        elif gtd_list[nodeid][0] == '\\row':
+            return_string = [gtd_list[nodeid][0]]
+            for i in range(len(child_list)):
+                if child_list[i][2] == 'inside':
+                    return_string += ['{'] + _iter(child_list[i][1], gtd_list,swapSubSup) + ['}']
+            for i in range(len(child_list)):
+                if child_list[i][2] == 'below':
+                    return_string += _iter(child_list[i][1], gtd_list,swapSubSup)
+
 
         elif gtd_list[nodeid][0] in ACCENT_COMMANDS_ABOVE or gtd_list[nodeid][0] in ACCENT_COMMANDS_BELOW:
             return_string = [gtd_list[nodeid][0]]

@@ -72,10 +72,6 @@ class Construct(LatexItem):
         """Convert construct to LaTeX representation."""
         pass
 
-    def get_region_lists(self) -> Tuple[str, list['Expression']] | None:
-        """Applies to region that occur multiple times, e.g. 'below' in StackConstruct."""
-        return None
-        
     @abstractmethod
     def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
@@ -134,36 +130,88 @@ class AccentConstruct(Construct):
             regions.append(('sup', self.sup))
         return regions
     
+class RowConstruct(Construct):
+    """Represents a row in a \\stack{\\row{..&..} \\row{..&..} }
+       Rows have content in the 'inside' region. 
+       Each row is in the 'below' region of every previous row.
+    """
+
+    def __init__(self,
+                 inside: 'Expression',
+                 below: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
+        super().__init__(r"\row", None, parent)
+        self.inside = inside
+        self.below = below
+        inside.parent = self
+
+    def toLatex(self) -> str:
+        """Convert row to LaTeX: \\row{..&..}"""
+        inside_latex = self.inside.toLatex() if self.inside else ""
+        result = f"{self.construct_type} {{ {inside_latex} }}"
+        if self.below:
+            result += self.below.toLatex()
+        return result
+
+    def toLatex_matrixForm(self) -> str:
+        """Convert row to LaTeX without \\rows but using '\\': ..&..  \\ ..&.. """
+        inside_latex = self.inside.toLatex() if self.inside else ""
+        result = inside_latex
+        if self.below:
+            next_row = self.below.get_children()[0]
+            result += r" \\ " + next_row.toLatex_matrixForm()
+        return result
+
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
+        """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
+
+        Returns regions in order: inside
+        """
+        regions = []
+        if self.inside:
+            regions.append(('inside', self.inside))
+        if self.below:
+            regions.append(('below', self.below))
+        return regions
+    
 class StackConstruct(Construct):
-    """Represents a matrix or vector \\stack{..&.. \\ ..&.. }
-       As a struct with a series of 'below' sequences
+    """Represents a matrix or vector \\stack{\\row{..&..} \\row{..&..} }
+       Content resides in the 'inside' region and consists of the 1st row.
+       Following rows appended 'below' regions.
+       So:
+       - stack
+           .inside = 
+              - row1
+                  .inside = [item, item, item]
+                  .below = 
+                      -row2
+                         .inside = ...
+       This way the parents of each row are the parents above (vertically) and the items in each row are aligned horizontally.
     """
 
     def __init__(self,
                  construct_type: str,
-                 child: 'Expression',
+                 inside: 'Expression',
                  parent: Optional['Expression'] = None):
         super().__init__(construct_type, None, parent)
-        self.child = child
-        child.parent = self
-        self.mtype = None
-
-        # Import at runtime to avoid circular dependency
         from .expression import Expression
 
-        # split items by '\\' symbol into rows
-        rows = []
-        _items = []
-        for item in self.child.items:
-            if isinstance(item, Symbol) and item.value == '\\\\':
-                rows.append(Expression(_items))
-                _items = []
-            else:
-                _items.append(item)
+        self.parent = parent
+        rows = inside.get_children() # List[RowConstruct]
+        first_row_expr = Expression([rows[0]])
+        self.inside = first_row_expr
+        inside.parent = self
+        self.mtype = None
 
-        if _items:
-            rows.append(Expression(_items))
-        self.rows = rows
+        lastRow = rows[0]
+        ii=1
+        while ii < len(rows):
+            row_expr = Expression([rows[ii]])
+            lastRow.below = row_expr
+            row_expr.parent = lastRow
+            lastRow = rows[ii]
+            ii += 1
+
 
     def set_matrix_type(self, mtype:str):
         self.mtype = mtype
@@ -171,10 +219,11 @@ class StackConstruct(Construct):
     def toLatex(self) -> str:
         """Convert stack to LaTeX: \\stack{..&.. \\ ..&.. }^{superscript}"""
 
-        child_latex = self.child.toLatex() if self.child else ""
         if self.mtype is None:
+            child_latex = self.inside.toLatex() if self.inside else ""
             result = f"{self.construct_type} {{ {child_latex} }}"
         else:
+            child_latex = self.inside.get_children()[0].toLatex_matrixForm()
             result = f"\\begin{{{self.mtype}}} {child_latex} \\end{{{self.mtype}}}"
             
         if self.sup:
@@ -182,19 +231,11 @@ class StackConstruct(Construct):
 
         return result
 
-    def get_region_lists(self) -> Tuple[str, list['Expression']] | None:
-        """Applies if multiple row."""
-        if len(self.rows) > 1:
-            return 'below', self.rows[1:]  # all rows except the first
-
-        return None
-    
     def get_regions(self) -> List[Tuple[str, 'Expression']]:
         """Get numerator, denominator, and optional superscript."""
         regions = []
 
-        if len(self.rows) > 0:
-            regions.append(('below', self.rows[0]))
+        regions.append(('inside', self.inside))
 
         return regions
 

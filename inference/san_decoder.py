@@ -114,6 +114,13 @@ class SAN_decoder(nn.Module):
 
                     structs = torch.sigmoid(struct_prob)
 
+                    # p_word_str = self.params['words'].words_index_dict[p_word.item()]
+                    # if p_word_str == '\\row':
+                    #     order = range(structs.shape[1])
+                    # else:    
+                    #     order = range(structs.shape[1]-1, -1, -1)
+
+                    # for num in order:
                     for num in range(structs.shape[1]-1, -1, -1):
                         if structs[0][num] > self.threshold:
                             struct_list.append((self.struct_dict[num], hidden, p_word, p_id, word_alpha_sum))
@@ -142,6 +149,14 @@ class SAN_decoder(nn.Module):
                             # illegal relation for sqrt, neglect
                             pass
                     elif p_word_str == '\\stack':
+                        if word_str == 'inside':
+                            p_re = 'Inside'
+                        else:
+                            # illegal relation for stack, neglect
+                            pass
+                    elif p_word_str == '\\row':
+                        if word_str == 'inside':
+                            p_re = 'Inside'
                         if word_str == 'below':
                             p_re = 'Below'
                         else:

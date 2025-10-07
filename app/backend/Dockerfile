@@ -63,7 +63,6 @@ COPY --chown=appuser:appuser utils/ ./utils/
 COPY --chown=appuser:appuser san_model/ ./san_model/
 COPY --chown=appuser:appuser data_tools/ ./data_tools/
 COPY --chown=appuser:appuser inference/ ./inference/
-COPY --chown=appuser:appuser checkpoints/ ./checkpoints/
 RUN mkdir -p training
 COPY --chown=appuser:appuser training/__init__.py ./training/
 COPY --chown=appuser:appuser training/dataset.py ./training/
