@@ -29,9 +29,11 @@ export class MathDrawer {
   @State() latexResult: string = '';
   @State() isProcessing: boolean = false;
   @State() error: string = '';
+  @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
 
   private canvas: HTMLCanvasElement;
   private strokeManager: StrokeManager;
+  private lastConvertedStrokeCount: number = 0;
   // Use relative URL in production to avoid CORS
   private apiUrl: string = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
 
@@ -100,6 +102,11 @@ export class MathDrawer {
   private stopDrawing = (event: PointerEvent) => {
     this.strokeManager.stopDrawing(event);
     this.strokeCount = this.strokeManager.getStrokeCount();
+
+    // Mark preview as outdated if we have a result and stroke count changed
+    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
+      this.previewState = 'outdated';
+    }
   };
 
   @Method()
@@ -108,18 +115,30 @@ export class MathDrawer {
     this.strokeCount = 0;
     this.latexResult = '';
     this.error = '';
+    this.previewState = 'none';
+    this.lastConvertedStrokeCount = 0;
   }
 
   @Method()
   async undo() {
     this.strokeManager.undo();
     this.strokeCount = this.strokeManager.getStrokeCount();
+
+    // Mark preview as outdated if we have a result and stroke count changed
+    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
+      this.previewState = 'outdated';
+    }
   }
 
   @Method()
   async redo() {
     this.strokeManager.redo();
     this.strokeCount = this.strokeManager.getStrokeCount();
+
+    // Mark preview as outdated if we have a result and stroke count changed
+    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
+      this.previewState = 'outdated';
+    }
   }
 
   @Method()
@@ -131,6 +150,7 @@ export class MathDrawer {
     }
 
     this.isProcessing = true;
+    this.previewState = 'updating';
     this.error = '';
 
     try {
@@ -155,6 +175,8 @@ export class MathDrawer {
 
       const result = await response.json();
       this.latexResult = result.latex;
+      this.lastConvertedStrokeCount = this.strokeCount;
+      this.previewState = 'current';
 
       // Trigger MathJax rendering after LaTeX content is updated
       setTimeout(() => {
@@ -171,6 +193,7 @@ export class MathDrawer {
     } catch (err) {
       this.error = `Error: ${err.message}`;
       console.error('Conversion error:', err);
+      this.previewState = this.latexResult ? 'outdated' : 'none';
     } finally {
       this.isProcessing = false;
     }
@@ -208,6 +231,23 @@ export class MathDrawer {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="16 18 22 12 16 6"></polyline>
         <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+    );
+  }
+
+  private renderRefreshIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    );
+  }
+
+  private renderSpinner() {
+    return (
+      <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
       </svg>
     );
   }
@@ -262,8 +302,22 @@ export class MathDrawer {
             />
           </div>
           {this.latexResult && (
-            <div class="inline-result">
+            <div
+              class={`inline-result ${this.previewState}`}
+              onClick={() => this.previewState === 'outdated' && this.convertToLatex()}
+              title={this.previewState === 'outdated' ? 'Click to update' : ''}
+            >
               <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
+              {this.previewState === 'outdated' && (
+                <div class="refresh-icon-overlay">
+                  {this.renderRefreshIcon()}
+                </div>
+              )}
+              {this.previewState === 'updating' && (
+                <div class="spinner-overlay">
+                  {this.renderSpinner()}
+                </div>
+              )}
             </div>
           )}
 

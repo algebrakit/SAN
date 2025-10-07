@@ -4,6 +4,8 @@
   align-items: stretch;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar {
@@ -67,6 +69,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .canvas-container {
@@ -77,6 +81,7 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   background: white;
   overflow: hidden;
+  max-width: 100%;
 }
 
 canvas {
@@ -107,6 +112,35 @@ canvas:active {
   max-width: 200px;
   pointer-events: none;
   animation: fadeIn 0.3s ease-in;
+  transition: all 0.3s ease;
+}
+
+.inline-result.current {
+  background-color: rgba(240, 253, 244, 0.95);
+  border: 1px solid #86efac;
+  box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3);
+}
+
+.inline-result.outdated {
+  background-color: rgba(254, 243, 199, 0.95);
+  border: 1px solid #fbbf24;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.inline-result.outdated:hover {
+  background-color: rgba(254, 243, 199, 1);
+  box-shadow: 0 3px 12px rgba(251, 191, 36, 0.4);
+  transform: translateY(-1px);
+}
+
+.inline-result.updating {
+  background-color: rgba(240, 253, 244, 0.95);
+  border: 1px solid #86efac;
+  box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3);
+  pointer-events: none;
+  cursor: wait;
 }
 
 @keyframes fadeIn {
@@ -129,6 +163,53 @@ canvas:active {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.refresh-icon-overlay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  background-color: rgba(251, 191, 36, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.refresh-icon-overlay svg {
+  width: 12px;
+  height: 12px;
+  color: white;
+}
+
+.spinner-overlay {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  color: #86efac;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-message {
