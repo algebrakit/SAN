@@ -40,37 +40,7 @@ class Expression:
 
     def toLatex(self) -> str:
         """Convert this expression to LaTeX by concatenating all items."""
-        _items = self.items.copy()
-        ii = 1
-        while ii < len(_items):
-            item = _items[ii]
-            if isinstance(item, StackConstruct):
-                #get the bracket types to determine the kind of matrix
-                matrix_type = 'matrix'
-                if ii > 0 and ii + 1 < len(_items):
-                    prev_item = _items[ii - 1]
-                    next_item = _items[ii + 1]
-                    if isinstance(prev_item, Symbol) and isinstance(next_item, Symbol):
-                        prev_symbol = prev_item.value
-                        next_symbol = next_item.value
-                        if prev_symbol == '(' and next_symbol == ')':
-                            matrix_type = 'pmatrix'
-                        elif prev_symbol == '[' and next_symbol == ']':
-                            matrix_type = 'bmatrix'
-                        elif prev_symbol == r'\{' and next_symbol == r'\}':
-                            matrix_type = 'Bmatrix'
-                        elif prev_symbol == '|' and next_symbol == '|':
-                            matrix_type = 'vmatrix'
-                        elif prev_symbol == r'\Vert' and next_symbol == r'\Vert':
-                            matrix_type = 'Vmatrix'
-                if matrix_type != 'matrix':
-                    _items.pop(ii+1)
-                    _items.pop(ii-1)
-                    item.set_matrix_type(matrix_type)
-                    continue
-
-            ii += 1
-
+        _items = _handleStackConstructs(self.items)
         return ' '.join(item.toLatex() for item in _items)
 
     def to_hybrid(self) -> List[List[Union[int, str, None]]]:
@@ -96,3 +66,47 @@ class Expression:
     def get_children(self) -> List[LatexItem]:
         """Get all items contained in this expression."""
         return self.items
+
+
+# ----------------------------------
+def _handleStackConstructs(items) -> List[LatexItem]:
+    _items = items.copy()
+    ii = 1
+    while ii < len(_items):
+        item = _items[ii]
+        if isinstance(item, StackConstruct):
+            #get the bracket types to determine the kind of matrix
+            matrix_type = 'matrix'
+            if ii > 0 and ii + 1 < len(_items):
+                prev_item = _items[ii - 1]
+                next_item = _items[ii + 1]
+                if isinstance(prev_item, Symbol) and isinstance(next_item, Symbol):
+                    prev_symbol = prev_item.value
+                    next_symbol = next_item.value
+                    if prev_symbol == '(' and next_symbol == ')':
+                        matrix_type = 'pmatrix'
+                    elif prev_symbol == '[' and next_symbol == ']':
+                        matrix_type = 'bmatrix'
+                    elif prev_symbol == r'\{' and next_symbol == r'\}':
+                        matrix_type = 'Bmatrix'
+                    elif prev_symbol == '|' and next_symbol == '|':
+                        if ii > 1 and ii+2 < len(_items) \
+                            and isinstance(_items[ii - 2], Symbol) and isinstance(_items[ii+2], Symbol) \
+                            and _items[ii - 2].value == _items[ii+2].value == '|':
+                                matrix_type = 'Vmatrix'
+                                _items.pop(ii+1)
+                                _items.pop(ii-1)
+                                ii -= 1
+                        else:
+                            matrix_type = 'vmatrix'
+                    elif prev_symbol == r'\Vert' and next_symbol == r'\Vert':
+                        matrix_type = 'Vmatrix'
+            if matrix_type != 'matrix':
+                _items.pop(ii+1)
+                _items.pop(ii-1)
+                ii -= 1
+            item.set_matrix_type(matrix_type)
+
+        ii += 1
+    return _items    
+
