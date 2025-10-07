@@ -114,12 +114,6 @@ class SAN_decoder(nn.Module):
 
                     structs = torch.sigmoid(struct_prob)
 
-                    # p_word_str = self.params['words'].words_index_dict[p_word.item()]
-                    # if p_word_str == '\\row':
-                    #     order = range(structs.shape[1])
-                    # else:    
-                    #     order = range(structs.shape[1]-1, -1, -1)
-
                     # for num in order:
                     for num in range(structs.shape[1]-1, -1, -1):
                         if structs[0][num] > self.threshold:

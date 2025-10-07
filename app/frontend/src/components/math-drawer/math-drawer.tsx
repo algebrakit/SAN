@@ -3,6 +3,7 @@ import { StrokeManager } from './stroke-manager';
 
 const CANVAS_WIDTH = 480;
 const CANVAS_HEIGHT = 280;
+const SCALE_FACTOR = 2; // 2x resolution for smoother rendering
 
 // Global window interface extension for MathJax
 declare global {
@@ -36,8 +37,19 @@ export class MathDrawer {
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
-    this.strokeManager = new StrokeManager(this.canvas);
+    this.setupHighDPICanvas();
+    this.strokeManager = new StrokeManager(this.canvas, SCALE_FACTOR);
     this.setupTouchEvents();
+  }
+
+  private setupHighDPICanvas() {
+    // Set the actual size in memory (scaled up for high DPI)
+    this.canvas.width = CANVAS_WIDTH * SCALE_FACTOR;
+    this.canvas.height = CANVAS_HEIGHT * SCALE_FACTOR;
+
+    // Set the display size (CSS pixels)
+    this.canvas.style.width = `${CANVAS_WIDTH}px`;
+    this.canvas.style.height = `${CANVAS_HEIGHT}px`;
   }
 
   private setupTouchEvents() {
@@ -169,8 +181,6 @@ export class MathDrawer {
       <div class="math-drawer-container">
         <div class="canvas-container">
           <canvas
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
             onPointerDown={this.startDrawing}
             onPointerMove={this.draw}
             onPointerUp={this.stopDrawing}

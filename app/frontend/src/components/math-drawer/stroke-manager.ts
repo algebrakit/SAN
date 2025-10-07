@@ -18,18 +18,26 @@ export class StrokeManager {
   private undoStack: Stroke[][] = [];
   private redoStack: Stroke[][] = [];
   private highlightedStrokeIds: number[] = [];
+  private scaleFactor: number;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.scaleFactor = scaleFactor;
     this.setupCanvas();
   }
 
   private setupCanvas() {
+    // Scale the context to match the high DPI canvas
+    this.ctx.scale(this.scaleFactor, this.scaleFactor);
+
     this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 2;
+    this.ctx.lineWidth = 2.5;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
+    // Enable anti-aliasing
+    this.ctx.imageSmoothingEnabled = true;
+    this.ctx.imageSmoothingQuality = 'high';
   }
 
   private getPointerPosition(event: PointerEvent): Point {
