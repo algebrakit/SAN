@@ -80,8 +80,29 @@
   border-radius: 0 8px 8px 0;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   background: white;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   max-width: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #9aa3af #f0f3f7;
+}
+
+.canvas-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.canvas-container::-webkit-scrollbar-track {
+  background: #f0f3f7;
+  border-radius: 0 0 8px 0;
+}
+
+.canvas-container::-webkit-scrollbar-thumb {
+  background: #9aa3af;
+  border-radius: 4px;
+}
+
+.canvas-container::-webkit-scrollbar-thumb:hover {
+  background: #7a8491;
 }
 
 canvas {
@@ -163,6 +184,13 @@ canvas:active {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.empty-preview-text {
+  color: #6b7280;
+  font-size: 13px;
+  padding: 4px 8px;
+  text-align: center;
 }
 
 .refresh-icon-overlay {
@@ -286,5 +314,14 @@ canvas:active {
   .icon-button svg {
     width: 22px;
     height: 22px;
+  }
+
+  /* Hide scrollbar on touch devices - use two-finger pan instead */
+  .canvas-container {
+    scrollbar-width: none;
+  }
+
+  .canvas-container::-webkit-scrollbar {
+    display: none;
   }
 }

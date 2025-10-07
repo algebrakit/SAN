@@ -30,18 +30,27 @@ export class MathDrawer {
   @State() isProcessing: boolean = false;
   @State() error: string = '';
   @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
+  @State() panOffsetX: number = 0;
 
   private canvas: HTMLCanvasElement;
+  private canvasContainer: HTMLElement;
   private strokeManager: StrokeManager;
   private lastConvertedStrokeCount: number = 0;
   // Use relative URL in production to avoid CORS
   private apiUrl: string = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
 
+  // Pan gesture tracking
+  private isPanning: boolean = false;
+  private lastTouchPoints: { x: number; y: number }[] = [];
+  private panStartOffset: number = 0;
+
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
+    this.canvasContainer = this.el.querySelector('.canvas-container');
     this.setupHighDPICanvas();
     this.strokeManager = new StrokeManager(this.canvas, SCALE_FACTOR);
     this.setupTouchEvents();
+    this.setupPanEvents();
   }
 
   private setupHighDPICanvas() {
@@ -60,24 +69,35 @@ export class MathDrawer {
       e.preventDefault();
     });
 
-    // Prevent scrolling when touching the canvas
+    // Prevent scrolling when touching the canvas with one finger
     this.canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         e.preventDefault();
+      } else if (e.touches.length === 2) {
+        // Two-finger touch - start pan gesture
+        e.preventDefault();
+        this.handlePanStart(e);
       }
     }, { passive: false });
 
     this.canvas.addEventListener('touchmove', (e) => {
       if (e.touches.length === 1) {
         e.preventDefault();
+      } else if (e.touches.length === 2) {
+        // Two-finger move - pan gesture
+        e.preventDefault();
+        this.handlePanMove(e);
       }
     }, { passive: false });
 
     this.canvas.addEventListener('touchend', (e) => {
       e.preventDefault();
+      if (this.isPanning) {
+        this.handlePanEnd();
+      }
     }, { passive: false });
 
-    // Prevent multi-touch gestures
+    // Prevent multi-touch gestures (pinch zoom)
     this.canvas.addEventListener('gesturestart', (e) => {
       e.preventDefault();
     }, { passive: false });
@@ -91,21 +111,91 @@ export class MathDrawer {
     }, { passive: false });
   }
 
+  private setupPanEvents() {
+    // Desktop scrollbar support
+    if (this.canvasContainer) {
+      this.canvasContainer.addEventListener('scroll', () => {
+        this.panOffsetX = this.canvasContainer.scrollLeft;
+      });
+    }
+  }
+
+  private handlePanStart(event: TouchEvent) {
+    if (event.touches.length !== 2) return;
+
+    this.isPanning = true;
+    this.panStartOffset = this.panOffsetX;
+
+    // Store initial touch points
+    this.lastTouchPoints = [
+      { x: event.touches[0].clientX, y: event.touches[0].clientY },
+      { x: event.touches[1].clientX, y: event.touches[1].clientY }
+    ];
+  }
+
+  private handlePanMove(event: TouchEvent) {
+    if (!this.isPanning || event.touches.length !== 2) return;
+
+    const currentTouchPoints = [
+      { x: event.touches[0].clientX, y: event.touches[0].clientY },
+      { x: event.touches[1].clientX, y: event.touches[1].clientY }
+    ];
+
+    // Calculate center point movement
+    const lastCenterX = (this.lastTouchPoints[0].x + this.lastTouchPoints[1].x) / 2;
+    const currentCenterX = (currentTouchPoints[0].x + currentTouchPoints[1].x) / 2;
+
+    const deltaX = currentCenterX - lastCenterX;
+
+    // Update pan offset (invert delta for natural scrolling)
+    const newOffset = this.panOffsetX - deltaX;
+
+    // Calculate max scroll (canvas width - container width)
+    const containerWidth = this.canvasContainer?.clientWidth || CANVAS_WIDTH;
+    const maxScroll = Math.max(0, CANVAS_WIDTH - containerWidth);
+
+    // Clamp to bounds
+    this.panOffsetX = Math.max(0, Math.min(maxScroll, newOffset));
+
+    // Sync with scrollbar if available
+    if (this.canvasContainer) {
+      this.canvasContainer.scrollLeft = this.panOffsetX;
+    }
+
+    this.lastTouchPoints = currentTouchPoints;
+  }
+
+  private handlePanEnd() {
+    this.isPanning = false;
+    this.lastTouchPoints = [];
+  }
+
   private startDrawing = (event: PointerEvent) => {
+    // Don't start drawing if we're panning
+    if (this.isPanning) return;
     this.strokeManager.startDrawing(event);
   };
 
   private draw = (event: PointerEvent) => {
+    // Don't draw if we're panning
+    if (this.isPanning) return;
     this.strokeManager.draw(event);
   };
 
   private stopDrawing = (event: PointerEvent) => {
+    // Don't process stop if we're panning
+    if (this.isPanning) return;
+
     this.strokeManager.stopDrawing(event);
     this.strokeCount = this.strokeManager.getStrokeCount();
 
-    // Mark preview as outdated if we have a result and stroke count changed
-    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
-      this.previewState = 'outdated';
+    // Show preview in outdated state if there are strokes
+    if (this.strokeCount > 0) {
+      // If we have a result and stroke count changed, mark as outdated
+      // If we don't have a result yet, also show as outdated (needs conversion)
+      if (!this.latexResult || this.strokeCount !== this.lastConvertedStrokeCount) {
+        this.previewState = 'outdated';
+      }
     }
   };
 
@@ -117,6 +207,11 @@ export class MathDrawer {
     this.error = '';
     this.previewState = 'none';
     this.lastConvertedStrokeCount = 0;
+    // Reset pan position
+    this.panOffsetX = 0;
+    if (this.canvasContainer) {
+      this.canvasContainer.scrollLeft = 0;
+    }
   }
 
   @Method()
@@ -280,15 +375,6 @@ export class MathDrawer {
           >
             {this.renderTrashIcon()}
           </button>
-          <div class="spacer"></div>
-          <button
-            class="icon-button"
-            onClick={() => this.convertToLatex()}
-            disabled={this.isProcessing || this.strokeCount === 0}
-            title="Convert to LaTeX"
-          >
-            {this.renderConvertIcon()}
-          </button>
         </div>
 
         <div class="canvas-wrapper">
@@ -301,13 +387,17 @@ export class MathDrawer {
               style={{ touchAction: 'none' }}
             />
           </div>
-          {this.latexResult && (
+          {this.previewState !== 'none' && (
             <div
               class={`inline-result ${this.previewState}`}
               onClick={() => this.previewState === 'outdated' && this.convertToLatex()}
-              title={this.previewState === 'outdated' ? 'Click to update' : ''}
+              title={this.previewState === 'outdated' ? 'Click to convert' : ''}
             >
-              <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
+              {this.latexResult ? (
+                <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
+              ) : (
+                <div class="empty-preview-text">Click to convert</div>
+              )}
               {this.previewState === 'outdated' && (
                 <div class="refresh-icon-overlay">
                   {this.renderRefreshIcon()}
