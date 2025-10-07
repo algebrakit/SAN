@@ -176,53 +176,102 @@ export class MathDrawer {
     }
   }
 
+  private renderUndoIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7v6h6"></path>
+        <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path>
+      </svg>
+    );
+  }
+
+  private renderRedoIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 7v6h-6"></path>
+        <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"></path>
+      </svg>
+    );
+  }
+
+  private renderTrashIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+      </svg>
+    );
+  }
+
+  private renderConvertIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+    );
+  }
+
   render() {
     return (
       <div class="math-drawer-container">
-        <div class="canvas-container">
-          <canvas
-            onPointerDown={this.startDrawing}
-            onPointerMove={this.draw}
-            onPointerUp={this.stopDrawing}
-            onPointerOut={this.stopDrawing}
-            style={{ touchAction: 'none' }}
-          />
+        <div class="sidebar">
+          <button
+            class="icon-button"
+            onClick={() => this.undo()}
+            disabled={this.isProcessing || !this.strokeManager?.canUndo()}
+            title="Undo"
+          >
+            {this.renderUndoIcon()}
+          </button>
+          <button
+            class="icon-button"
+            onClick={() => this.redo()}
+            disabled={this.isProcessing || !this.strokeManager?.canRedo()}
+            title="Redo"
+          >
+            {this.renderRedoIcon()}
+          </button>
+          <button
+            class="icon-button"
+            onClick={() => this.clearCanvas()}
+            disabled={this.isProcessing}
+            title="Clear"
+          >
+            {this.renderTrashIcon()}
+          </button>
+          <div class="spacer"></div>
+          <button
+            class="icon-button"
+            onClick={() => this.convertToLatex()}
+            disabled={this.isProcessing || this.strokeCount === 0}
+            title="Convert to LaTeX"
+          >
+            {this.renderConvertIcon()}
+          </button>
         </div>
-        
-        <div class="controls">
-          <button onClick={() => this.undo()} disabled={this.isProcessing || !this.strokeManager?.canUndo()}>
-            Undo
-          </button>
-          <button onClick={() => this.redo()} disabled={this.isProcessing || !this.strokeManager?.canRedo()}>
-            Redo
-          </button>
-          <button onClick={() => this.clearCanvas()} disabled={this.isProcessing}>
-            Clear
-          </button>
-          <button onClick={() => this.convertToLatex()} disabled={this.isProcessing || this.strokeCount === 0}>
-            {this.isProcessing ? 'Converting...' : 'Convert to LaTeX'}
-          </button>
-        </div>
-        
-        {this.error && (
-          <div class="error-message">
-            {this.error}
+
+        <div class="canvas-wrapper">
+          <div class="canvas-container">
+            <canvas
+              onPointerDown={this.startDrawing}
+              onPointerMove={this.draw}
+              onPointerUp={this.stopDrawing}
+              onPointerOut={this.stopDrawing}
+              style={{ touchAction: 'none' }}
+            />
+            {this.latexResult && (
+              <div class="inline-result">
+                <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
+              </div>
+            )}
           </div>
-        )}
-        
-        {this.latexResult && (
-          <div class="latex-result">
-            <h3>LaTeX Result:</h3>
-            <div class="latex-output">
-              <code>{this.latexResult}</code>
+
+          {this.error && (
+            <div class="error-message">
+              {this.error}
             </div>
-            <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
-          </div>
-        )}
-        
-        <div class="info">
-          <p>Draw mathematical expressions using your mouse, stylus, or finger.</p>
-          <p>Strokes: {this.strokeCount}</p>
+          )}
         </div>
       </div>
     );

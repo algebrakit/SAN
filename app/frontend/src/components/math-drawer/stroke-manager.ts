@@ -19,6 +19,9 @@ export class StrokeManager {
   private redoStack: Stroke[][] = [];
   private highlightedStrokeIds: number[] = [];
   private scaleFactor: number;
+  private showGrid: boolean = true;
+  private gridSpacing: number = 20; // Grid spacing in pixels
+  private gridColor: string = '#e5e7eb'; // Light gray
 
   constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
@@ -38,6 +41,9 @@ export class StrokeManager {
     // Enable anti-aliasing
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
+
+    // Draw initial grid
+    this.drawGrid();
   }
 
   private getPointerPosition(event: PointerEvent): Point {
@@ -161,9 +167,41 @@ export class StrokeManager {
     this.redrawCanvas();
   }
 
+  private drawGrid(): void {
+    if (!this.showGrid) return;
+
+    const width = this.canvas.width / this.scaleFactor;
+    const height = this.canvas.height / this.scaleFactor;
+
+    this.ctx.save();
+    this.ctx.strokeStyle = this.gridColor;
+    this.ctx.lineWidth = 0.5;
+
+    // Draw vertical lines
+    for (let x = 0; x <= width; x += this.gridSpacing) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(x, 0);
+      this.ctx.lineTo(x, height);
+      this.ctx.stroke();
+    }
+
+    // Draw horizontal lines
+    for (let y = 0; y <= height; y += this.gridSpacing) {
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, y);
+      this.ctx.lineTo(width, y);
+      this.ctx.stroke();
+    }
+
+    this.ctx.restore();
+  }
+
   private redrawCanvas(): void {
     // Clear canvas
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // Draw grid first (so it's behind strokes)
+    this.drawGrid();
 
     // Redraw all strokes with appropriate colors
     this.strokes.forEach(stroke => {
@@ -256,5 +294,10 @@ export class StrokeManager {
 
   getStrokeCount(): number {
     return this.strokes.length;
+  }
+
+  setShowGrid(show: boolean): void {
+    this.showGrid = show;
+    this.redrawCanvas();
   }
 }
