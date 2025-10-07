@@ -1,7 +1,7 @@
 import { Component, h, State, Element, Method } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
 
-const CANVAS_WIDTH = 480;
+const CANVAS_WIDTH = 2000;
 const CANVAS_HEIGHT = 280;
 const SCALE_FACTOR = 2; // 2x resolution for smoother rendering
 
@@ -47,7 +47,7 @@ export class MathDrawer {
     this.canvas.width = CANVAS_WIDTH * SCALE_FACTOR;
     this.canvas.height = CANVAS_HEIGHT * SCALE_FACTOR;
 
-    // Set the display size (CSS pixels)
+    // Set the display size (CSS pixels) - fixed size, container will clip
     this.canvas.style.width = `${CANVAS_WIDTH}px`;
     this.canvas.style.height = `${CANVAS_HEIGHT}px`;
   }
@@ -260,12 +260,12 @@ export class MathDrawer {
               onPointerOut={this.stopDrawing}
               style={{ touchAction: 'none' }}
             />
-            {this.latexResult && (
-              <div class="inline-result">
-                <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
-              </div>
-            )}
           </div>
+          {this.latexResult && (
+            <div class="inline-result">
+              <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
+            </div>
+          )}
 
           {this.error && (
             <div class="error-message">

@@ -21,7 +21,7 @@ export class StrokeManager {
   private scaleFactor: number;
   private showGrid: boolean = true;
   private gridSpacing: number = 20; // Grid spacing in pixels
-  private gridColor: string = '#e5e7eb'; // Light gray
+  private gridColor: string = '#d8dde3'; // Subtle gray to match design
 
   constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
@@ -139,6 +139,7 @@ export class StrokeManager {
     this.redoStack = [];
     this.highlightedStrokeIds = [];
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawGrid();
   }
 
   undo(): void {
