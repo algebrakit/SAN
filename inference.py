@@ -132,6 +132,7 @@ with torch.no_grad():
             with open('bad_case.json', 'w') as f:
                 json.dump(bad_case, f, ensure_ascii=False)
 
+        break
     print(exp_right / len(labels))
 
 with open('bad_case.json', 'w') as f:

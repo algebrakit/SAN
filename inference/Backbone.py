@@ -22,7 +22,7 @@ class Backbone(nn.Module):
     def forward(self, images, images_mask):
 
         cnn_features = self.encoder(images)
-        prediction = self.decoder(cnn_features, images_mask)
+        prediction = self.decoder(cnn_features, images_mask, images)
 
         return prediction
 

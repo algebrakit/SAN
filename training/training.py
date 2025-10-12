@@ -16,6 +16,8 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
     accumulation_steps = params.get('gradient_accumulation_steps', 1)
     scaler = params['scaler']
 
+    peak_mem = 0
+
     with tqdm(train_loader, total=len(train_loader)) as pbar:
         for batch_idx, (images, image_masks, labels, label_masks) in enumerate(pbar):
 
@@ -59,7 +61,14 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
 
             # Mixed precision backward pass
             scaler.scale(loss).backward()
-
+    
+            mem_use = torch.cuda.max_memory_allocated() / 1e9
+            if mem_use > peak_mem:
+                peak_mem = mem_use
+                print(f"Peak memory: {peak_mem:.2f} GB")
+            if batch_idx % 3000 == 0:
+                print(f"Peak memory: {peak_mem:.2f} GB")
+            
             # Only step optimizer every accumulation_steps
             if (batch_idx + 1) % accumulation_steps == 0 or (batch_idx + 1) == len(train_loader):
                 if params['gradient_clip']:

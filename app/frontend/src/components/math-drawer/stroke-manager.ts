@@ -22,6 +22,8 @@ export class StrokeManager {
   private showGrid: boolean = true;
   private gridSpacing: number = 20; // Grid spacing in pixels
   private gridColor: string = '#d8dde3'; // Subtle gray to match design
+  private eraserRadius: number = 15; // Eraser radius in pixels
+  private strokesToErase: Set<number> = new Set(); // Track strokes to erase during current drag
 
   constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
@@ -130,6 +132,16 @@ export class StrokeManager {
     }
 
     this.currentStroke = [];
+  }
+
+  // Cancel drawing (on pointer out) - don't save the stroke
+  cancelDrawing(): void {
+    if (!this.isDrawing) return;
+
+    this.isDrawing = false;
+    this.currentStroke = [];
+    this.highlightedStrokeIds = [];
+    this.redrawCanvas();
   }
 
   clear(): void {
@@ -299,6 +311,138 @@ export class StrokeManager {
 
   setShowGrid(show: boolean): void {
     this.showGrid = show;
+    this.redrawCanvas();
+  }
+
+  // Calculate distance from a point to a line segment
+  private pointToSegmentDistance(point: Point, segStart: Point, segEnd: Point): number {
+    const A = point.x - segStart.x;
+    const B = point.y - segStart.y;
+    const C = segEnd.x - segStart.x;
+    const D = segEnd.y - segStart.y;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+
+    if (lenSq !== 0) {
+      param = dot / lenSq;
+    }
+
+    let xx, yy;
+
+    if (param < 0) {
+      xx = segStart.x;
+      yy = segStart.y;
+    } else if (param > 1) {
+      xx = segEnd.x;
+      yy = segEnd.y;
+    } else {
+      xx = segStart.x + param * C;
+      yy = segStart.y + param * D;
+    }
+
+    const dx = point.x - xx;
+    const dy = point.y - yy;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Check if a point is within eraser radius of any part of a stroke
+  private isStrokeInEraserRadius(stroke: Stroke, point: Point, radius: number): boolean {
+    // Check distance from point to each segment in the stroke
+    for (let i = 0; i < stroke.points.length - 1; i++) {
+      const distance = this.pointToSegmentDistance(point, stroke.points[i], stroke.points[i + 1]);
+      if (distance <= radius) {
+        return true;
+      }
+    }
+
+    // Also check distance to individual points (for single-point strokes or endpoints)
+    for (const strokePoint of stroke.points) {
+      const dx = point.x - strokePoint.x;
+      const dy = point.y - strokePoint.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance <= radius) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Detect strokes within eraser radius
+  detectErasableStrokes(point: Point): number[] {
+    const erasableIds: number[] = [];
+
+    this.strokes.forEach(stroke => {
+      if (this.isStrokeInEraserRadius(stroke, point, this.eraserRadius)) {
+        erasableIds.push(stroke.id);
+      }
+    });
+
+    return erasableIds;
+  }
+
+  // Start erasing mode
+  startErasing(point: Point): void {
+    // Save current state to undo stack before any erasing
+    this.undoStack.push([...this.strokes]);
+    this.redoStack = []; // Clear redo stack when new action is performed
+    this.strokesToErase.clear();
+
+    // Detect and mark strokes for erasing
+    const erasableIds = this.detectErasableStrokes(point);
+    erasableIds.forEach(id => this.strokesToErase.add(id));
+
+    // Highlight strokes that will be erased
+    this.highlightedStrokeIds = erasableIds;
+    this.redrawCanvas();
+  }
+
+  // Continue erasing (during drag)
+  continueErasing(point: Point): void {
+    const erasableIds = this.detectErasableStrokes(point);
+    let changed = false;
+
+    erasableIds.forEach(id => {
+      if (!this.strokesToErase.has(id)) {
+        this.strokesToErase.add(id);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      this.highlightedStrokeIds = Array.from(this.strokesToErase);
+      this.redrawCanvas();
+    }
+  }
+
+  // Stop erasing (on pointer up) - actually delete the strokes
+  stopErasing(): void {
+    if (this.strokesToErase.size > 0) {
+      // Remove all marked strokes
+      this.strokes = this.strokes.filter(stroke => !this.strokesToErase.has(stroke.id));
+      this.strokesToErase.clear();
+    } else {
+      // No strokes were erased, remove the undo state we added
+      this.undoStack.pop();
+    }
+
+    // Clear highlighting
+    this.highlightedStrokeIds = [];
+    this.redrawCanvas();
+  }
+
+  // Cancel erasing (on pointer out) - don't delete, just clear highlights
+  cancelErasing(): void {
+    // Remove the undo state we added since no deletion happened
+    if (this.strokesToErase.size > 0 || this.highlightedStrokeIds.length > 0) {
+      this.undoStack.pop();
+    }
+
+    // Clear all erasing state
+    this.strokesToErase.clear();
+    this.highlightedStrokeIds = [];
     this.redrawCanvas();
   }
 }

@@ -31,6 +31,7 @@ export class MathDrawer {
   @State() error: string = '';
   @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
   @State() panOffsetX: number = 0;
+  @State() isEraserMode: boolean = false;
 
   private canvas: HTMLCanvasElement;
   private canvasContainer: HTMLElement;
@@ -42,7 +43,11 @@ export class MathDrawer {
   // Pan gesture tracking
   private isPanning: boolean = false;
   private lastTouchPoints: { x: number; y: number }[] = [];
-  private panStartOffset: number = 0;
+  private panEndTimestamp: number = 0;
+  private readonly PAN_COOLDOWN_MS: number = 200; // 0.4 second cooldown after panning
+
+  // Eraser tracking
+  private isErasing: boolean = false;
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
@@ -81,9 +86,9 @@ export class MathDrawer {
     }, { passive: false });
 
     this.canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1) {
+      if (e.touches.length === 1 && !this.isPanning) {
         e.preventDefault();
-      } else if (e.touches.length === 2) {
+      } else if (e.touches.length >= 2) {
         // Two-finger move - pan gesture
         e.preventDefault();
         this.handlePanMove(e);
@@ -91,6 +96,14 @@ export class MathDrawer {
     }, { passive: false });
 
     this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      if (this.isPanning && e.touches.length < 2) {
+        // Pan ends when we have less than 2 fingers
+        this.handlePanEnd();
+      }
+    }, { passive: false });
+
+    this.canvas.addEventListener('touchcancel', (e) => {
       e.preventDefault();
       if (this.isPanning) {
         this.handlePanEnd();
@@ -124,7 +137,9 @@ export class MathDrawer {
     if (event.touches.length !== 2) return;
 
     this.isPanning = true;
-    this.panStartOffset = this.panOffsetX;
+
+    // Cancel any active drawing when pan starts
+    this.cancelDrawing();
 
     // Store initial touch points
     this.lastTouchPoints = [
@@ -163,41 +178,108 @@ export class MathDrawer {
     }
 
     this.lastTouchPoints = currentTouchPoints;
+    // keep track of the last time we were in panning...
+    this.panEndTimestamp = Date.now();
   }
 
   private handlePanEnd() {
     this.isPanning = false;
     this.lastTouchPoints = [];
+    // Update timestamp when pan actually ends
+    this.panEndTimestamp = Date.now();
+  }
+
+  private getCanvasPoint(event: PointerEvent): { x: number; y: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
   }
 
   private startDrawing = (event: PointerEvent) => {
     // Don't start drawing if we're panning
-    if (this.isPanning) return;
-    this.strokeManager.startDrawing(event);
+    if (this.isPanning) {
+      event.preventDefault();
+      return;
+    }
+
+    // Don't start drawing if we just finished panning (within cooldown period)
+    const timeSincePanEnd = Date.now() - this.panEndTimestamp;
+    if (this.panEndTimestamp > 0 && timeSincePanEnd < this.PAN_COOLDOWN_MS) {
+      event.preventDefault();
+      return;
+    }
+
+    if (this.isEraserMode) {
+      // Start erasing
+      const point = this.getCanvasPoint(event);
+      this.strokeManager.startErasing(point);
+      this.isErasing = true;
+    } else {
+      // Normal drawing
+      this.strokeManager.startDrawing(event);
+    }
   };
 
   private draw = (event: PointerEvent) => {
     // Don't draw if we're panning
     if (this.isPanning) return;
-    this.strokeManager.draw(event);
+
+    if (this.isEraserMode) {
+      // Continue erasing
+      const point = this.getCanvasPoint(event);
+      this.strokeManager.continueErasing(point);
+    } else {
+      // Normal drawing
+      this.strokeManager.draw(event);
+    }
   };
 
   private stopDrawing = (event: PointerEvent) => {
     // Don't process stop if we're panning
     if (this.isPanning) return;
 
-    this.strokeManager.stopDrawing(event);
-    this.strokeCount = this.strokeManager.getStrokeCount();
+    if (this.isEraserMode && this.isErasing) {
+      // Stop erasing - actually delete the strokes
+      this.strokeManager.stopErasing();
+      this.isErasing = false;
+      this.strokeCount = this.strokeManager.getStrokeCount();
 
-    // Show preview in outdated state if there are strokes
-    if (this.strokeCount > 0) {
-      // If we have a result and stroke count changed, mark as outdated
-      // If we don't have a result yet, also show as outdated (needs conversion)
-      if (!this.latexResult || this.strokeCount !== this.lastConvertedStrokeCount) {
+      // Update preview state if needed
+      if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
         this.previewState = 'outdated';
+      }
+    } else if (!this.isEraserMode) {
+      // Normal drawing stop
+      this.strokeManager.stopDrawing(event);
+      this.strokeCount = this.strokeManager.getStrokeCount();
+
+      // Show preview in outdated state if there are strokes
+      if (this.strokeCount > 0) {
+        // If we have a result and stroke count changed, mark as outdated
+        // If we don't have a result yet, also show as outdated (needs conversion)
+        if (!this.latexResult || this.strokeCount !== this.lastConvertedStrokeCount) {
+          this.previewState = 'outdated';
+        }
       }
     }
   };
+
+  private cancelDrawing = () => {
+    if (this.isEraserMode && this.isErasing) {
+      // Cancel erasing - don't delete, just clear highlights
+      this.strokeManager.cancelErasing();
+      this.isErasing = false;
+    } else if (!this.isEraserMode) {
+      // For normal drawing, cancel without saving
+      this.strokeManager.cancelDrawing();
+    }
+  };
+
+  private toggleEraserMode() {
+    this.isEraserMode = !this.isEraserMode;
+  }
 
   @Method()
   async clearCanvas() {
@@ -207,6 +289,7 @@ export class MathDrawer {
     this.error = '';
     this.previewState = 'none';
     this.lastConvertedStrokeCount = 0;
+    this.isEraserMode = false; // Exit eraser mode when clearing
     // Reset pan position
     this.panOffsetX = 0;
     if (this.canvasContainer) {
@@ -321,20 +404,20 @@ export class MathDrawer {
     );
   }
 
-  private renderConvertIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 18 22 12 16 6"></polyline>
-        <polyline points="8 6 2 12 8 18"></polyline>
-      </svg>
-    );
-  }
-
   private renderRefreshIcon() {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="23 4 23 10 17 10"></polyline>
         <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    );
+  }
+
+  private renderEraserIcon() {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 20H7L3 16L12 7L17 12M11 11L13 13"></path>
+        <path d="M8.5 15.5L6 13"></path>
       </svg>
     );
   }
@@ -375,15 +458,24 @@ export class MathDrawer {
           >
             {this.renderTrashIcon()}
           </button>
+          <button
+            class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
+            onClick={() => this.toggleEraserMode()}
+            disabled={this.isProcessing}
+            title="Eraser"
+          >
+            {this.renderEraserIcon()}
+          </button>
         </div>
 
         <div class="canvas-wrapper">
           <div class="canvas-container">
             <canvas
+              class={this.isEraserMode ? 'eraser-cursor' : ''}
               onPointerDown={this.startDrawing}
               onPointerMove={this.draw}
               onPointerUp={this.stopDrawing}
-              onPointerOut={this.stopDrawing}
+              onPointerOut={this.cancelDrawing}
               style={{ touchAction: 'none' }}
             />
           </div>

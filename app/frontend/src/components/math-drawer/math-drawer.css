@@ -63,6 +63,17 @@
   opacity: 0.4;
 }
 
+.icon-button.active {
+  background-color: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.icon-button.active:hover {
+  background-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+}
+
 .canvas-wrapper {
   flex: 1;
   min-width: 0;
@@ -121,6 +132,14 @@ canvas:active {
   cursor: none;
 }
 
+canvas.eraser-cursor {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="none" stroke="rgba(239, 68, 68, 0.6)" stroke-width="2"/><circle cx="16" cy="16" r="2" fill="rgba(239, 68, 68, 0.8)"/></svg>') 16 16, crosshair;
+}
+
+canvas.eraser-cursor:active {
+  cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="rgba(239, 68, 68, 0.2)" stroke="rgba(239, 68, 68, 0.8)" stroke-width="2"/><circle cx="16" cy="16" r="2" fill="rgba(239, 68, 68, 1)"/></svg>') 16 16, crosshair;
+}
+
 .inline-result {
   position: absolute;
   bottom: 10px;
@@ -130,7 +149,8 @@ canvas:active {
   border-radius: 6px;
   padding: 8px 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  max-width: 200px;
+  max-width: calc(100% - 40px);
+  min-width: 100px;
   pointer-events: none;
   animation: fadeIn 0.3s ease-in;
   transition: all 0.3s ease;
@@ -184,6 +204,9 @@ canvas:active {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
 }
 
 .empty-preview-text {

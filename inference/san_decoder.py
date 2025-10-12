@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from .attention import Attention
 from utils.Expression.defs import ABOVE_BELOW_COMMANDS, ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
+from utils.show_attention import visualize_attention
 
 class SAN_decoder(nn.Module):
 
@@ -63,7 +64,7 @@ class SAN_decoder(nn.Module):
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
 
-    def forward(self, cnn_features, images_mask):
+    def forward(self, cnn_features, images_mask, images):
 
         height, width = cnn_features.shape[2:]
         images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
@@ -90,7 +91,7 @@ class SAN_decoder(nn.Module):
 
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
-                word_context_vec, word_alpha, word_alpha_sum = self.word_attention(cnn_features, word_hidden_first,
+                word_context_vec, word_alpha, word_alpha_sum, alpha_query, alpha_coverage = self.word_attention(cnn_features, word_hidden_first,
                                                                                    word_alpha_sum, images_mask)
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
@@ -225,6 +226,12 @@ class SAN_decoder(nn.Module):
                     pid = cid
                     word_embedding = self.embedding(word)
                     parent_hidden = hidden.clone()
+
+                # show attention heatmap
+                image = images[0,0,:,:]
+                alpha = word_alpha[0,:,:]
+                visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
+                        
 
         return result
 
