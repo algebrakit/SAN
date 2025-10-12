@@ -60,6 +60,8 @@ decoder:
 # Attention parameters
 attention:
   attention_dim: 512
+  use_position_encoding: True
+  position_encoding_weight: 1.0
 
 # hybrid tree
 hybrid_tree:

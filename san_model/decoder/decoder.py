@@ -110,6 +110,7 @@ class SAN_decoder(nn.Module):
 
                 # GRU-alpha
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
+                
                 # Attention mechanism. word_context_vec is \Omega in the article
                 word_context_vec, word_alpha, word_alpha_sum = self.word_attention(cnn_features, word_hidden_first,
                                                                                    word_alpha_sum, images_mask)
