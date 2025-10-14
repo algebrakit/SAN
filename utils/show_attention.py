@@ -18,8 +18,8 @@ def visualize_attention(image, alpha, query_alpha, coverage_alpha, timestep, pre
     ax2.set_title(f'Attention at step {timestep}: {predicted_symbol}')
     ax2.axis('off')
     # Add colorbar with value range
-    cbar2 = plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
-    cbar2.set_label(f'min={attention.min():.3f}, max={attention.max():.3f}', fontsize=8)
+    # cbar2 = plt.colorbar(im2, ax=ax2, fraction=0.046, pad=0.04)
+    # cbar2.set_label(f'min={attention.min():.3f}, max={attention.max():.3f}', fontsize=8)
 
     # Query Alpha (bottom-left) - can be positive/negative
     query_alpha_np = query_alpha.squeeze().cpu().numpy()

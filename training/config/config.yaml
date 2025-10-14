@@ -61,7 +61,11 @@ decoder:
 attention:
   attention_dim: 512
   use_position_encoding: True
-  position_encoding_weight: 1.0
+  # Learnable weights to balance attention terms (initialized values)
+  query_weight: 2.0
+  coverage_weight: 4.0
+  features_weight: 0.5
+  position_encoding_weight: 1.0  
 
 # hybrid tree
 hybrid_tree:

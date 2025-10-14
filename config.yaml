@@ -70,8 +70,8 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'training/checkpoints'
-finetune: False
-checkpoint: "training/checkpoints/mathwriting-matrix/best.pth"
+finetune: True
+checkpoint: "training/checkpoints/mathwriting-positional/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'
