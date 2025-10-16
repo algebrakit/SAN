@@ -112,8 +112,9 @@ class SAN_decoder(nn.Module):
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
                 
                 # Attention mechanism. word_context_vec is \Omega in the article
-                word_context_vec, word_alpha, word_alpha_sum = self.word_attention(cnn_features, word_hidden_first,
-                                                                                   word_alpha_sum, images_mask)
+                # For training, we use the old single-aggregate approach (completed=word_alpha_sum, active=None)
+                word_context_vec, word_alpha, word_alpha_sum, _ = self.word_attention(cnn_features, word_hidden_first,
+                                                                                        word_alpha_sum, None, images_mask)
                 # GRU-beta
                 # hidden is c^{\alpha}_{\beta} in the article
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
@@ -152,8 +153,9 @@ class SAN_decoder(nn.Module):
 
                 # the partner state of reversed GRU_alpha is concatenation of (child + relation). Like ['0', 'sub'] (but then the embedding vectors)
                 c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
-                c2p_context_vec, c2p_alpha, c2p_alpha_sum = self.c2p_attention(cnn_features, c2p_hidden_first,
-                                                                               c2p_alpha_sum, images_mask)
+                # For training, use old single-aggregate approach
+                c2p_context_vec, c2p_alpha, c2p_alpha_sum, _ = self.c2p_attention(cnn_features, c2p_hidden_first,
+                                                                                    c2p_alpha_sum, None, images_mask)
                 c2p_hidden = self.c2p_out_gru(c2p_context_vec, c2p_hidden_first)
 
                 c2p_state = self.c2p_state_weight(c2p_hidden)
@@ -187,8 +189,9 @@ class SAN_decoder(nn.Module):
 
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
-                word_context_vec, word_alpha, word_alpha_sum = self.word_attention(cnn_features, word_hidden_first,
-                                                                                   word_alpha_sum, images_mask)
+                # Eval mode: use old single-aggregate for now (TODO: implement dual-aggregate)
+                word_context_vec, word_alpha, word_alpha_sum, _ = self.word_attention(cnn_features, word_hidden_first,
+                                                                                        word_alpha_sum, None, images_mask)
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
                 current_state = self.word_state_weight(hidden)

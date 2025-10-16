@@ -104,6 +104,9 @@ class Attention(nn.Module):
 
         # Compute query-only attention for visualization (with position encoding if enabled)
         if self.use_position_encoding:
+            pos_encoding = self.position_encoding(height, width)
+            pos_encoding = pos_encoding.unsqueeze(0)
+            weighted_position = self.position_weight * pos_encoding
             alpha_query = torch.tanh(weighted_query + weighted_features + weighted_position)
         else:
             alpha_query = torch.tanh(weighted_query + weighted_features)
