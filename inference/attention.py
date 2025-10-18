@@ -52,15 +52,17 @@ class Attention(nn.Module):
             self.position_weight = nn.Parameter(torch.tensor(position_weight_init))
 
     def forward(self, cnn_features, hidden, alpha_sum, image_mask=None):
-        # the hidden state c^{\alpha}_0 which combines the historic state and the latest terminal symbol or relation
+        # W_0 c^{\alpha}_0 in the article. Variable 'hidden' is c^{\alpha}_0, which combines the historic state and the 
+        # latest terminal symbol or relation
         query = self.hidden_weight(hidden)
+
         # alpha_sum is 2D vector over encoded features. Use convolution to change nr. of channels to 'attention_dim' 
         # and perform convolution on rows and colums in the image
         # Note: the linear transformation can be absorbed in the convolution as it acts on the channel dimension only
         alpha_sum_trans = self.attention_conv(alpha_sum)
         coverage_alpha = self.attention_weight(alpha_sum_trans.permute(0,2,3,1)) # to do: remove
 
-        # change #channels from dimension of feature vector ('out_channels') to dimensionof attention vector ('attention_dim')
+        # change #channels from dimension of feature vector ('out_channels') to dimension of attention vector ('attention_dim')
         cnn_features_trans = self.encoder_feature_conv(cnn_features)
 
         # Get spatial dimensions
@@ -76,6 +78,7 @@ class Attention(nn.Module):
             pos_encoding = self.position_encoding(height, width)  # [H, W, attention_dim]
             pos_encoding = pos_encoding.unsqueeze(0)  # [1, H, W, attention_dim]
             weighted_position = self.position_weight * pos_encoding
+            
             # attention score dims: 1 x features rows x features cols x attention_dim
             alpha_score = torch.tanh(weighted_query + weighted_coverage + weighted_features + weighted_position)
         else:
@@ -104,6 +107,9 @@ class Attention(nn.Module):
 
         # Compute query-only attention for visualization (with position encoding if enabled)
         if self.use_position_encoding:
+            pos_encoding = self.position_encoding(height, width)
+            pos_encoding = pos_encoding.unsqueeze(0)
+            weighted_position = self.position_weight * pos_encoding
             alpha_query = torch.tanh(weighted_query + weighted_features + weighted_position)
         else:
             alpha_query = torch.tanh(weighted_query + weighted_features)
