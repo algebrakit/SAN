@@ -1,0 +1,4 @@
+incomplete-1.bmp    f ' ( x ) = \frac { d } { d x } v ( k ( x ) ) = v ' ( k ( x ) ) \frac { d k } { d x } ( x )
+attention-1.bmp y = \frac { 1 } { \sqrt { 2 \pi } \sigma } e ^ { - \frac { ( x - \mu ) ^ 2 } { 2 \sigma ^ 2 } }
+incorrect-symbols-1.bmp z = 2 + 4 + 6 + 8 + 1 0 + 1 2 + 1 4
+hallucinate-1.bmp   \bar { A } = \stack { \row { a & 2 x} \row { 3 & 1 - x } } + \stack { \row { 2 & b } \row { 3 & 1 - x } }

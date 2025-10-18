@@ -84,7 +84,18 @@ def load_checkpoint(model, optimizer, path):
     else:
         print(f'No optimizer in the pretrained model')
 
-    model.load_state_dict(state['model'])
+    # Load state dict with strict=False to allow missing keys (e.g., new positional encoding weights)
+    missing_keys, unexpected_keys = model.load_state_dict(state['model'], strict=False)
+
+    if missing_keys:
+        print(f'Warning: Missing keys in checkpoint (will be randomly initialized):')
+        for key in missing_keys:
+            print(f'  - {key}')
+
+    if unexpected_keys:
+        print(f'Warning: Unexpected keys in checkpoint (will be ignored):')
+        for key in unexpected_keys:
+            print(f'  - {key}')
 
 
 class Meter:

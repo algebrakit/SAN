@@ -71,6 +71,11 @@ attention:
 hybrid_tree:
   threshold: 0.5
 
+# EOS penalty weights (addresses train/inference mismatch)
+# Higher weights = stronger penalty for EOS mispredictions
+eos_early_weight: 5.0    # Penalty for predicting EOS too early (catastrophic - missing expression parts)
+eos_missing_weight: 3.0  # Penalty for not predicting EOS when needed (hallucination)
+
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
