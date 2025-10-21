@@ -40,8 +40,12 @@ class Backbone(nn.Module):
             struct_average_loss = (struct_average_loss * labels_mask[:,:,0][:, :, None]).sum() / (labels_mask[:,:,0].sum() + 1e-10)
 
         if is_train:
-            parent_average_loss = self.cross(c2p_probs.contiguous().reshape(-1, word_probs.shape[-1]), labels[:, :, 3].reshape(-1))
-            kl_average_loss = self.cal_kl_loss(words_alphas, c2p_alphas, labels, images_mask[:, :, ::self.ratio, ::self.ratio].contiguous(), labels_mask)
+            if self.params['decoder']['inverse']:
+                parent_average_loss = self.cross(c2p_probs.contiguous().reshape(-1, word_probs.shape[-1]), labels[:, :, 3].reshape(-1))
+                kl_average_loss = self.cal_kl_loss(words_alphas, c2p_alphas, labels, images_mask[:, :, ::self.ratio, ::self.ratio].contiguous(), labels_mask)
+            else:
+                parent_average_loss = 0
+                kl_average_loss = 0
 
             # Calculate EOS penalty to address train/inference mismatch
             eos_penalty = self.calculate_eos_penalty(word_probs, labels, labels_mask)

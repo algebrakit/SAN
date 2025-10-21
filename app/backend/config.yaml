@@ -33,7 +33,7 @@ eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
 # word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/mathwriting-matrix/word.txt'
+word_path: '/Users/martijnslob/github/SAN/data/chrome2013/word.txt'
 
 # Encoder selection
 encoder:
@@ -72,7 +72,7 @@ optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: True
 # checkpoint: "resources/model.pth"
-checkpoint: "../../training/checkpoints/mathwriting-positional/best.pth"
+checkpoint: "../../training/checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

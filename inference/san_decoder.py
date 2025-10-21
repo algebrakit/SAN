@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .attention import Attention
+from san_model.decoder.attention import Attention
 from utils.Expression.defs import ABOVE_BELOW_COMMANDS, ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
 from utils.show_attention import visualize_attention
 
@@ -49,18 +49,6 @@ class SAN_decoder(nn.Module):
 
         self.struct_convert = nn.Linear(self.hidden_size // 2, self.struct_num)
 
-        """ child to parent """
-        self.c2p_input_gru = nn.GRUCell(self.input_size * 2, self.hidden_size)
-        self.c2p_out_gru = nn.GRUCell(self.out_channel, self.hidden_size)
-
-        self.c2p_attention = Attention(params)
-
-        self.c2p_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_word_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_relation_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_context_weight = nn.Linear(self.out_channel, self.hidden_size // 2)
-        self.c2p_convert = nn.Linear(self.hidden_size // 2, self.word_num)
-
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
 
@@ -74,6 +62,10 @@ class SAN_decoder(nn.Module):
 
         else:
             word_embedding = self.embedding(torch.ones(1).long().to(device=self.device))
+            alpha_sum_active = torch.zeros((1, 1, height, width)).to(device=self.device)
+            alpha_sum_completed = torch.zeros((1, 1, height, width)).to(device=self.device)
+            alpha_prev_init     = torch.zeros((1, 1, height, width)).to(device=self.device)
+            alpha_prev = alpha_prev_init
             struct_list = []
             parent_hidden = self.init_hidden(cnn_features, images_mask)
 
@@ -81,10 +73,6 @@ class SAN_decoder(nn.Module):
             cid, pid = 0, 0
             p_re = 'Start'
             word = torch.LongTensor([1])
-
-            # keep history of attention for each time step
-            # [pid, alpha]
-            history = [] 
 
             result = [['<s>', 0, -1, 'root']]
 
@@ -94,16 +82,11 @@ class SAN_decoder(nn.Module):
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
 
-                # Build dual attention aggregates from history
-                alpha_sum_completed, alpha_sum_active = self.get_word_alpha_sum(history, struct_list)
-
                 # Compute attention with dual aggregates (return debug values for visualization)
-                word_context_vec, word_alpha, _, _, alpha_query, alpha_coverage = self.word_attention(
+                word_context_vec, word_alpha, alpha_query, alpha_coverage = self.word_attention(
                     cnn_features, word_hidden_first,
-                    alpha_sum_completed, alpha_sum_active, images_mask, return_debug=True)
+                    alpha_sum_completed, alpha_sum_active + alpha_prev, images_mask, return_debug=True)
 
-                # Store this step's attention in history
-                history.append([pid, word_alpha])
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
                 current_state = self.word_state_weight(hidden)
@@ -123,19 +106,22 @@ class SAN_decoder(nn.Module):
                 if word_str == 'struct':
                     # this follows a symbol or construct (frac, sum, etc.)
                     struct_prob = self.struct_convert(word_out_state)
-
                     structs = torch.sigmoid(struct_prob)
+
+                    alpha_sum_active = alpha_sum_active + word_alpha + alpha_prev
+                    alpha_prev = alpha_prev_init
 
                     # Push active structures to stack (in reverse order)
                     # Each item stores: (relation, hidden_state, parent_word, parent_id)
                     for num in range(structs.shape[1]-1, -1, -1):
                         if structs[0][num] > self.threshold:
-                            struct_list.append((self.struct_dict[num], hidden, p_word, cid))
+                            struct_list.append((self.struct_dict[num], hidden, p_word, pid, alpha_sum_active))
                     if len(struct_list) == 0:
+                        # todo: what to do here?
                         break
 
                     # Pop first structure from stack
-                    word, parent_hidden, p_word, pid = struct_list.pop()
+                    word, parent_hidden, p_word, pid, alpha_sum_active = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
@@ -208,8 +194,17 @@ class SAN_decoder(nn.Module):
                     if len(struct_list) == 0:
                         break
 
+                    alpha_sum_completed = alpha_sum_completed + alpha_prev
+                    alpha_prev = alpha_prev_init
+
                     # Pop next structure from stack
-                    word, parent_hidden, p_word, pid = struct_list.pop()
+                    # BUG: e.g \sqrt{x^3 + 1}.
+                    # SQRT --> struct_list = SQRT_INSIDE
+                    # pop inside --> struct_list is empty, hidden and alpha_active set
+                    # x^3  --> struct_list = x SUP,
+                    # pop sup --> struct_list is  empty
+                    # eos. --> hidden and alpha are NOT correct!
+                    word, parent_hidden, p_word, pid, alpha_sum_active = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
@@ -234,18 +229,20 @@ class SAN_decoder(nn.Module):
                     # symbol or construct head (e.g. \frac, \sum, etc.)
                     if word.item():
                         cid += 1
-                        p_id = cid
                         result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
 
+                    # in default left-to-right, the current symbol is the parent of the next
                     p_re = 'Right'
-                    pid = cid
+                    pid = cid 
                     word_embedding = self.embedding(word)
                     parent_hidden = hidden.clone()
+                    alpha_sum_completed = alpha_sum_completed + alpha_prev
+                    alpha_prev = word_alpha
 
                 # show attention heatmap
-                image = images[0,0,:,:]
-                alpha = word_alpha[0,:,:]
-                visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
+                # image = images[0,0,:,:]
+                # alpha = word_alpha[0,:,:]
+                # visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
                         
 
         return result
@@ -258,48 +255,3 @@ class SAN_decoder(nn.Module):
 
         return torch.tanh(average)
     
-    def get_word_alpha_sum(self, history, struct_list):
-        """
-        Build two attention aggregates:
-        - alpha_sum_completed: sum of attention vectors of completed steps (penalize)
-        - alpha_sum_active: sum of attention vectors of steps still on the stack (boost)
-
-        Args:
-            history: List of [parent_id, alpha] for each parsed symbol
-            struct_list: Stack of active structures, each containing parent_id
-
-        Returns:
-            (alpha_sum_completed, alpha_sum_active): Two attention aggregate tensors
-        """
-        if len(history) == 0:
-            # No history yet, return zeros
-            return None, None
-
-        # Extract parent_ids that are currently active (on the stack)
-        active_parent_ids = set()
-        for item in struct_list:
-            # struct_list items are tuples: (relation, hidden, p_word, parent_id, ...)
-            parent_id = item[3]  # parent_id is at index 3
-            active_parent_ids.add(parent_id)
-
-        # Initialize aggregates with same shape as individual alpha
-        # history[0][1] is the first alpha tensor
-        alpha_shape = history[0][1].shape
-        device = history[0][1].device
-
-        alpha_sum_completed = torch.zeros(alpha_shape).to(device)
-        alpha_sum_active = torch.zeros(alpha_shape).to(device)
-
-        # Separate alphas based on whether their parent_id is on the stack
-        for parent_id, alpha in history:
-            if parent_id in active_parent_ids:
-                alpha_sum_active += alpha
-            else:
-                alpha_sum_completed += alpha
-
-        # Add batch dimension if needed (alpha is [H, W], need [1, 1, H, W])
-        if len(alpha_sum_completed.shape) == 2:
-            alpha_sum_completed = alpha_sum_completed.unsqueeze(0).unsqueeze(0)
-            alpha_sum_active = alpha_sum_active.unsqueeze(0).unsqueeze(0)
-
-        return alpha_sum_completed, alpha_sum_active 

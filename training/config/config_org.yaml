@@ -7,6 +7,7 @@ seed: 20200814
 # Training parameters
 epoches: 200
 batch_size: 8
+gradient_accumulation_steps: 1
 workers: 0
 optimizer: Adadelta
 lr: 1
@@ -27,12 +28,12 @@ gradient_clip: True
 use_label_mask: False
 
 # Training data
-train_image_path: 'data/chrome2013/train/train_image.pkl'
-train_label_path: 'data/chrome2013/train/train_label.pkl'
-eval_image_path: 'data/chrome2013/test/test_image.pkl'
-eval_label_path: 'data/chrome2013/test/test_label.pkl'
+train_image_path: '../data/mathwriting-matrix/train_image.pkl'
+train_label_path: '../data/mathwriting-matrix/train_label.pkl'
+eval_image_path: '../data/mathwriting-matrix/test_image.pkl'
+eval_label_path: '../data/mathwriting-matrix/test_label.pkl'
 
-word_path: 'data/chrome2013/word.txt'
+word_path: '../data/mathwriting-matrix/word.txt'
 
 # Encoder selection
 encoder:
@@ -61,7 +62,12 @@ decoder:
 # Attention parameters
 attention:
   attention_dim: 512
-  use_position_encoding: True  # Set to True to enable positional encoding (requires retraining)
+  use_position_encoding: True
+  # Learnable weights to balance attention terms (initialized values)
+  query_weight: 2.0
+  coverage_weight: 4.0
+  features_weight: 0.5
+  position_encoding_weight: 1.0  
 
 # hybrid tree
 hybrid_tree:
@@ -69,9 +75,9 @@ hybrid_tree:
 
 # Training weights save path
 optimizer_save: False
-checkpoint_dir: 'training/checkpoints'
-finetune: True
-checkpoint: "training/checkpoints/best.pth"
+checkpoint_dir: 'checkpoints'
+finetune: False
+checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

@@ -39,8 +39,8 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             with torch.amp.autocast('cuda', enabled=params.get('use_amp', False)):
                 probs, loss = model(images, image_masks, labels, label_masks)
 
-                word_loss, struct_loss, parent_loss, kl_loss = loss
-                loss = (word_loss + struct_loss + parent_loss + kl_loss)
+                word_loss, struct_loss, parent_loss, kl_loss, eos_penalty = loss
+                loss = (word_loss + struct_loss + parent_loss + kl_loss + eos_penalty)
 
                 # Scale loss by accumulation steps for averaging
                 loss = loss / accumulation_steps
@@ -48,8 +48,9 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             loss_dt += loss.item()
             word_loss_dt += word_loss.item() / accumulation_steps
             struct_loss_dt += struct_loss.item() / accumulation_steps
-            parent_loss_dt += parent_loss.item() / accumulation_steps
-            kl_loss_dt += kl_loss.item() / accumulation_steps
+            if params['decoder']['inverse']:
+                parent_loss_dt += parent_loss.item() / accumulation_steps
+                kl_loss_dt += kl_loss.item() / accumulation_steps
 
             wordRate, structRate, ExpRate = cal_score(probs, labels, label_masks)
 

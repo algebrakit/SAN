@@ -6,10 +6,10 @@ seed: 20200814
 
 # Training parameters
 epoches: 200
-batch_size: 8
+batch_size: 10
 workers: 0
 optimizer: Adadelta
-lr: 1
+lr: 0.3
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
@@ -27,12 +27,11 @@ gradient_clip: True
 use_label_mask: False
 
 # Training data
-train_image_path: 'data/train_image.pkl'
-train_label_path: 'data/train_label.pkl'
-eval_image_path: 'data/test_image.pkl'
-eval_label_path: 'data/test_label.pkl'
-
-word_path: 'data/word.txt'
+train_image_path: '../data/train_image.pkl'
+train_label_path: '../data/train_label.pkl'
+eval_image_path: '../data/test_image.pkl'
+eval_label_path: '../data/test_label.pkl'
+word_path: '../data/word.txt'
 
 # Encoder selection
 encoder:
@@ -56,6 +55,7 @@ decoder:
   cell: 'GRU'
   input_size: 256
   hidden_size: 256
+  inverse: False
 
 # Attention parameters
 attention:
@@ -74,8 +74,8 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
-checkpoint: "checkpoints/SAN_decoder/best.pth"
+finetune: True
+checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

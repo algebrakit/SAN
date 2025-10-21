@@ -79,7 +79,7 @@ if not args.check:
         os.makedirs(os.path.join(params['checkpoint_dir'], model.name), exist_ok=True)
     os.system(f'cp {args.config} {os.path.join(params["checkpoint_dir"], model.name, model.name)}.yaml')
 
-min_score = 0
+min_score = -1
 min_step = 0
 for epoch in range(params['epoches']):
 
@@ -90,7 +90,7 @@ for epoch in range(params['epoches']):
         print(f'Epoch: {epoch+1}  loss: {eval_loss:.4f}  word score: {eval_word_score:.4f}  struct score: {eval_node_score:.4f} '
               f'ExpRate: {eval_expRate:.4f}')
 
-        if eval_expRate > min_score and not args.check:
+        if eval_expRate >= min_score and not args.check:
             min_score = eval_expRate
             save_checkpoint(model, optimizer, eval_word_score, eval_node_score, eval_expRate, epoch+1,
                             optimizer_save=params['optimizer_save'], path=params['checkpoint_dir'])

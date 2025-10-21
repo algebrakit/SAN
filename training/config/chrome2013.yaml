@@ -7,9 +7,10 @@ seed: 20200814
 # Training parameters
 epoches: 200
 batch_size: 8
+gradient_accumulation_steps: 1
 workers: 0
 optimizer: Adadelta
-lr: 1
+lr: 0.3
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
@@ -17,8 +18,8 @@ weight_decay: 1e-4
 beta: 0.9
 image_resize: True
 # max dimensions
-image_width: 3200
-image_height: 400
+image_width: 1600
+image_height: 320
 image_channel: 1
 dropout: True
 dropout_ratio: 0.5
@@ -28,12 +29,12 @@ gradient_clip: True
 use_label_mask: False
 
 # Training data
-train_image_path: '/Users/martijnslob/github/SAN/data/chrome2013/train/train_image.pkl'
-train_label_path: '/Users/martijnslob/github/SAN/data/chrome2013/train/train_label.pkl'
-eval_image_path: '/Users/martijnslob/github/SAN/data/chrome2013/test/test_image.pkl'
-eval_label_path: '/Users/martijnslob/github/SAN/data/chrome2013/test/test_label.pkl'
+train_image_path: '../data/chrome2013/train_image.pkl'
+train_label_path: '../data/chrome2013/train_label.pkl'
+eval_image_path: '../data/chrome2013/test_image.pkl'
+eval_label_path: '../data/chrome2013/test_label.pkl'
 
-word_path: '/Users/martijnslob/github/SAN/data/chrome2013/word.txt'
+word_path: '../data/chrome2013/word.txt'
 
 # Encoder selection
 encoder:
@@ -57,10 +58,17 @@ decoder:
   cell: 'GRU'
   input_size: 256
   hidden_size: 256
+  inverse: False
 
 # Attention parameters
 attention:
   attention_dim: 512
+  use_position_encoding: True
+  # Learnable weights to balance attention terms (initialized values)
+  query_weight: 2.0
+  coverage_weight: 4.0
+  features_weight: 0.5
+  position_encoding_weight: 1.0  
 
 # hybrid tree
 hybrid_tree:

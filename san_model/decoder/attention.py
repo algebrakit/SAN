@@ -17,8 +17,10 @@ class Attention(nn.Module):
         self.encoder_feature_conv = nn.Conv2d(self.channel, self.attention_dim, kernel_size=1)
 
         # Note: the linear transformation can be absorbed in the convolution as it acts on the channel dimension only
-        self.attention_conv = nn.Conv2d(1, 512, kernel_size=11, padding=5, bias=False)
-        self.attention_weight = nn.Linear(512, self.attention_dim, bias=False)
+        # self.attention_conv = nn.Conv2d(1, 512, kernel_size=11, padding=5, bias=False)
+        # self.attention_weight = nn.Linear(512, self.attention_dim, bias=False)
+        self.attention_completed_conv = nn.Conv2d(1, self.attention_dim, kernel_size=11, padding=5, bias=False)
+        self.attention_active_conv = nn.Conv2d(1, self.attention_dim, kernel_size=11, padding=5, bias=False)
         self.alpha_convert = nn.Linear(self.attention_dim, 1)
 
         # Learnable weights to balance attention terms
@@ -49,7 +51,7 @@ class Attention(nn.Module):
             position_weight_init = params.get('attention', {}).get('position_encoding_weight', 2.0)
             self.position_weight = nn.Parameter(torch.tensor(position_weight_init))
 
-    def forward(self, cnn_features, hidden, alpha_sum_completed=None, alpha_sum_active=None, image_mask=None, return_debug=False):
+    def forward(self, cnn_features, hidden, alpha_sum_completed, alpha_sum_active, image_mask=None, return_debug=False):
         """
         Compute attention with dual coverage aggregates.
 
@@ -76,23 +78,17 @@ class Attention(nn.Module):
         weighted_features = self.features_weight * cnn_features_trans.permute(0,2,3,1)
 
         # Process completed coverage (penalize)
-        if alpha_sum_completed is not None:
-            alpha_completed_trans = self.attention_conv(alpha_sum_completed)
-            coverage_completed = self.attention_weight(alpha_completed_trans.permute(0,2,3,1))
-            weighted_coverage_completed = self.coverage_completed_weight * coverage_completed
-        else:
-            weighted_coverage_completed = 0
+        alpha_completed_trans = self.attention_completed_conv(alpha_sum_completed)
+        coverage_completed = alpha_completed_trans.permute(0,2,3,1)
+        weighted_coverage_completed = self.coverage_completed_weight * coverage_completed
 
         # Process active coverage (boost)
-        if alpha_sum_active is not None:
-            alpha_active_trans = self.attention_conv(alpha_sum_active)
-            coverage_active = self.attention_weight(alpha_active_trans.permute(0,2,3,1))
-            weighted_coverage_active = self.coverage_active_weight * coverage_active
-        else:
-            weighted_coverage_active = 0
+        alpha_active_trans = self.attention_active_conv(alpha_sum_active)
+        coverage_active = alpha_active_trans.permute(0,2,3,1)
+        weighted_coverage_active = self.coverage_active_weight * coverage_active
 
-        # Combine terms: SUBTRACT completed (penalize), ADD active (boost)
-        alpha_score = weighted_query + weighted_features - weighted_coverage_completed + weighted_coverage_active
+        # Combine terms: 
+        alpha_score = weighted_query + weighted_features + weighted_coverage_completed + weighted_coverage_active
 
         # Add positional encoding if enabled
         if self.use_position_encoding:
@@ -109,18 +105,28 @@ class Attention(nn.Module):
         if image_mask is not None:
             energy_exp = energy_exp * image_mask.squeeze(1)
         alpha = energy_exp / (energy_exp.sum(-1).sum(-1)[:,None,None] + 1e-10)
-
-        context_vector = (alpha[:,None,:,:] * cnn_features).sum(-1).sum(-1)
+        alpha = alpha[:,None,:,:]
+        context_vector = (alpha * cnn_features).sum(-1).sum(-1)
 
         # Return attention map and current aggregates (for updating history)
         # Note: aggregates are updated externally in the decoder
         if return_debug:
             # For visualization: return query+features and coverage (completed-active)
-            query_features = weighted_query + weighted_features
-            coverage_combined = weighted_coverage_active - weighted_coverage_completed
+            query_features = weighted_query + weighted_features + weighted_position
+            coverage_combined = weighted_coverage_active + weighted_coverage_completed
             # Convert to 2D by taking the alpha channel (before softmax)
             query_features_2d = self.alpha_convert(torch.tanh(query_features)).squeeze(-1).squeeze(0)
+            query_features_2d = self.to_softmax(query_features_2d, image_mask)
             coverage_combined_2d = self.alpha_convert(torch.tanh(coverage_combined)).squeeze(-1).squeeze(0)
-            return context_vector, alpha, alpha_sum_completed, alpha_sum_active, query_features_2d, coverage_combined_2d
+            # coverage_combined_2d = self.to_softmax(coverage_combined_2d, image_mask)
+            return context_vector, alpha, query_features_2d, coverage_combined_2d
         else:
-            return context_vector, alpha, alpha_sum_completed, alpha_sum_active
+            return context_vector, alpha
+
+    def to_softmax(self, A, image_mask):
+        energy = A - A.max()
+        energy_exp = torch.exp(energy.squeeze(-1))
+        if image_mask is not None:
+            energy_exp = energy_exp * image_mask.squeeze(1)
+        alpha = energy_exp / (energy_exp.sum(-1).sum(-1)[:,None,None] + 1e-10)
+        return alpha

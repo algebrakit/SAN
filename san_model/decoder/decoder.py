@@ -55,16 +55,17 @@ class SAN_decoder(nn.Module):
         self.struct_convert = nn.Linear(self.hidden_size // 2, self.struct_num)
 
         """ child to parent """
-        self.c2p_input_gru = nn.GRUCell(self.input_size * 2, self.hidden_size)
-        self.c2p_out_gru = nn.GRUCell(self.out_channel, self.hidden_size)
+        if self.params['decoder']['inverse']:
+            self.c2p_input_gru = nn.GRUCell(self.input_size * 2, self.hidden_size)
+            self.c2p_out_gru = nn.GRUCell(self.out_channel, self.hidden_size)
 
-        self.c2p_attention = Attention(params)
+            self.c2p_attention = Attention(params)
 
-        self.c2p_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_word_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_relation_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
-        self.c2p_context_weight = nn.Linear(self.out_channel, self.hidden_size // 2)
-        self.c2p_convert = nn.Linear(self.hidden_size // 2, self.word_num)
+            self.c2p_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
+            self.c2p_word_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
+            self.c2p_relation_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
+            self.c2p_context_weight = nn.Linear(self.out_channel, self.hidden_size // 2)
+            self.c2p_convert = nn.Linear(self.hidden_size // 2, self.word_num)
 
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
@@ -75,12 +76,16 @@ class SAN_decoder(nn.Module):
         height, width = cnn_features.shape[2:]
         word_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
         struct_probs = torch.zeros((batch_size, num_steps, self.struct_num)).to(device=self.device)
-        c2p_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
         images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
-
         word_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
-        c2p_alpha_sum = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
-        c2p_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
+
+        if self.params['decoder']['inverse']:
+            c2p_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
+            c2p_alpha_sum = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            c2p_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
+            c2p_alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+        else:
+            c2p_probs, c2p_alphas = None, None
 
         if is_train:
             # c^{alpha}_0 in the article, for all samples in the batch and all lines in the hybrid tree.
@@ -91,18 +96,25 @@ class SAN_decoder(nn.Module):
             # c^{alpha}_p in the article, but for the reversed model (child-to-parent). So the parent state corresponding to the previous relation
             c2p_hidden = torch.zeros((batch_size, self.hidden_size)).to(device=self.device)
             # Syntax-aware attention vector att_{\alpha}(X) per line, accumulated over the parents
-            word_alpha_sums = torch.zeros((batch_size * (num_steps + 1), 1, height, width)).to(device=self.device)
-
+            alpha_sum_parents = torch.zeros((batch_size * (num_steps + 1), 1, height, width)).to(device=self.device)
+            # attention vector to penalise covered parts of the image.
+            alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            # attention vector of previous symbol
+            alpha_prev = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            
             # Iterate over the lines in the hybrid tree
             for i in range(num_steps):
-
+                
                 parent_ids = labels[:,i,2].clone()
+                current_type = labels[:,i,1].clone()
+                current_parent_type = labels[:,i,3].clone()
+
                 for item in range(len(parent_ids)):
                     parent_ids[item] = parent_ids[item] * batch_size + item
                 # retrieve hidden states c^{\alpha}_0 for the current line from the history (parent_hiddens)    
                 parent_hidden = parent_hiddens[parent_ids,:].contiguous()
                 # syntax-aware attention vector, Att_{\alpha}(X)
-                word_alpha_sum = word_alpha_sums[parent_ids, :, :, :].contiguous()
+                alpha_sum_parent = alpha_sum_parents[parent_ids, :, :, :].contiguous()
 
                 # Partner state, c^{\alpha}_p in the article. 
                 # Set to the latest generated terminal (teacher forcing strategy)
@@ -113,85 +125,81 @@ class SAN_decoder(nn.Module):
                 
                 # Attention mechanism. word_context_vec is \Omega in the article
                 # For training, we use the old single-aggregate approach (completed=word_alpha_sum, active=None)
-                word_context_vec, word_alpha, word_alpha_sum, _ = self.word_attention(cnn_features, word_hidden_first,
-                                                                                        word_alpha_sum, None, images_mask)
+                alpha_parent_is_struct_mask = torch.zeros(batch_size, 1, 1, 1, device=self.device)
+                for bb in range(batch_size):
+                    if current_parent_type[bb].item() in self.struct_dict:
+                        alpha_parent_is_struct_mask[bb] = 1.0
+                alpha_prev = alpha_prev * (1 - alpha_parent_is_struct_mask)
+
+                word_context_vec, word_alpha = self.word_attention(
+                    cnn_features, word_hidden_first,
+                    alpha_sum_completed, alpha_sum_parent + alpha_prev, images_mask)
+                
                 # GRU-beta
                 # hidden is c^{\alpha}_{\beta} in the article
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
-
-                if i != num_steps - 1:
-                    # update history
-                    parent_hiddens[(i+1)*batch_size:(i+2)*batch_size,:] = hidden
-                    word_alpha_sums[(i + 1) * batch_size:(i + 2) * batch_size, :, :, :] = word_alpha_sum
 
                 # map c^{\alpha}_{\beta}, c^{\alpha}_p, \Omega before aggregation
                 current_state = self.word_state_weight(hidden)
                 word_weighted_embedding = self.word_embedding_weight(word_embedding)
                 word_context_weighted = self.word_context_weight(word_context_vec)
 
-                """ child to parent """
-                # Walk the hybrid tree backwards to predict parents from (child + relation)
-                # E.g. for expression 2x_0: 
-                # - forward:         ['2'] --> ['x', 'right']
-                # - child-to-parent: ['0', 'sub'] --> 'x' 
-                # So we have 2 estimations for 'x'. We use the attention vector KL and the backward/forward probabilities 
-                # for x as a regulariser when calculating the loss
+                # update word_alpha_sum for structs
+                alpha_struct_mask = (current_type == self.STRUCT_ID).float().view(batch_size, 1, 1, 1)
+                alpha_eos_mask = (current_type != self.EOS_ID).float().view(batch_size, 1, 1, 1)
 
-                # the embedding of the last generated child (teacher forcing strategy)
-                child_embedding = self.embedding(labels[:, -(i + 1), 1])
-
-                # the embedding of the last generated relation (also using teacher forcing strategy)
-                relation = labels[:, -(i + 1), 3].clone()
-                for num in range(relation.shape[0]):
-                    if labels[num, -(i + 1), 1] == self.STRUCT_ID: # struct
-                        # struct line, set parent to struct (original parent is symbol, like \frac)
-                        relation[num] = self.STRUCT_ID 
-                    elif relation[num].item() not in self.struct_dict and relation[num].item() != self.EOS_ID:
-                        # if parent is symbol, the relation is 'right'
-                        relation[num] = self.RIGHT_ID
-                relation_embedding = self.embedding(relation)
-
-                # the partner state of reversed GRU_alpha is concatenation of (child + relation). Like ['0', 'sub'] (but then the embedding vectors)
-                c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
-                # For training, use old single-aggregate approach
-                c2p_context_vec, c2p_alpha, c2p_alpha_sum, _ = self.c2p_attention(cnn_features, c2p_hidden_first,
-                                                                                    c2p_alpha_sum, None, images_mask)
-                c2p_hidden = self.c2p_out_gru(c2p_context_vec, c2p_hidden_first)
-
-                c2p_state = self.c2p_state_weight(c2p_hidden)
-                c2p_weighted_word = self.c2p_word_weight(child_embedding)
-                c2p_weighted_relation = self.c2p_relation_weight(relation_embedding)
-                c2p_context_weighted = self.c2p_context_weight(c2p_context_vec)
+                # If processed a rule (struct):
+                # e.g. previous = '\frac', current = 'struct'.
+                alpha_sum_parent = alpha_sum_parent + alpha_struct_mask * (word_alpha + alpha_prev)
+                # If processed a symbol (e.g. 'x', 'frac', 'eos')
+                # - previous = '2', current = 'x'. The '2' is completed. The 'x' is active for the next symbol
+                # - previous = '2', current = 'eos'. The '2' is completed. alpha_prev = None
+                # - \frac{a}{b} * 2, parsing '*'. Then alpha_prev corresponds to 'struct' of the frac
+                alpha_sum_completed = alpha_sum_completed + (1-alpha_struct_mask) * alpha_prev
+                alpha_prev = (1-alpha_struct_mask)*alpha_eos_mask*word_alpha
 
                 if self.params['dropout']:
                     word_out_state = self.dropout(current_state + word_weighted_embedding + word_context_weighted)
-                    c2p_out_state = self.dropout(c2p_state + c2p_weighted_word + c2p_weighted_relation + c2p_context_weighted)
                 else:
                     word_out_state = current_state + word_weighted_embedding + word_context_weighted
-                    c2p_out_state = self.dropout(c2p_state + c2p_weighted_word + c2p_weighted_relation + c2p_context_weighted)
+
+                if i != num_steps - 1:
+                    # update history
+                    parent_hiddens[(i+1)*batch_size:(i+2)*batch_size,:] = hidden
+                    alpha_sum_parents[(i + 1) * batch_size:(i + 2) * batch_size, :, :, :] = alpha_sum_parent
 
                 word_prob = self.word_convert(word_out_state)
                 struct_prob = self.struct_convert(word_out_state)
-                c2p_prob = self.c2p_convert(c2p_out_state)
-
                 word_probs[:, i] = word_prob
                 struct_probs[:, i] = struct_prob
-                c2p_probs[:, -(i + 1)] = c2p_prob
-                word_alphas[:, i] = word_alpha
-                c2p_alphas[:, -(i + 1)] = c2p_alpha
+                word_alphas[:, i] = word_alpha[:,0,:,:]
+
+                if self.params['decoder']['inverse']:
+                    c2p_out_state, c2p_alpha, c2p_hidden, c2p_alpha_sum, c2p_alpha_sum_completed = self.child_to_parent(i, labels, cnn_features, c2p_hidden, c2p_alpha_sum_completed, c2p_alpha_sum, images_mask)
+
+                    c2p_prob = self.c2p_convert(c2p_out_state)
+                    c2p_probs[:, -(i + 1)] = c2p_prob
+                    c2p_alphas[:, -(i + 1)] = c2p_alpha[:,0,:,:]
 
         else:
-            word_embedding = self.embedding(torch.ones(batch_size).long().to(device=self.device))
-            word_alpha_sum = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            word_embedding      = self.embedding(torch.ones(batch_size).long().to(device=self.device))
+            alpha_sum_parent    = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            alpha_prev_init     = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            alpha_prev = alpha_prev_init
+
             struct_list = []
             parent_hidden = self.init_hidden(cnn_features, images_mask)
             for i in range(num_steps):
 
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
+
                 # Eval mode: use old single-aggregate for now (TODO: implement dual-aggregate)
-                word_context_vec, word_alpha, word_alpha_sum, _ = self.word_attention(cnn_features, word_hidden_first,
-                                                                                        word_alpha_sum, None, images_mask)
+                word_context_vec, word_alpha = self.word_attention(
+                    cnn_features, word_hidden_first,
+                    alpha_sum_completed, alpha_sum_parent, images_mask)
+                
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
                 current_state = self.word_state_weight(hidden)
@@ -206,7 +214,7 @@ class SAN_decoder(nn.Module):
                 word_prob = self.word_convert(word_out_state)
 
 
-                word_probs[0][i, :] = word_prob
+                word_probs[:, i, :] = word_prob
                 word_alphas[:, i] = word_alpha
 
                 _, word = word_prob.max(1)
@@ -214,28 +222,37 @@ class SAN_decoder(nn.Module):
                 if word.item() == self.STRUCT_ID: # struct
 
                     struct_prob = self.struct_convert(word_out_state)
-                    struct_probs[0][i, :] = struct_prob
+                    struct_probs[:, i, :] = struct_prob
 
                     structs = torch.sigmoid(struct_prob)
 
+                    # e.g. prev: 'frac', current: 'struct'
+                    # start a new sequence, so re-init alpha_prev
+                    alpha_sum_parent = alpha_sum_parent + word_alpha + alpha_prev
+                    alpha_prev = alpha_prev_init
+
                     for num in range(structs.shape[1]-1, -1, -1):
                         if structs[0][num] > self.threshold:
-                            struct_list.append((self.struct_dict[num], hidden, word_alpha_sum))
+                            struct_list.append((self.struct_dict[num], hidden, alpha_sum_parent))
 
                     if len(struct_list) == 0:
                         break
-                    word, parent_hidden, word_alpha_sum = struct_list.pop()
+                    word, parent_hidden, alpha_sum_parent = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
 
                 elif word == self.EOS_ID: 
                     if len(struct_list) == 0:
                         break
-                    word, parent_hidden, word_alpha_sum = struct_list.pop()
+                    word, parent_hidden, alpha_sum_parent = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
+                    alpha_sum_completed = alpha_sum_completed + alpha_prev
+                    alpha_prev = alpha_prev_init
 
                 else:
                     word_embedding = self.embedding(word)
                     parent_hidden = hidden.clone()
+                    alpha_sum_completed = alpha_sum_completed + alpha_prev
+                    alpha_prev = word_alpha
 
         return word_probs, struct_probs, word_alphas, None, c2p_probs, c2p_alphas
 
@@ -246,3 +263,59 @@ class SAN_decoder(nn.Module):
         average = self.init_weight(average)
 
         return torch.tanh(average)
+    
+    def child_to_parent(self, i, labels, cnn_features, c2p_hidden, c2p_alpha_sum_completed, c2p_alpha_sum, images_mask):
+        """ child to parent """
+        # Walk the hybrid tree backwards to predict parents from (child + relation)
+        # E.g. for expression 2x_0: 
+        # - forward:         ['2'] --> ['x', 'right']
+        # - child-to-parent: ['0', 'sub'] --> 'x' 
+        # So we have 2 estimations for 'x'. We use the attention vector KL and the backward/forward probabilities 
+        # for x as a regulariser when calculating the loss
+
+        batch_size, num_steps, _ = labels.shape
+        height, width = cnn_features.shape[2:]
+        current_type = labels[:,-(i + 1),1].clone()
+
+        # the embedding of the last generated child (teacher forcing strategy)
+        child_embedding = self.embedding(current_type)
+
+        # the embedding of the last generated relation (also using teacher forcing strategy)
+        relation = labels[:, -(i + 1), 3].clone()
+        for num in range(relation.shape[0]):
+            if labels[num, -(i + 1), 1] == self.STRUCT_ID: # struct
+                # struct line, set parent to struct (original parent is symbol, like \frac)
+                relation[num] = self.STRUCT_ID
+            elif relation[num].item() not in self.struct_dict and relation[num].item() != self.EOS_ID:
+                # if parent is symbol, the relation is 'right'
+                relation[num] = self.RIGHT_ID
+        relation_embedding = self.embedding(relation)
+
+        c2p_alpha_struct_mask = (current_type == self.STRUCT_ID).float().view(batch_size, 1, 1, 1)
+        c2p_alpha_eos_mask = (current_type != self.EOS_ID).float().view(batch_size, 1, 1, 1)
+
+        # the partner state of reversed GRU_alpha is concatenation of (child + relation). Like ['0', 'sub'] (but then the embedding vectors)
+        c2p_hidden_first = self.c2p_input_gru(torch.cat((child_embedding, relation_embedding), dim=1), c2p_hidden)
+
+        c2p_context_vec, c2p_alpha = self.c2p_attention(
+            cnn_features, c2p_hidden_first,
+            c2p_alpha_sum_completed, c2p_alpha_sum, images_mask)
+        
+        c2p_hidden = self.c2p_out_gru(c2p_context_vec, c2p_hidden_first)
+
+        c2p_state = self.c2p_state_weight(c2p_hidden)
+        c2p_weighted_word = self.c2p_word_weight(child_embedding)
+        c2p_weighted_relation = self.c2p_relation_weight(relation_embedding)
+        c2p_context_weighted = self.c2p_context_weight(c2p_context_vec)
+
+        # update word_alpha_sum for structs
+        c2p_alpha_sum = c2p_alpha_sum + c2p_alpha_struct_mask * c2p_alpha
+        c2p_alpha_sum_completed = c2p_alpha_sum_completed + (1-c2p_alpha_struct_mask) * c2p_alpha
+
+        if self.params['dropout']:
+            c2p_out_state = self.dropout(c2p_state + c2p_weighted_word + c2p_weighted_relation + c2p_context_weighted)
+        else:
+            c2p_out_state = c2p_state + c2p_weighted_word + c2p_weighted_relation + c2p_context_weighted
+
+        return c2p_out_state, c2p_alpha, c2p_hidden, c2p_alpha_sum, c2p_alpha_sum_completed
+
