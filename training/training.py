@@ -97,8 +97,8 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                     writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
                     writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
 
-                pbar.set_description(f'Epoch: {epoch+1} LOSS: train: {loss_dt:.4f} parent: {parent_loss_dt:.4f} '
-                                     f'KL: {kl_loss_dt:.4f} RATE: Word: {word_right / length:.4f}  '
+                pbar.set_description(f'Epoch: {epoch+1} LOSS: train: {loss_dt:.4f}'
+                                     f'RATE: Word: {word_right / length:.4f}  '
                                      f'struct: {struct_right / length:.4f} Exp: {exp_right / cal_num:.4f}')
                 # pbar.set_description(f'Epoch: {epoch+1} train loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
                 #                      f'struct loss: {struct_loss_dt:.4f} parent loss: {parent_loss_dt:.4f} '

@@ -38,9 +38,6 @@ class SAN_decoder(nn.Module):
         self.word_input_gru = nn.GRUCell(self.input_size, self.hidden_size)
         self.word_out_gru = nn.GRUCell(self.out_channel, self.hidden_size)
 
-        # structure gru
-        self.struc_input_gru = nn.GRUCell(self.input_size, self.hidden_size)
-
         # attention
         self.word_attention = Attention(params)
 

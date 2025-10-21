@@ -5,9 +5,10 @@ experiment: "SAN"
 seed: 20200814
 
 # Training parameters
-epoches: 200
-batch_size: 10
-workers: 0
+epoches: 50
+batch_size: 6
+gradient_accumulation_steps: 3
+workers: 4
 optimizer: Adadelta
 lr: 0.3
 lr_decay: cosine
@@ -25,6 +26,7 @@ relu: True
 gradient: 100
 gradient_clip: True
 use_label_mask: False
+use_amp: True
 
 # Training data
 train_image_path: '../data/train_image.pkl'
@@ -74,7 +76,7 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: True
+finetune: False
 checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path

@@ -27,6 +27,7 @@ relu: True
 gradient: 100
 gradient_clip: True
 use_label_mask: False
+use_amp: True
 
 # Training data
 train_image_path: '../data/chrome2013/train_image.pkl'

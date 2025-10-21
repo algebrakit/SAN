@@ -240,9 +240,9 @@ class SAN_decoder(nn.Module):
                     alpha_prev = word_alpha
 
                 # show attention heatmap
-                # image = images[0,0,:,:]
-                # alpha = word_alpha[0,:,:]
-                # visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
+                image = images[0,0,:,:]
+                alpha = word_alpha[0,:,:]
+                visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
                         
 
         return result
