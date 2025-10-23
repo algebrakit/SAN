@@ -21,7 +21,8 @@ class Backbone(nn.Module):
             self.decoder = SAN_decoder(params=self.params)
         else:
             self.decoder = getattr(decoder, params['decoder']['net'])(params=self.params)
-        self.cross = nn.CrossEntropyLoss()
+        self.cross = nn.CrossEntropyLoss(reduction='sum')  # Sum for gradient accumulation, normalized by tokens in training.py
+        self.cross_unreduced = nn.CrossEntropyLoss(reduction='none')  # For masking padding tokens
         self.bce = nn.BCEWithLogitsLoss(reduction='none')
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet'][
             'conv1_stride']
@@ -31,28 +32,43 @@ class Backbone(nn.Module):
         cnn_features = self.encoder(images)
         word_probs, struct_probs, words_alphas, struct_alphas, c2p_probs, c2p_alphas = self.decoder(cnn_features, labels, images_mask, labels_mask, is_train=is_train)
 
-        word_average_loss = self.cross(word_probs.contiguous().reshape(-1, word_probs.shape[-1]), labels[:,:,1].reshape(-1))
+        # Sum losses (not average) - will be normalized by accumulated_tokens in training.py
+        # Use unreduced loss to apply mask (exclude padding tokens)
+        batch_size, time_steps, vocab_size = word_probs.shape
+        word_loss_per_token = self.cross_unreduced(
+            word_probs.contiguous().reshape(-1, vocab_size),
+            labels[:,:,1].reshape(-1)
+        ).reshape(batch_size, time_steps)
+        word_loss = (word_loss_per_token * labels_mask[:,:,0]).sum()  # Mask padding
 
         # BCEWithLogitsLoss includes sigmoid internally, so don't apply it manually
-        struct_average_loss = self.bce(struct_probs, labels[:,:,4:].float())
+        struct_loss_elements = self.bce(struct_probs, labels[:,:,4:].float())
         struct_probs = torch.sigmoid(struct_probs)  # Apply sigmoid for output/evaluation
         if labels_mask is not None:
-            struct_average_loss = (struct_average_loss * labels_mask[:,:,0][:, :, None]).sum() / (labels_mask[:,:,0].sum() + 1e-10)
+            struct_loss = (struct_loss_elements * labels_mask[:,:,0][:, :, None]).sum()  # Sum, not average
+        else:
+            struct_loss = struct_loss_elements.sum()
 
         if is_train:
             if self.params['decoder']['inverse']:
-                parent_average_loss = self.cross(c2p_probs.contiguous().reshape(-1, word_probs.shape[-1]), labels[:, :, 3].reshape(-1))
-                kl_average_loss = self.cal_kl_loss(words_alphas, c2p_alphas, labels, images_mask[:, :, ::self.ratio, ::self.ratio].contiguous(), labels_mask)
+                # Use unreduced loss to apply mask (exclude padding tokens)
+                parent_loss_per_token = self.cross_unreduced(
+                    c2p_probs.contiguous().reshape(-1, vocab_size),
+                    labels[:,:,3].reshape(-1)
+                ).reshape(batch_size, time_steps)
+                parent_loss = (parent_loss_per_token * labels_mask[:,:,0]).sum()  # Mask padding
+
+                kl_loss = self.cal_kl_loss(words_alphas, c2p_alphas, labels, images_mask[:, :, ::self.ratio, ::self.ratio].contiguous(), labels_mask)
             else:
-                parent_average_loss = 0
-                kl_average_loss = 0
+                parent_loss = 0
+                kl_loss = 0
 
             # Calculate EOS penalty to address train/inference mismatch
             eos_penalty = self.calculate_eos_penalty(word_probs, labels, labels_mask)
 
-            return (word_probs, struct_probs), (word_average_loss, struct_average_loss, parent_average_loss, kl_average_loss, eos_penalty)
+            return (word_probs, struct_probs), (word_loss, struct_loss, parent_loss, kl_loss, eos_penalty)
 
-        return (word_probs, struct_probs), (word_average_loss, struct_average_loss)
+        return (word_probs, struct_probs), (word_loss, struct_loss)
 
     def calculate_eos_penalty(self, word_probs, labels, labels_mask):
         """
@@ -95,15 +111,15 @@ class Backbone(nn.Module):
         # Case 1: Penalize predicting EOS when it shouldn't (EARLY TERMINATION)
         # This is more catastrophic - missing expression parts
         # We want eos_probs to be LOW when true_non_eos is HIGH
-        early_eos_penalty = (eos_probs * true_non_eos * valid_mask).sum() / (valid_mask.sum() + 1e-10)
+        early_eos_penalty = (eos_probs * true_non_eos * valid_mask).sum()  # Sum, not average (normalized in training.py)
         early_eos_weight = self.params.get('eos_early_weight', 5.0)
 
         # Case 2: Penalize NOT predicting EOS when it should (HALLUCINATION)
         # We want eos_probs to be HIGH when true_eos is HIGH
-        missing_eos_penalty = ((1.0 - eos_probs) * true_eos * valid_mask).sum() / (valid_mask.sum() + 1e-10)
+        missing_eos_penalty = ((1.0 - eos_probs) * true_eos * valid_mask).sum()  # Sum, not average (normalized in training.py)
         missing_eos_weight = self.params.get('eos_missing_weight', 3.0)
 
-        # Combine with asymmetric weights
+        # Combine with asymmetric weights (returns sum to be normalized by accumulated_tokens)
         eos_penalty = early_eos_weight * early_eos_penalty + missing_eos_weight * missing_eos_penalty
 
         return eos_penalty
@@ -121,7 +137,8 @@ class Backbone(nn.Module):
         new_parent_alphas = parent_alphas[:,1:,:,:].contiguous()
 
         KL_alpha = new_child_alphas * (torch.log(new_child_alphas + 1e-10) - torch.log(new_parent_alphas + 1e-10)) * image_mask
-        KL_loss = (KL_alpha.sum(-1).sum(-1) * label_mask[:,:-1, 0]).sum(-1).sum(-1) / (label_mask.sum() - batch_size)
+        # Sum, not average (normalized by accumulated_tokens in training.py)
+        KL_loss = (KL_alpha.sum(-1).sum(-1) * label_mask[:,:-1, 0]).sum(-1).sum(-1)
 
         return KL_loss
 

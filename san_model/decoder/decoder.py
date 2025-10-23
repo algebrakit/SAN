@@ -73,8 +73,8 @@ class SAN_decoder(nn.Module):
         height, width = cnn_features.shape[2:]
         word_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
         struct_probs = torch.zeros((batch_size, num_steps, self.struct_num)).to(device=self.device)
-        images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
         word_alphas = torch.zeros((batch_size, num_steps, height, width)).to(device=self.device)
+        images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
 
         if self.params['decoder']['inverse']:
             c2p_probs = torch.zeros((batch_size, num_steps, self.word_num)).to(device=self.device)
@@ -182,10 +182,15 @@ class SAN_decoder(nn.Module):
             word_embedding      = self.embedding(torch.ones(batch_size).long().to(device=self.device))
             alpha_sum_parent    = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
             alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
-            alpha_prev_init     = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
-            alpha_prev = alpha_prev_init
+            alpha_prev     = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
 
             struct_list = []
+            for bb in range(batch_size):
+                struct_list.append([])
+
+            # Track which samples have finished decoding
+            finished = torch.zeros(batch_size, dtype=torch.bool, device=self.device)
+
             parent_hidden = self.init_hidden(cnn_features, images_mask)
             for i in range(num_steps):
 
@@ -212,44 +217,50 @@ class SAN_decoder(nn.Module):
 
 
                 word_probs[:, i, :] = word_prob
-                word_alphas[:, i] = word_alpha
+                word_alphas[:, i, :, :] = word_alpha[:, 0, :, :]
 
                 _, word = word_prob.max(1)
 
-                if word.item() == self.STRUCT_ID: # struct
+                struct_prob = self.struct_convert(word_out_state)
+                struct_probs[:, i, :] = struct_prob
+                structs = torch.sigmoid(struct_prob)
 
-                    struct_prob = self.struct_convert(word_out_state)
-                    struct_probs[:, i, :] = struct_prob
+                for bb in range(batch_size):
+                    # Skip samples that have already finished decoding
+                    if finished[bb]:
+                        continue
 
-                    structs = torch.sigmoid(struct_prob)
+                    if word[bb].item() == self.STRUCT_ID: # struct
 
-                    # e.g. prev: 'frac', current: 'struct'
-                    # start a new sequence, so re-init alpha_prev
-                    alpha_sum_parent = alpha_sum_parent + word_alpha + alpha_prev
-                    alpha_prev = alpha_prev_init
+                        # e.g. prev: 'frac', current: 'struct'
+                        # start a new sequence, so re-init alpha_prev
+                        alpha_sum_parent[bb] = alpha_sum_parent[bb] + word_alpha[bb] + alpha_prev[bb]
+                        alpha_prev[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
 
-                    for num in range(structs.shape[1]-1, -1, -1):
-                        if structs[0][num] > self.threshold:
-                            struct_list.append((self.struct_dict[num], hidden, alpha_sum_parent))
+                        for num in range(structs.shape[1]-1, -1, -1):
+                            if structs[bb,num] > self.threshold:
+                                struct_list[bb].append((self.struct_dict[num], hidden[bb], alpha_sum_parent[bb]))
 
-                    if len(struct_list) == 0:
-                        break
-                    word, parent_hidden, alpha_sum_parent = struct_list.pop()
-                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
+                        if len(struct_list[bb]) == 0:
+                            finished[bb] = True  # Mark as finished instead of break
+                            continue
+                        word[bb], parent_hidden[bb], alpha_sum_parent[bb] = struct_list[bb].pop()
+                        word_embedding[bb] = self.embedding(torch.LongTensor([word[bb]]).to(device=self.device))
 
-                elif word == self.EOS_ID: 
-                    if len(struct_list) == 0:
-                        break
-                    word, parent_hidden, alpha_sum_parent = struct_list.pop()
-                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
-                    alpha_sum_completed = alpha_sum_completed + alpha_prev
-                    alpha_prev = alpha_prev_init
+                    elif word[bb].item() == self.EOS_ID:
+                        if len(struct_list[bb]) == 0:
+                            finished[bb] = True  # Mark as finished instead of break
+                            continue
+                        word[bb], parent_hidden[bb], alpha_sum_parent[bb] = struct_list[bb].pop()
+                        word_embedding[bb] = self.embedding(torch.LongTensor([word[bb]]).to(device=self.device))
+                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_prev[bb]
+                        alpha_prev[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
 
-                else:
-                    word_embedding = self.embedding(word)
-                    parent_hidden = hidden.clone()
-                    alpha_sum_completed = alpha_sum_completed + alpha_prev
-                    alpha_prev = word_alpha
+                    else:
+                        word_embedding[bb] = self.embedding(word[bb])
+                        parent_hidden[bb] = hidden[bb].clone()
+                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_prev[bb]
+                        alpha_prev[bb] = word_alpha[bb]
 
         return word_probs, struct_probs, word_alphas, None, c2p_probs, c2p_alphas
 

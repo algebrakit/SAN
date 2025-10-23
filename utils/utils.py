@@ -84,7 +84,7 @@ def load_checkpoint(model, optimizer, path):
     else:
         print(f'No optimizer in the pretrained model')
 
-    model.load_state_dict(state['model'])
+    model.load_state_dict(state['model'], strict=False)
 
 
 class Meter:
@@ -117,12 +117,36 @@ def cal_score(probs, labels, mask):
     struct_probs = struct_probs.contiguous().reshape(batch_size, -1)
     struct_pred = struct_probs > 0.5
 
-    word_scores = [SequenceMatcher(None, s1[:int(np.sum(s3))], s2[:int(np.sum(s3))], autojunk=False).ratio() * (len(s1[:int(np.sum(s3))]) + len(s2[:int(np.sum(s3))])) / len(s1[:int(np.sum(s3))]) / 2
-              for s1, s2, s3 in zip(word_label.cpu().detach().numpy(), word_pred.cpu().detach().numpy(), mask.cpu().detach().numpy())]
-    struct_scores = [SequenceMatcher(None, s1[:int(np.sum(s3))], s2[:int(np.sum(s3))], autojunk=False).ratio() * (len(s1[:int(np.sum(s3))]) + len(s2[:int(np.sum(s3))])) / len(s1[:int(np.sum(s3))]) / 2
-                   for s1, s2, s3 in zip(struct_label.cpu().detach().numpy(), struct_pred.cpu().detach().numpy(), mask.cpu().detach().numpy())]
+    # Calculate word and struct scores per sample in batch
+    # Use only word mask column (mask[:,:,0]) to get valid length
+    word_label_np = word_label.cpu().detach().numpy()
+    word_pred_np = word_pred.cpu().detach().numpy()
+    struct_label_np = struct_label.cpu().detach().numpy()
+    struct_pred_np = struct_pred.cpu().detach().numpy()
+    mask_np = mask[:,:,0].cpu().detach().numpy()  # Use only word mask column
 
-    batch_size = len(word_scores) if word_probs is not None else len(struct_scores)
+    word_scores = []
+    for label_seq, pred_seq, mask_seq in zip(word_label_np, word_pred_np, mask_np):
+        valid_len = int(np.sum(mask_seq))  # Count only valid (non-padding) positions
+        label_valid = label_seq[:valid_len]
+        pred_valid = pred_seq[:valid_len]
+
+        # SequenceMatcher ratio with length normalization
+        ratio = SequenceMatcher(None, label_valid, pred_valid, autojunk=False).ratio()
+        # Adjust for length mismatch (though lengths should match after slicing)
+        normalized_score = ratio * (len(label_valid) + len(pred_valid)) / len(label_valid) / 2
+        word_scores.append(normalized_score)
+
+    struct_scores = []
+    for label_seq, pred_seq, mask_seq in zip(struct_label_np, struct_pred_np, mask_np):
+        valid_len = int(np.sum(mask_seq))  # Count only valid (non-padding) positions
+        label_valid = label_seq[:valid_len]
+        pred_valid = pred_seq[:valid_len]
+
+        # SequenceMatcher ratio with length normalization
+        ratio = SequenceMatcher(None, label_valid, pred_valid, autojunk=False).ratio()
+        normalized_score = ratio * (len(label_valid) + len(pred_valid)) / len(label_valid) / 2
+        struct_scores.append(normalized_score)
 
     for i in range(batch_size):
         if struct_mask[i].sum() > 0:
@@ -132,9 +156,10 @@ def cal_score(probs, labels, mask):
             if word_scores[i] == 1:
                 line_right += 1
 
-    ExpRate = line_right / batch_size
+    # Return count of perfect expressions, not ratio (for correct batched accumulation)
+    numExpCorrect = line_right
 
     word_scores = np.mean(word_scores) if word_probs is not None else 0
     struct_scores = np.mean(struct_scores) if struct_probs is not None else 0
-    return word_scores, struct_scores, ExpRate
+    return word_scores, struct_scores, numExpCorrect
 

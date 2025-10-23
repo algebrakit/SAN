@@ -1,7 +1,9 @@
 import torch
 import pickle as pkl
-from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler
+from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler, Sampler
 import cv2
+import random
+import numpy as np
 
 
 class HYBTr_Dataset(Dataset):
@@ -92,6 +94,141 @@ class HYBTr_Dataset(Dataset):
         return images, image_masks, labels, labels_masks
 
 
+class BucketBatchSampler(Sampler):
+    """
+    Sampler that groups samples by sequence length into buckets with dynamic batch sizes.
+    This ensures batches have similar sequence lengths, leading to:
+    - Uniform memory usage (eliminates spikes from long sequences)
+    - Less padding waste
+    - Better GPU utilization
+    - Adaptive batch sizes: shorter sequences use larger batches
+    """
+
+    def __init__(self, dataset, batch_size, bucket_size_multiplier=10, shuffle=True, use_dynamic_batching=True, params=None):
+        """
+        Args:
+            dataset: HYBTr_Dataset instance
+            batch_size: Base number of samples per batch (used for longest sequences)
+            bucket_size_multiplier: How many batches to group in one bucket (default: 10)
+            shuffle: Whether to shuffle within buckets and across buckets
+            use_dynamic_batching: If True, adjust batch_size per bucket to keep tokens/batch constant
+            params: Optional params dict for accessing max_batch_size and other config
+        """
+        self.dataset = dataset
+        self.base_batch_size = batch_size
+        self.shuffle = shuffle
+        self.use_dynamic_batching = use_dynamic_batching
+        self.params = params if params is not None else {}
+
+        # Get image sizes for all samples (bucketing by image size instead of sequence length)
+        print("BucketBatchSampler: Computing image sizes...")
+        self.lengths = []  # Reusing 'lengths' variable name, but now stores image sizes (pixels)
+        for idx in range(len(dataset)):
+            name = dataset.name_list[idx]
+            image = dataset.images[name]
+            # Use total pixels (height × width) as size metric for bucketing
+            img_size = image.shape[0] * image.shape[1]
+            self.lengths.append(img_size)
+
+        # Validate dataset is not empty
+        if len(self.lengths) == 0:
+            raise ValueError(
+                "BucketBatchSampler: Dataset is empty! "
+                "Cannot create batches from an empty dataset. "
+                "Please check your data paths and ensure dataset contains samples."
+            )
+
+        # Sort indices by image size (pixels)
+        self.sorted_indices = sorted(range(len(self.lengths)), key=lambda i: self.lengths[i])
+
+        bucket_size = batch_size * bucket_size_multiplier
+        self.buckets = []
+        for i in range(0, len(self.sorted_indices), bucket_size):
+            bucket = self.sorted_indices[i:i + bucket_size]
+            self.buckets.append(bucket)
+
+        # Calculate dynamic batch sizes per bucket
+        if use_dynamic_batching:
+            # Target pixels = base_batch_size × max_image_size (from largest images)
+            max_size = max(self.lengths)
+            target_pixels_per_batch = self.base_batch_size * max_size
+
+            # Absolute maximum batch size to prevent OOM (configurable via params)
+            absolute_max_batch_size = self.params.get('max_batch_size', 64)  # Default: 64 samples max
+
+            self.bucket_batch_sizes = []
+            for bucket in self.buckets:
+                image_sizes = [self.lengths[idx] for idx in bucket]  # Image sizes (pixels)
+
+                bucket_max_image_size = max(image_sizes)  # Max image pixels in this bucket
+                dynamic_batch_size = max(1, min(target_pixels_per_batch // max(bucket_max_image_size, 1), absolute_max_batch_size))
+                self.bucket_batch_sizes.append(dynamic_batch_size)
+
+            # Print dynamic batching info
+            print(f"BucketBatchSampler: Created {len(self.buckets)} buckets")
+            print(f"Dynamic batching enabled: target_pixels_per_batch={target_pixels_per_batch:,} (base_batch_size={self.base_batch_size} × max_size={max_size:,} pixels)")
+        else:
+            # Fixed batch size for all buckets
+            self.bucket_batch_sizes = [self.base_batch_size] * len(self.buckets)
+            print(f"BucketBatchSampler: Created {len(self.buckets)} buckets (fixed batch_size={self.base_batch_size})")
+
+        # Show representative buckets from small to large (5 samples distributed across range)
+        num_buckets = len(self.buckets)
+        if num_buckets <= 5:
+            sample_indices = list(range(num_buckets))
+        else:
+            # Sample at 0%, 25%, 50%, 75%, 100% positions
+            sample_indices = [
+                0,
+                num_buckets // 4,
+                num_buckets // 2,
+                3 * num_buckets // 4,
+                num_buckets - 1
+            ]
+
+        for i in sample_indices:
+            bucket = self.buckets[i]
+            sizes_in_bucket = [self.lengths[idx] for idx in bucket]
+            batch_size_for_bucket = self.bucket_batch_sizes[i]
+            avg_pixels = batch_size_for_bucket * np.mean(sizes_in_bucket)
+            print(f"  Bucket {i}: {len(bucket)} samples, "
+                  f"size range (pixels) [{min(sizes_in_bucket):,}, {max(sizes_in_bucket):,}], "
+                  f"mean={np.mean(sizes_in_bucket):,.0f}, "
+                  f"batch_size={batch_size_for_bucket}, "
+                  f"avg_pixels/batch={avg_pixels:,.0f}")
+
+    def __iter__(self):
+        # Create list of (bucket, batch_size) pairs for shuffling
+        bucket_pairs = list(zip(self.buckets, self.bucket_batch_sizes))
+
+        # Shuffle buckets for randomness across epochs
+        if self.shuffle:
+            random.shuffle(bucket_pairs)
+
+        # Iterate through buckets and create batches
+        for bucket, bucket_batch_size in bucket_pairs:
+            # Shuffle within bucket
+            if self.shuffle:
+                bucket_copy = bucket.copy()
+                random.shuffle(bucket_copy)
+            else:
+                bucket_copy = bucket
+
+            # Create batches from this bucket using bucket-specific batch size
+            for i in range(0, len(bucket_copy), bucket_batch_size):
+                batch = bucket_copy[i:i + bucket_batch_size]
+                if len(batch) > 0:
+                    yield batch
+
+    def __len__(self):
+        # Calculate total number of batches using bucket-specific batch sizes
+        total_batches = 0
+        for bucket, bucket_batch_size in zip(self.buckets, self.bucket_batch_sizes):
+            # Count full batches + 1 partial batch if remainder exists
+            total_batches += (len(bucket) + bucket_batch_size - 1) // bucket_batch_size
+        return total_batches
+
+
 def get_dataset(params):
 
     words = Words(params['word_path'])
@@ -103,12 +240,29 @@ def get_dataset(params):
     train_dataset = HYBTr_Dataset(params, params['train_image_path'], params['train_label_path'], words)
     eval_dataset = HYBTr_Dataset(params, params['eval_image_path'], params['eval_label_path'], words)
 
-    train_sampler = RandomSampler(train_dataset)
-    eval_sampler = RandomSampler(eval_dataset)
+    # Use bucket batch sampler for training to ensure uniform memory usage
+    train_batch_sampler = BucketBatchSampler(
+        train_dataset,
+        batch_size=params['batch_size'],
+        bucket_size_multiplier=params.get('bucket_size_multiplier', 10),
+        shuffle=True,
+        use_dynamic_batching=params.get('use_dynamic_batching', True),
+        params=params  # Pass params for max_batch_size and other config
+    )
 
-    train_loader = DataLoader(train_dataset, batch_size=params['batch_size'], sampler=train_sampler,
+    # Use bucket batch sampler for eval too (can use larger batches since no gradients/accumulation)
+    eval_batch_sampler = BucketBatchSampler(
+        eval_dataset,
+        batch_size=params.get('eval_batch_size', params['batch_size'] * 2),  # Default: 2× training batch_size
+        bucket_size_multiplier=params.get('bucket_size_multiplier', 10),
+        shuffle=False,  # Don't shuffle eval for reproducibility
+        use_dynamic_batching=params.get('use_dynamic_batching', True),
+        params=params
+    )
+
+    train_loader = DataLoader(train_dataset, batch_sampler=train_batch_sampler,
                               num_workers=params['workers'], collate_fn=train_dataset.collate_fn, pin_memory=True)
-    eval_loader = DataLoader(eval_dataset, batch_size=1, sampler=eval_sampler,
+    eval_loader = DataLoader(eval_dataset, batch_sampler=eval_batch_sampler,
                               num_workers=params['workers'], collate_fn=eval_dataset.collate_fn, pin_memory=True)
 
     print(f'train dataset: {len(train_dataset)} train steps: {len(train_loader)} '

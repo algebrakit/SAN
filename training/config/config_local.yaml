@@ -10,11 +10,11 @@ batch_size: 1 # needed to support the largest images
 eval_batch_size: 2  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
 max_batch_size: 32  # used for most images, which are much smaller than the largest
 workers: 0  # REDUCED from 4 to eliminate multiprocessing memory overhead
-bucket_size_multiplier: 10000  # nr of data items per bucket is batch_size x bucket_size_multiplier
+bucket_size_multiplier: 1000  # nr of data items per bucket is batch_size x bucket_size_multiplier
 use_dynamic_batching: True  # Adjust batch_size per bucket: short sequences get larger batches for better GPU utilization
 min_samples_per_step: 32 # default: equal to max_batch_size
 optimizer: Adadelta
-lr: 0.3
+lr: 1
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
@@ -33,11 +33,11 @@ use_label_mask: False
 use_amp: True
 
 # Training data
-train_image_path: '../data/train_image.pkl'
-train_label_path: '../data/train_label.pkl'
-eval_image_path: '../data/test_image.pkl'
-eval_label_path: '../data/test_label.pkl'
-word_path: '../data/word.txt'
+train_image_path: '../data/mathwriting-chrome2013/train_image.pkl'
+train_label_path: '../data/mathwriting-chrome2013/train_label.pkl'
+eval_image_path: '../data/mathwriting-chrome2013/test_image.pkl'
+eval_label_path: '../data/mathwriting-chrome2013/test_label.pkl'
+word_path: '../data/mathwriting-chrome2013/word.txt'
 
 # Encoder selection
 encoder:
@@ -80,7 +80,7 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: True
+finetune: False
 checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path

@@ -198,12 +198,6 @@ class SAN_decoder(nn.Module):
                     alpha_prev = alpha_prev_init
 
                     # Pop next structure from stack
-                    # BUG: e.g \sqrt{x^3 + 1}.
-                    # SQRT --> struct_list = SQRT_INSIDE
-                    # pop inside --> struct_list is empty, hidden and alpha_active set
-                    # x^3  --> struct_list = x SUP,
-                    # pop sup --> struct_list is  empty
-                    # eos. --> hidden and alpha are NOT correct!
                     word, parent_hidden, p_word, pid, alpha_sum_active = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
