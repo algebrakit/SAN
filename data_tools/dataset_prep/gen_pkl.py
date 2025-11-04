@@ -5,10 +5,10 @@ import cv2
 import pickle as pkl
 
 
-image_path = '/Users/martijnslob/github/SAN/data/mathwriting-chrome2013/train/images'
-image_out = 'train_image.pkl'
-label_path = '/Users/martijnslob/github/SAN/data/mathwriting-chrome2013/train/hyb'
-label_out = 'train_label.pkl'
+image_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/images'
+image_out = 'test_image.pkl'
+label_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/hyb'
+label_out = 'test_label.pkl'
 
 images = glob.glob(os.path.join(image_path, '*.bmp'))
 image_dict = {}

@@ -1,9 +1,20 @@
 import os
+
+# Limit CPU thread parallelism to prevent 4000%+ CPU usage
+# Must be set BEFORE importing torch
+os.environ['OMP_NUM_THREADS'] = '4'        # Limit OpenMP threads
+os.environ['MKL_NUM_THREADS'] = '4'        # Limit MKL (Intel Math Kernel Library)
+os.environ['OPENBLAS_NUM_THREADS'] = '4'   # Limit OpenBLAS
+os.environ['NUMEXPR_NUM_THREADS'] = '4'    # Limit NumExpr
+
 import time
 import argparse
 import random
 import gc
 import torch
+
+# Explicitly limit PyTorch intra-op parallelism
+torch.set_num_threads(4)
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 

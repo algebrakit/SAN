@@ -33,7 +33,7 @@ eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
 # word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/chrome2013/word.txt'
+word_path: '/Users/martijnslob/github/SAN/data/mathwriting-chrome2013/word.txt'
 
 # Encoder selection
 encoder:

@@ -60,12 +60,16 @@ class HYBTr_Dataset(Dataset):
 
         return image, label
 
+    # batch_images: [Batch Size, (Image, HybridTree)], where
+    # - Image = HxW tensor
+    # - HybridTree = nr of lines x 11 (id, symbol, parent_id, parent_symbol, ... 7 structs ...)
     def collate_fn(self, batch_images):
 
         max_width, max_height, max_length = 0, 0, 0
         batch, channel = len(batch_images), batch_images[0][0].shape[0]
         proper_items = []
         for item in batch_images:
+            # item = (Image, HybridTree)
             if item[0].shape[1] * max_width > self.image_width * self.image_height or item[0].shape[2] * max_height > self.image_width * self.image_height:
                 continue
             max_height = item[0].shape[1] if item[0].shape[1] > max_height else max_height
@@ -75,20 +79,24 @@ class HYBTr_Dataset(Dataset):
 
         images, image_masks = torch.zeros((len(proper_items), channel, max_height, max_width)), torch.zeros(
             (len(proper_items), 1, max_height, max_width))
-        labels, labels_masks = torch.zeros((len(proper_items), max_length, 11)).long(), torch.zeros(
-            (len(proper_items), max_length, 2))
+        labels, labels_masks = torch.zeros((len(proper_items), max_length, 11)).long(), \
+                               torch.zeros((len(proper_items), max_length, 2))
 
+        # for each item in batch...
         for i in range(len(proper_items)):
 
             _, h, w = proper_items[i][0].shape
+            nr_of_lines = proper_items[i][1].shape[0]
+
+            # image_masks: [batch_index, 0, height, width]
             images[i][:, :h, :w] = proper_items[i][0]
             image_masks[i][:, :h, :w] = 1
 
-            l = proper_items[i][1].shape[0]
-            labels[i][:l, :] = proper_items[i][1]
-            labels_masks[i][:l, 0] = 1
+            # label_masks: [batch index, line index, (1 if line applies, 1 if line is struct)]
+            labels[i][:nr_of_lines, :] = proper_items[i][1]
+            labels_masks[i][:nr_of_lines, 0] = 1
 
-            for j in range(proper_items[i][1].shape[0]):
+            for j in range(nr_of_lines): 
                 labels_masks[i][j][1] = proper_items[i][1][j][4:].sum() != 0
 
         return images, image_masks, labels, labels_masks
@@ -96,12 +104,12 @@ class HYBTr_Dataset(Dataset):
 
 class BucketBatchSampler(Sampler):
     """
-    Sampler that groups samples by sequence length into buckets with dynamic batch sizes.
-    This ensures batches have similar sequence lengths, leading to:
-    - Uniform memory usage (eliminates spikes from long sequences)
+    Sampler that groups samples by image size (pixels) into buckets with dynamic batch sizes.
+    This ensures batches have similar image sizes, leading to:
+    - Uniform memory usage (eliminates spikes from large images)
     - Less padding waste
     - Better GPU utilization
-    - Adaptive batch sizes: shorter sequences use larger batches
+    - Adaptive batch sizes: smaller images use larger batches
     """
 
     def __init__(self, dataset, batch_size, bucket_size_multiplier=10, shuffle=True, use_dynamic_batching=True, params=None):
@@ -122,16 +130,16 @@ class BucketBatchSampler(Sampler):
 
         # Get image sizes for all samples (bucketing by image size instead of sequence length)
         print("BucketBatchSampler: Computing image sizes...")
-        self.lengths = []  # Reusing 'lengths' variable name, but now stores image sizes (pixels)
+        self.image_sizes = []
         for idx in range(len(dataset)):
             name = dataset.name_list[idx]
             image = dataset.images[name]
             # Use total pixels (height × width) as size metric for bucketing
             img_size = image.shape[0] * image.shape[1]
-            self.lengths.append(img_size)
+            self.image_sizes.append(img_size)
 
         # Validate dataset is not empty
-        if len(self.lengths) == 0:
+        if len(self.image_sizes) == 0:
             raise ValueError(
                 "BucketBatchSampler: Dataset is empty! "
                 "Cannot create batches from an empty dataset. "
@@ -139,18 +147,61 @@ class BucketBatchSampler(Sampler):
             )
 
         # Sort indices by image size (pixels)
-        self.sorted_indices = sorted(range(len(self.lengths)), key=lambda i: self.lengths[i])
+        self.sorted_indices = sorted(range(len(self.image_sizes)), key=lambda i: self.image_sizes[i])
+        sorted_sizes = [self.image_sizes[idx] for idx in self.sorted_indices]
+        if params['bucket_trunc_largest'] is not None:
+            N = params['bucket_trunc_largest']
+            print(f"Largest image sizes: {sorted_sizes[-20:]}")
+            print(f"Removing largest {N} items")
+            del self.sorted_indices[-N:]
+            del sorted_sizes[-N:]
 
-        bucket_size = batch_size * bucket_size_multiplier
-        self.buckets = []
-        for i in range(0, len(self.sorted_indices), bucket_size):
-            bucket = self.sorted_indices[i:i + bucket_size]
-            self.buckets.append(bucket)
+        # Create buckets using percentile-based or fixed-size strategy
+        if 'bucket_percentiles' in self.params and self.params['bucket_percentiles'] is not None:
+            # Percentile-based bucketing: distribute samples by size percentiles
+            percentiles = self.params['bucket_percentiles']
+            print(f"BucketBatchSampler: Using percentile-based bucketing with percentiles: {percentiles}")
+
+            # Validate percentiles
+            if len(percentiles) < 2:
+                raise ValueError("bucket_percentiles must have at least 2 values (start and end)")
+            if percentiles[0] != 0 or percentiles[-1] != 100:
+                raise ValueError("bucket_percentiles must start at 0 and end at 100")
+            if percentiles != sorted(percentiles):
+                raise ValueError("bucket_percentiles must be in ascending order")
+
+            # Create buckets based on percentile ranges
+            n_samples = len(sorted_sizes)
+            self.buckets = []
+            for i in range(len(percentiles) - 1):
+                start_percentile = percentiles[i]
+                end_percentile = percentiles[i + 1]
+                start_idx = int(n_samples * start_percentile / 100)
+                end_idx = int(n_samples * end_percentile / 100)
+
+                bucket = self.sorted_indices[start_idx:end_idx]
+
+                # Validate bucket is not empty (can happen with duplicate/adjacent percentiles)
+                if len(bucket) == 0:
+                    raise ValueError(
+                        f"Bucket {i} is empty! Percentile range [{start_percentile}%, {end_percentile}%) "
+                        f"creates no samples. Check percentiles {percentiles} for duplicates or values too close together."
+                    )
+
+                self.buckets.append(bucket)
+        else:
+            # Fixed-size bucketing (backward compatibility)
+            print(f"BucketBatchSampler: Using fixed-size bucketing with multiplier={bucket_size_multiplier}")
+            bucket_size = batch_size * bucket_size_multiplier
+            self.buckets = []
+            for i in range(0, len(self.sorted_indices), bucket_size):
+                bucket = self.sorted_indices[i:i + bucket_size]
+                self.buckets.append(bucket)
 
         # Calculate dynamic batch sizes per bucket
         if use_dynamic_batching:
             # Target pixels = base_batch_size × max_image_size (from largest images)
-            max_size = max(self.lengths)
+            max_size = max(sorted_sizes)
             target_pixels_per_batch = self.base_batch_size * max_size
 
             # Absolute maximum batch size to prevent OOM (configurable via params)
@@ -158,73 +209,112 @@ class BucketBatchSampler(Sampler):
 
             self.bucket_batch_sizes = []
             for bucket in self.buckets:
-                image_sizes = [self.lengths[idx] for idx in bucket]  # Image sizes (pixels)
+                image_sizes = [self.image_sizes[idx] for idx in bucket]  # Image sizes (pixels)
 
                 bucket_max_image_size = max(image_sizes)  # Max image pixels in this bucket
                 dynamic_batch_size = max(1, min(target_pixels_per_batch // max(bucket_max_image_size, 1), absolute_max_batch_size))
                 self.bucket_batch_sizes.append(dynamic_batch_size)
 
             # Print dynamic batching info
-            print(f"BucketBatchSampler: Created {len(self.buckets)} buckets")
             print(f"Dynamic batching enabled: target_pixels_per_batch={target_pixels_per_batch:,} (base_batch_size={self.base_batch_size} × max_size={max_size:,} pixels)")
         else:
             # Fixed batch size for all buckets
             self.bucket_batch_sizes = [self.base_batch_size] * len(self.buckets)
             print(f"BucketBatchSampler: Created {len(self.buckets)} buckets (fixed batch_size={self.base_batch_size})")
 
-        # Show representative buckets from small to large (5 samples distributed across range)
+        # Show bucket details
         num_buckets = len(self.buckets)
-        if num_buckets <= 5:
-            sample_indices = list(range(num_buckets))
-        else:
-            # Sample at 0%, 25%, 50%, 75%, 100% positions
-            sample_indices = [
-                0,
-                num_buckets // 4,
-                num_buckets // 2,
-                3 * num_buckets // 4,
-                num_buckets - 1
-            ]
 
+        # For percentile-based bucketing, show all buckets (typically 5-10)
+        # For fixed-size bucketing, show representative sample (5 buckets)
+        if 'bucket_percentiles' in self.params and self.params['bucket_percentiles'] is not None:
+            # Show all buckets for percentile-based
+            sample_indices = list(range(num_buckets))
+            print(f"\nBucket statistics:")
+        else:
+            # Show representative buckets for fixed-size
+            if num_buckets <= 10:
+                sample_indices = list(range(num_buckets))
+            else:
+                # Sample at 0%, 25%, 50%, 75%, 100% positions
+                sample_indices = [
+                    0,
+                    num_buckets // 4,
+                    num_buckets // 2,
+                    3 * num_buckets // 4,
+                    num_buckets - 1
+                ]
+            print(f"\nRepresentative bucket statistics (showing {len(sample_indices)} of {num_buckets} buckets):")
+
+        total_nr_batches = 0
         for i in sample_indices:
             bucket = self.buckets[i]
-            sizes_in_bucket = [self.lengths[idx] for idx in bucket]
+            sizes_in_bucket = [self.image_sizes[idx] for idx in bucket]
             batch_size_for_bucket = self.bucket_batch_sizes[i]
+            num_batches = (len(bucket) + batch_size_for_bucket - 1) // batch_size_for_bucket
+            total_nr_batches+= num_batches
             avg_pixels = batch_size_for_bucket * np.mean(sizes_in_bucket)
-            print(f"  Bucket {i}: {len(bucket)} samples, "
-                  f"size range (pixels) [{min(sizes_in_bucket):,}, {max(sizes_in_bucket):,}], "
+            print(f"  Bucket {i}: {len(bucket):,} samples → ~{num_batches:,} batches, "
+                  f"size range [{min(sizes_in_bucket):,}, {max(sizes_in_bucket):,}] pixels, "
                   f"mean={np.mean(sizes_in_bucket):,.0f}, "
                   f"batch_size={batch_size_for_bucket}, "
                   f"avg_pixels/batch={avg_pixels:,.0f}")
+        print(f"Nr of batches: {total_nr_batches}")
+            
 
     def __iter__(self):
-        # Create list of (bucket, batch_size) pairs for shuffling
-        bucket_pairs = list(zip(self.buckets, self.bucket_batch_sizes))
+        """
+        Generate batches by collecting from all buckets and shuffling together.
 
-        # Shuffle buckets for randomness across epochs
-        if self.shuffle:
-            random.shuffle(bucket_pairs)
+        Strategy:
+        1. For each bucket, shuffle samples and create batches using bucket-specific batch_size
+        2. Collect all batches into a single list
+        3. Shuffle the entire batch list for diversity across buckets
+        4. Yield batches in shuffled order
 
-        # Iterate through buckets and create batches
-        for bucket, bucket_batch_size in bucket_pairs:
-            # Shuffle within bucket
+        This ensures training sees diverse image sizes throughout the epoch (not sequentially by bucket).
+        Proportional representation is natural: buckets with more samples contribute more batches.
+
+        Yields:
+            list: Batch of sample indices
+        """
+        all_batches = []
+
+        for bucket, batch_size in zip(self.buckets, self.bucket_batch_sizes):
+            # Shuffle samples within bucket
             if self.shuffle:
                 bucket_copy = bucket.copy()
                 random.shuffle(bucket_copy)
             else:
                 bucket_copy = bucket
 
-            # Create batches from this bucket using bucket-specific batch size
-            for i in range(0, len(bucket_copy), bucket_batch_size):
-                batch = bucket_copy[i:i + bucket_batch_size]
+            # Create batches from this bucket
+            for i in range(0, len(bucket_copy), batch_size):
+                batch = bucket_copy[i:i + batch_size]
                 if len(batch) > 0:
-                    yield batch
+                    all_batches.append(batch)
+
+        # Shuffle all batches together for diversity across buckets
+        if self.shuffle:
+            random.shuffle(all_batches)
+
+        # Iterate through shuffled batches
+        for batch in all_batches:
+            yield batch
 
     def __len__(self):
-        # Calculate total number of batches using bucket-specific batch sizes
+        """
+        Calculate total number of batches across all buckets.
+
+        Uses ceiling division to count partial batches: if a bucket has 35 samples
+        and batch_size=32, this counts as 2 batches (32 + 3).
+
+        Returns:
+            int: Total number of batches that will be yielded by __iter__
+        """
         total_batches = 0
         for bucket, bucket_batch_size in zip(self.buckets, self.bucket_batch_sizes):
-            # Count full batches + 1 partial batch if remainder exists
+            # Count full batches + 1 partial batch if remainder exists (ceiling division)
             total_batches += (len(bucket) + bucket_batch_size - 1) // bucket_batch_size
         return total_batches
 
@@ -260,10 +350,25 @@ def get_dataset(params):
         params=params
     )
 
-    train_loader = DataLoader(train_dataset, batch_sampler=train_batch_sampler,
-                              num_workers=params['workers'], collate_fn=train_dataset.collate_fn, pin_memory=True)
-    eval_loader = DataLoader(eval_dataset, batch_sampler=eval_batch_sampler,
-                              num_workers=params['workers'], collate_fn=eval_dataset.collate_fn, pin_memory=True)
+    train_loader = DataLoader(
+        train_dataset,
+        batch_sampler=train_batch_sampler,
+        num_workers=params['workers'],
+        collate_fn=train_dataset.collate_fn,
+        pin_memory=True,
+        persistent_workers=False,  # Disabled - was causing CPU oscillation and worker stalls
+        prefetch_factor=1 if params['workers'] > 0 else None  # Each worker prefetches 1 batch
+    )
+
+    eval_loader = DataLoader(
+        eval_dataset,
+        batch_sampler=eval_batch_sampler,
+        num_workers=params['workers'],
+        collate_fn=eval_dataset.collate_fn,
+        pin_memory=True,
+        persistent_workers=False,  # Disabled - was causing CPU oscillation and worker stalls
+        prefetch_factor=1 if params['workers'] > 0 else None
+    )
 
     print(f'train dataset: {len(train_dataset)} train steps: {len(train_loader)} '
           f'eval dataset: {len(eval_dataset)} eval steps: {len(eval_loader)}')

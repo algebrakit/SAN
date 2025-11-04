@@ -32,7 +32,7 @@ train_label_path: 'data/chrome2013/train/train_label.pkl'
 eval_image_path: 'data/chrome2013/test/test_image.pkl'
 eval_label_path: 'data/chrome2013/test/test_label.pkl'
 
-word_path: 'data/chrome2013/word.txt'
+word_path: 'data/mathwriting-chrome2013/word.txt'
 
 # Encoder selection
 encoder:

@@ -10,13 +10,13 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
     device = params['device']
     loss_meter = Meter()
 
-    word_right, struct_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
-    loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt = 0, 0, 0, 0, 0
+    total_words_right, total_structs_right, total_exp_right, length, cal_num = 0, 0, 0, 0, 0
+    loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt, eos_penalty_dt = 0, 0, 0, 0, 0, 0
 
     # Sample-based accumulation instead of batch-based
     min_samples_per_step = params.get('min_samples_per_step', 18)  # Default: base_batch_size × 3
     accumulated_samples = 0
-    accumulated_tokens = 0  # Track total tokens (batch × time) for proper gradient normalization
+    accumulated_lines = 0  # Track total tokens (batch × time) for proper gradient normalization
     scaler = params['scaler']
     epoch_step_count = 0  # Track optimizer steps within this epoch (for LR schedule)
 
@@ -44,6 +44,8 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
 
     with tqdm(train_loader, total=len(train_loader)) as pbar:
         for batch_idx, (images, image_masks, labels, label_masks) in enumerate(pbar):
+            # image_masks: [batch_index, 0, height, width]
+            # label_masks: [batch index, line index, (1 if line applies, 1 if line is struct)]
 
             if epoch_step_count > 0 and epoch_step_count % 100 == 0:
                 # prevent OOM due to memory fragmentation (clear based on optimizer steps, not batches)
@@ -57,42 +59,38 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             if accumulated_samples == 0:
                 optimizer.zero_grad()
 
-            # if batch_idx > 1300:
-            #     # Log batch properties for debugging OOM
-            #     print(f"[Batch {batch_idx}] size={batch}, seq_len={time}, imgs_shape={images.shape}")
-
             # Mixed precision forward pass
             with torch.amp.autocast('cuda', enabled=params.get('use_amp', False)):
                 probs, loss_components = model(images, image_masks, labels, label_masks)
 
+                # loss is aggregated over all lines in hybrid tree and all items in batch (not averaged)
                 word_loss, struct_loss, parent_loss, kl_loss, eos_penalty = loss_components
                 loss = word_loss + struct_loss + parent_loss + kl_loss + eos_penalty
-
-                # Don't normalize yet - we'll normalize by actual accumulated samples later
 
             # Track losses (unnormalized)
             loss_dt += loss.item()
             word_loss_dt += word_loss.item()
             struct_loss_dt += struct_loss.item()
+            eos_penalty_dt += eos_penalty.item()
             if params['decoder']['inverse']:
                 parent_loss_dt += parent_loss.item()
                 kl_loss_dt += kl_loss.item()
 
-            wordRate, structRate, numExpCorrect = cal_score(probs, labels, label_masks)
+            words_right, structs_right, exp_right = cal_score(probs, labels, label_masks)
 
-            valid_tokens = label_masks[:,:,0].sum().item()  # Count only valid (non-padding) tokens
-            word_right = word_right + wordRate * valid_tokens
-            struct_right = struct_right + structRate * valid_tokens
-            exp_right = exp_right + numExpCorrect  # ExpRate is count, not ratio (after cal_score fix)
-            length = length + valid_tokens  # Only count valid tokens
-            cal_num = cal_num + batch
+            valid_lines = label_masks[:,:,0].sum().item()  # Count only valid (non-padding) label lines (hybrid tree lines)
+            total_words_right = total_words_right + words_right
+            total_structs_right = total_structs_right + structs_right
+            total_exp_right = total_exp_right + exp_right 
+            length = length + valid_lines  # Count valid lines up to this batch
+            cal_num = cal_num + batch      # Total number of samples up to this batch
 
             # Mixed precision backward pass
             scaler.scale(loss).backward()
 
             # Track accumulated samples and tokens
             accumulated_samples += batch
-            accumulated_tokens += valid_tokens  # Count only valid (non-padding) tokens
+            accumulated_lines += valid_lines  # Count only valid (non-padding) label lines (hybrid tree lines)
             total_samples_processed += batch
 
             mem_use = torch.cuda.max_memory_allocated() / 1e9
@@ -120,7 +118,7 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                 # 2. Then normalize gradients by total accumulated tokens (batch × time)
                 for param in model.parameters():
                     if param.grad is not None:
-                        param.grad.div_(accumulated_tokens)
+                        param.grad.div_(accumulated_lines)
 
                 # 3. Finally clip gradients (on properly scaled gradients)
                 if params['gradient_clip']:
@@ -132,11 +130,12 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                 global_step += 1  # Increment global step counter for TensorBoard
 
                 # Normalize losses by accumulated tokens for logging (matches gradient normalization)
-                loss_dt_normalized = loss_dt / accumulated_tokens
-                word_loss_dt_normalized = word_loss_dt / accumulated_tokens
-                struct_loss_dt_normalized = struct_loss_dt / accumulated_tokens
-                parent_loss_dt_normalized = parent_loss_dt / accumulated_tokens if params['decoder']['inverse'] else 0
-                kl_loss_dt_normalized = kl_loss_dt / accumulated_tokens if params['decoder']['inverse'] else 0
+                loss_dt_normalized = loss_dt / accumulated_lines
+                word_loss_dt_normalized = word_loss_dt / accumulated_lines
+                struct_loss_dt_normalized = struct_loss_dt / accumulated_lines
+                parent_loss_dt_normalized = parent_loss_dt / accumulated_lines if params['decoder']['inverse'] else 0
+                kl_loss_dt_normalized = kl_loss_dt / accumulated_lines if params['decoder']['inverse'] else 0
+                eos_penalty_dt_normalized = eos_penalty_dt / accumulated_lines if params['decoder'].get('eos_penalty', False) else 0
 
                 loss_meter.add(loss_dt_normalized)
 
@@ -145,27 +144,28 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                     writer.add_scalar('train/loss', loss_dt_normalized, global_step)
                     writer.add_scalar('train/word_loss', word_loss_dt_normalized, global_step)
                     writer.add_scalar('train/struct_loss', struct_loss_dt_normalized, global_step)
-                    writer.add_scalar('train/WordRate', wordRate, global_step)
+                    writer.add_scalar('train/WordRate', words_right / accumulated_lines, global_step)
                     writer.add_scalar('train/parent_loss', parent_loss_dt_normalized, global_step)
                     writer.add_scalar('train/kl_loss', kl_loss_dt_normalized, global_step)
-                    writer.add_scalar('train/structRate', structRate, global_step)
-                    writer.add_scalar('train/ExpRate', numExpCorrect, global_step)
+                    writer.add_scalar('train/eos_penalty', eos_penalty_dt_normalized, global_step)
+                    writer.add_scalar('train/structRate', structs_right / accumulated_lines / 7, global_step)
+                    writer.add_scalar('train/ExpRate', exp_right / accumulated_samples, global_step)
                     writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], global_step)
                     writer.add_scalar('train/accumulated_samples', accumulated_samples, global_step)  # Track actual samples per step
                     writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
-                    writer.add_scalar('epoch/train_WordRate', word_right / length, epoch+1)
-                    writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
-                    writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
+                    writer.add_scalar('epoch/train_WordRate', total_words_right / length, epoch+1)
+                    writer.add_scalar('epoch/train_structRate', total_structs_right / length / 7, epoch + 1)
+                    writer.add_scalar('epoch/train_ExpRate', total_exp_right / cal_num, epoch + 1)
 
                 pbar.set_description(f'Epoch: {epoch+1} LOSS: train: {loss_dt_normalized:.4f} '
-                                     f'RATE: Word: {word_right / length:.4f}  '
-                                     f'struct: {struct_right / length:.4f} Exp: {exp_right / cal_num:.4f} '
+                                     f'RATE: Word: {total_words_right / length:.4f}  '
+                                     f'struct: {total_structs_right / length / 7:.4f} Exp: {total_exp_right / cal_num:.4f} '
                                      f'samples: {accumulated_samples}')
 
                 # Reset accumulators
-                loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt = 0, 0, 0, 0, 0
+                loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt, eos_penalty_dt = 0, 0, 0, 0, 0, 0
                 accumulated_samples = 0
-                accumulated_tokens = 0
+                accumulated_lines = 0
 
         # Validation logging: verify all samples were processed
         dataset_size = len(train_loader.dataset)
@@ -177,7 +177,7 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
         else:
             print(f"\n✓ Epoch {epoch+1} complete: {total_samples_processed}/{dataset_size} samples processed ({epoch_step_count} optimizer steps)")
 
-        return loss_meter.mean, word_right / length, struct_right / length, exp_right / cal_num
+        return loss_meter.mean, total_words_right / length, total_structs_right / length / 7, total_exp_right / cal_num
 
 
 def eval(params, model, epoch, eval_loader, writer=None):
@@ -205,11 +205,12 @@ def eval(params, model, epoch, eval_loader, writer=None):
             word_loss, struct_loss = loss
             loss = word_loss + struct_loss
 
-            wordRate, structRate, numExpCorrect = cal_score(probs, labels, label_masks)
+            words_right, structs_right, numExpCorrect = cal_score(probs, labels, label_masks)
 
-            valid_tokens = label_masks[:,:,0].sum().item()  # Count only valid (non-padding) tokens
-            word_right = word_right + wordRate * valid_tokens
-            struct_right = struct_right + structRate * valid_tokens
+            valid_tokens = label_masks[:,:,0].sum().item()
+            word_right = word_right + words_right      # ✓ Just accumulate counts
+            struct_right = struct_right + structs_right  # ✓ Just accumulate counts
+
             exp_right = exp_right + numExpCorrect
             length = length + valid_tokens  # Only count valid tokens
             cal_num = cal_num + batch
@@ -232,17 +233,17 @@ def eval(params, model, epoch, eval_loader, writer=None):
                 writer.add_scalar('eval/loss', loss_dt, current_step)
                 writer.add_scalar('eval/word_loss', word_loss_dt, current_step)
                 writer.add_scalar('eval/struct_loss', struct_loss_dt, current_step)
-                writer.add_scalar('eval/WordRate', wordRate, current_step)
-                writer.add_scalar('eval/structRate', structRate, current_step)
+                writer.add_scalar('eval/WordRate', word_right/length, current_step)
+                writer.add_scalar('eval/structRate', struct_right / length / 7, current_step)
                 writer.add_scalar('eval/ExpRate', numExpCorrect, current_step)
 
             pbar.set_description(f'Epoch: {epoch + 1} eval loss: {loss_dt:.4f} word loss: {word_loss_dt:.4f} '
                                  f'struct loss: {struct_loss_dt:.4f} WordRate: {word_right / length:.4f} '
-                                 f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+                                 f'structRate: {struct_right / length / 7:.4f} ExpRate: {exp_right / cal_num:.4f}')
 
         if writer:
             writer.add_scalar('epoch/eval_loss', loss_meter.mean, epoch + 1)
             writer.add_scalar('epoch/eval_WordRate', word_right / length, epoch + 1)
-            writer.add_scalar('epoch/eval_structRate', struct_right / length, epoch + 1)
-            writer.add_scalar('epoch/eval_ExpRate', exp_right / len(eval_loader.dataset), epoch + 1)
-        return loss_meter.mean, word_right / length, struct_right / length, exp_right / cal_num
+            writer.add_scalar('epoch/eval_structRate', struct_right / length / 7, epoch + 1)
+            writer.add_scalar('epoch/eval_ExpRate', exp_right / cal_num, epoch + 1)
+        return loss_meter.mean, word_right / length, struct_right / length / 7, exp_right / cal_num

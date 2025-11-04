@@ -1,14 +1,24 @@
 # Experiment name
-experiment: "SAN_chrome2013"
+experiment: "SAN"
 
 # Random seed
 seed: 20200814
 
 # Training parameters
-epoches: 200
-batch_size: 8
-gradient_accumulation_steps: 1
-workers: 0
+epoches: 50
+batch_size: 6 # needed to support the largest images
+eval_batch_size: 2  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
+max_batch_size: 32  # used for most images, which are much smaller than the largest
+workers: 4  # REDUCED from 4 to eliminate multiprocessing memory overhead
+
+# Bucketing strategy - choose ONE:
+# Option 1: Percentile-based (recommended for skewed distributions - maximizes diversity for small images)
+bucket_percentiles: [0, 80, 98, 99, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+# Option 2: Fixed-size (fallback - comment out bucket_percentiles to use this)
+# bucket_size_multiplier: 10000  # nr of data items per bucket is batch_size x bucket_size_multiplier
+
+use_dynamic_batching: True  # Adjust batch_size per bucket: short sequences get larger batches for better GPU utilization
+min_samples_per_step: 32 # default: equal to max_batch_size
 optimizer: Adadelta
 lr: 0.3
 lr_decay: cosine
@@ -17,7 +27,6 @@ eps: 1e-6
 weight_decay: 1e-4
 beta: 0.9
 image_resize: True
-# max dimensions
 image_width: 1600
 image_height: 320
 image_channel: 1
@@ -34,7 +43,6 @@ train_image_path: '../data/chrome2013/train_image.pkl'
 train_label_path: '../data/chrome2013/train_label.pkl'
 eval_image_path: '../data/chrome2013/test_image.pkl'
 eval_label_path: '../data/chrome2013/test_label.pkl'
-
 word_path: '../data/chrome2013/word.txt'
 
 # Encoder selection
@@ -60,6 +68,7 @@ decoder:
   input_size: 256
   hidden_size: 256
   inverse: False
+  eos_penalty: False
 
 # Attention parameters
 attention:
@@ -78,7 +87,7 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: True
+finetune: False
 checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path

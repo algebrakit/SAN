@@ -16,14 +16,18 @@ class SAN_decoder(nn.Module):
         self.dropout_prob = params['dropout']
         self.device = params['device']
         self.word_num = params['word_num']
-        self.struct_num = params['struct_num'] # 7: below, above, inside, right, sub, sup, L-sup
-        # self.struct_dict = [108, 109, 110, 111, 112, 113, 114]
-        self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
         self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
         self.RIGHT_ID = self.params['words'].encode(['right'])[0]
         self.EOS_ID = self.params['words'].encode(['<eos>'])[0]
         self.SUB_ID = self.params['words'].encode(['sub'])[0]
         self.SUP_ID = self.params['words'].encode(['sup'])[0]
+        self.struct_num = params['struct_num'] # 7: below, above, inside, right, sub, sup, L-sup
+        self.struct_dict = torch.tensor(
+            self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right']),
+            device=self.device
+        )
+        # self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
+        self.struct_dict_no_right = torch.tensor([s for s in self.struct_dict if s != self.RIGHT_ID],device=self.device)
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
         self.threshold = params['hybrid_tree']['threshold']
@@ -94,10 +98,12 @@ class SAN_decoder(nn.Module):
             c2p_hidden = torch.zeros((batch_size, self.hidden_size)).to(device=self.device)
             # Syntax-aware attention vector att_{\alpha}(X) per line, accumulated over the parents
             alpha_sum_parents = torch.zeros((batch_size * (num_steps + 1), 1, height, width)).to(device=self.device)
+            # the attention weights used per symbol (alpha) or struct (alpha of 'struct' and construct '\frac')
+            alpha_currents = torch.zeros((batch_size * (num_steps + 1), 1, height, width)).to(device=self.device)
             # attention vector to penalise covered parts of the image.
             alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
             # attention vector of previous symbol
-            alpha_prev = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            alpha_current = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
             
             # Iterate over the lines in the hybrid tree
             for i in range(num_steps):
@@ -112,6 +118,7 @@ class SAN_decoder(nn.Module):
                 parent_hidden = parent_hiddens[parent_ids,:].contiguous()
                 # syntax-aware attention vector, Att_{\alpha}(X)
                 alpha_sum_parent = alpha_sum_parents[parent_ids, :, :, :].contiguous()
+                alpha_current = alpha_currents[parent_ids, :, :, :].contiguous()
 
                 # Partner state, c^{\alpha}_p in the article. 
                 # Set to the latest generated terminal (teacher forcing strategy)
@@ -121,16 +128,12 @@ class SAN_decoder(nn.Module):
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
                 
                 # Attention mechanism. word_context_vec is \Omega in the article
-                # For training, we use the old single-aggregate approach (completed=word_alpha_sum, active=None)
-                alpha_parent_is_struct_mask = torch.zeros(batch_size, 1, 1, 1, device=self.device)
-                for bb in range(batch_size):
-                    if current_parent_type[bb].item() in self.struct_dict:
-                        alpha_parent_is_struct_mask[bb] = 1.0
-                alpha_prev = alpha_prev * (1 - alpha_parent_is_struct_mask)
-
+                # If parent is a relation, then do not use the alpha_current as it is already included in alpha_sum_parent
+                alpha_relation_mask = torch.isin(current_parent_type, self.struct_dict).float().view(batch_size, 1, 1, 1)
+                alpha = alpha_current * (1 - alpha_relation_mask)                
                 word_context_vec, word_alpha = self.word_attention(
                     cnn_features, word_hidden_first,
-                    alpha_sum_completed, alpha_sum_parent + alpha_prev, images_mask)
+                    alpha_sum_completed, alpha_sum_parent + alpha, images_mask)
                 
                 # GRU-beta
                 # hidden is c^{\alpha}_{\beta} in the article
@@ -141,19 +144,38 @@ class SAN_decoder(nn.Module):
                 word_weighted_embedding = self.word_embedding_weight(word_embedding)
                 word_context_weighted = self.word_context_weight(word_context_vec)
 
-                # update word_alpha_sum for structs
+                # update word_alpha_sum for structs            
                 alpha_struct_mask = (current_type == self.STRUCT_ID).float().view(batch_size, 1, 1, 1)
-                alpha_eos_mask = (current_type != self.EOS_ID).float().view(batch_size, 1, 1, 1)
+                alpha_relation_not_right_mask = torch.isin(current_parent_type, self.struct_dict_no_right).float().view(batch_size, 1, 1, 1)
+                alpha_right_relation_mask = (current_parent_type == self.RIGHT_ID).float().view(batch_size, 1, 1, 1)
+                alpha_not_eos_mask = (current_type != self.EOS_ID).float().view(batch_size, 1, 1, 1)
 
-                # If processed a rule (struct):
-                # e.g. previous = '\frac', current = 'struct'.
-                alpha_sum_parent = alpha_sum_parent + alpha_struct_mask * (word_alpha + alpha_prev)
-                # If processed a symbol (e.g. 'x', 'frac', 'eos')
-                # - previous = '2', current = 'x'. The '2' is completed. The 'x' is active for the next symbol
-                # - previous = '2', current = 'eos'. The '2' is completed. alpha_prev = None
-                # - \frac{a}{b} * 2, parsing '*'. Then alpha_prev corresponds to 'struct' of the frac
-                alpha_sum_completed = alpha_sum_completed + (1-alpha_struct_mask) * alpha_prev
-                alpha_prev = (1-alpha_struct_mask)*alpha_eos_mask*word_alpha
+                # Update sum of active parents as follows:
+                # - If current match is 'struct':
+                #      e.g. previous = '\frac', current = 'struct'.
+                #      then add weights of this 'struct' and the previous '\fact'
+                # - ElseIf parent is 'right'
+                #      we are moving out of a construct, so
+                #      subtract current alpha ('struct' + '\frac')
+                alpha_sum_parent = alpha_sum_parent\
+                        + alpha_struct_mask * (word_alpha + alpha_current)\
+                        - (1-alpha_struct_mask) * alpha_right_relation_mask * alpha_current
+
+                # Update weight of completed symbols as follows
+                # - If current match is 'struct' or parent is a relation other than 'right'
+                #   no update
+                # - else (parent is 'right' or a symbol)
+                #   the struct or symbol is completed, so add its current alpha
+                alpha_sum_completed = alpha_sum_completed + (1-alpha_struct_mask) * (1-alpha_relation_not_right_mask) * alpha_current
+
+                # Update current alpha as follows:
+                # - If current match is 'struct':
+                #   Combine word_alpha with word_alpha of the previous symbol (e.g. '\frac')
+                # - If current match is 'eos';
+                #   Set to zero. (Not really needed, as an 'eos' is never a parent)
+                # - Else (current match is a symbol)
+                #   Set to current attention vector (word_alpha)
+                alpha_current = alpha_not_eos_mask * (word_alpha + alpha_struct_mask * alpha_current)
 
                 if self.params['dropout']:
                     word_out_state = self.dropout(current_state + word_weighted_embedding + word_context_weighted)
@@ -163,7 +185,8 @@ class SAN_decoder(nn.Module):
                 if i != num_steps - 1:
                     # update history
                     parent_hiddens[(i+1)*batch_size:(i+2)*batch_size,:] = hidden
-                    alpha_sum_parents[(i + 1) * batch_size:(i + 2) * batch_size, :, :, :] = alpha_sum_parent
+                    alpha_sum_parents[(i+1)*batch_size:(i+2)*batch_size, :, :, :] = alpha_sum_parent
+                    alpha_currents[(i+1)*batch_size:(i+2)*batch_size, :, :, :] = alpha_current
 
                 word_prob = self.word_convert(word_out_state)
                 struct_prob = self.struct_convert(word_out_state)
@@ -182,7 +205,7 @@ class SAN_decoder(nn.Module):
             word_embedding      = self.embedding(torch.ones(batch_size).long().to(device=self.device))
             alpha_sum_parent    = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
             alpha_sum_completed = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
-            alpha_prev     = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
+            alpha_current       = torch.zeros((batch_size, 1, height, width)).to(device=self.device)
 
             struct_list = []
             for bb in range(batch_size):
@@ -194,16 +217,18 @@ class SAN_decoder(nn.Module):
             parent_hidden = self.init_hidden(cnn_features, images_mask)
             for i in range(num_steps):
 
-                # word
+                # word: gru-alpha
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
 
-                # Eval mode: use old single-aggregate for now (TODO: implement dual-aggregate)
+                # attention
                 word_context_vec, word_alpha = self.word_attention(
                     cnn_features, word_hidden_first,
-                    alpha_sum_completed, alpha_sum_parent, images_mask)
+                    alpha_sum_completed, alpha_sum_parent + alpha_current, images_mask)
                 
+                # gru-beta
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
+                # project and combine condensed image, hidden state, and previously parsed symbol
                 current_state = self.word_state_weight(hidden)
                 word_weighted_embedding = self.word_embedding_weight(word_embedding)
                 word_context_weighted = self.word_context_weight(word_context_vec)
@@ -213,14 +238,13 @@ class SAN_decoder(nn.Module):
                 else:
                     word_out_state = current_state + word_weighted_embedding + word_context_weighted
 
+                # predict next word
                 word_prob = self.word_convert(word_out_state)
-
-
+                _, word = word_prob.max(1)
                 word_probs[:, i, :] = word_prob
                 word_alphas[:, i, :, :] = word_alpha[:, 0, :, :]
 
-                _, word = word_prob.max(1)
-
+                # predict struct
                 struct_prob = self.struct_convert(word_out_state)
                 struct_probs[:, i, :] = struct_prob
                 structs = torch.sigmoid(struct_prob)
@@ -230,37 +254,51 @@ class SAN_decoder(nn.Module):
                     if finished[bb]:
                         continue
 
-                    if word[bb].item() == self.STRUCT_ID: # struct
+                    if word[bb].item() == self.STRUCT_ID: # start new struct
 
                         # e.g. prev: 'frac', current: 'struct'
-                        # start a new sequence, so re-init alpha_prev
-                        alpha_sum_parent[bb] = alpha_sum_parent[bb] + word_alpha[bb] + alpha_prev[bb]
-                        alpha_prev[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
+                        # start a new sequence, so re-init alpha_current
+                        alpha_struct = word_alpha[bb] + alpha_current[bb]
+                        alpha_sum_parent[bb] = alpha_sum_parent[bb] + alpha_struct
+                        alpha_current[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
 
                         for num in range(structs.shape[1]-1, -1, -1):
                             if structs[bb,num] > self.threshold:
-                                struct_list[bb].append((self.struct_dict[num], hidden[bb], alpha_sum_parent[bb]))
+                                struct_list[bb].append((self.struct_dict[num], hidden[bb], alpha_sum_parent[bb], alpha_struct))
 
                         if len(struct_list[bb]) == 0:
                             finished[bb] = True  # Mark as finished instead of break
                             continue
-                        word[bb], parent_hidden[bb], alpha_sum_parent[bb] = struct_list[bb].pop()
+
+                        word[bb], parent_hidden[bb], alpha_sum_parent[bb], alpha_struct = struct_list[bb].pop()
+                        if word[bb] == self.RIGHT_ID:
+                            # completed the struct (e.g. \frac or a sup)
+                            alpha_current[bb] = alpha_struct
+                            alpha_sum_parent[bb] = alpha_sum_parent[bb] - alpha_struct
+
                         word_embedding[bb] = self.embedding(torch.LongTensor([word[bb]]).to(device=self.device))
 
-                    elif word[bb].item() == self.EOS_ID:
+                    elif word[bb].item() == self.EOS_ID: # end of sequece
                         if len(struct_list[bb]) == 0:
                             finished[bb] = True  # Mark as finished instead of break
                             continue
-                        word[bb], parent_hidden[bb], alpha_sum_parent[bb] = struct_list[bb].pop()
-                        word_embedding[bb] = self.embedding(torch.LongTensor([word[bb]]).to(device=self.device))
-                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_prev[bb]
-                        alpha_prev[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
 
-                    else:
+                        word[bb], parent_hidden[bb], alpha_sum_parent[bb], alpha_struct = struct_list[bb].pop()
+                        word_embedding[bb] = self.embedding(torch.LongTensor([word[bb]]).to(device=self.device))
+                        # completed the current sequence
+                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_current[bb]
+                        alpha_current[bb] = torch.zeros((1, 1, height, width)).to(device=self.device)
+                        if word[bb] == self.RIGHT_ID:
+                            # completed the struct (e.g. \frac or a sup)
+                            alpha_current[bb] = alpha_struct
+                            alpha_sum_parent[bb] = alpha_sum_parent[bb] - alpha_struct
+
+
+                    else: # regular word (symbol or latex command) in current sequence.
                         word_embedding[bb] = self.embedding(word[bb])
                         parent_hidden[bb] = hidden[bb].clone()
-                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_prev[bb]
-                        alpha_prev[bb] = word_alpha[bb]
+                        alpha_sum_completed[bb] = alpha_sum_completed[bb] + alpha_current[bb]
+                        alpha_current[bb] = word_alpha[bb]
 
         return word_probs, struct_probs, word_alphas, None, c2p_probs, c2p_alphas
 

@@ -78,11 +78,13 @@ class Attention(nn.Module):
         weighted_features = self.features_weight * cnn_features_trans.permute(0,2,3,1)
 
         # Process completed coverage (penalize)
+        alpha_sum_completed = alpha_sum_completed / (alpha_sum_completed.sum(dim=(1,2,3), keepdim=True) + 1e-10) # normalise needed as the sum() equals the number of completed symbols
         alpha_completed_trans = self.attention_completed_conv(alpha_sum_completed)
         coverage_completed = alpha_completed_trans.permute(0,2,3,1)
         weighted_coverage_completed = self.coverage_completed_weight * coverage_completed
 
         # Process active coverage (boost)
+        alpha_sum_active = alpha_sum_active / (alpha_sum_active.sum(dim=(1,2,3), keepdim=True) + 1e-10) # normalise needed as the sum() equals the number of active parents
         alpha_active_trans = self.attention_active_conv(alpha_sum_active)
         coverage_active = alpha_active_trans.permute(0,2,3,1)
         weighted_coverage_active = self.coverage_active_weight * coverage_active

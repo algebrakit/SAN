@@ -1,1 +1,2 @@
+diff-1.bmp  f ' ( x ) = \frac { d v ( k ( x ) ) } { d x } = v ' ( k ( x ) ) \frac { d k ( x ) } { d x }
 attention-1.bmp y = \sqrt [ 4 ] { 2 x ^ { 3 } + 1 }

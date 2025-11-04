@@ -21,6 +21,7 @@ class SAN_decoder(nn.Module):
         # the relation in the other they are encoded in the hybrid tree
         self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
         self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
+        self.RIGHT_ID = self.params['words'].encode(['right'])[0]
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
         self.threshold = params['hybrid_tree']['threshold']
@@ -108,20 +109,26 @@ class SAN_decoder(nn.Module):
                     struct_prob = self.struct_convert(word_out_state)
                     structs = torch.sigmoid(struct_prob)
 
-                    alpha_sum_active = alpha_sum_active + word_alpha + alpha_prev
+                    alpha_struct = word_alpha + alpha_prev
+                    alpha_sum_active = alpha_sum_active + alpha_struct
                     alpha_prev = alpha_prev_init
 
                     # Push active structures to stack (in reverse order)
                     # Each item stores: (relation, hidden_state, parent_word, parent_id)
                     for num in range(structs.shape[1]-1, -1, -1):
                         if structs[0][num] > self.threshold:
-                            struct_list.append((self.struct_dict[num], hidden, p_word, pid, alpha_sum_active))
+                            struct_list.append((self.struct_dict[num], hidden, p_word, pid, alpha_sum_active, alpha_struct))
                     if len(struct_list) == 0:
                         # todo: what to do here?
                         break
 
                     # Pop first structure from stack
-                    word, parent_hidden, p_word, pid, alpha_sum_active = struct_list.pop()
+                    word, parent_hidden, p_word, pid, alpha_sum_active, alpha_struct = struct_list.pop()
+                    if word == self.RIGHT_ID:
+                        # completed the struct (e.g. \frac or a sup)
+                        alpha_sum_active = alpha_sum_active - alpha_struct
+                        alpha_prev = alpha_struct
+
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
@@ -198,7 +205,12 @@ class SAN_decoder(nn.Module):
                     alpha_prev = alpha_prev_init
 
                     # Pop next structure from stack
-                    word, parent_hidden, p_word, pid, alpha_sum_active = struct_list.pop()
+                    word, parent_hidden, p_word, pid, alpha_sum_active, alpha_struct = struct_list.pop()
+                    if word == self.RIGHT_ID:
+                        # completed the struct (e.g. \frac or a sup)
+                        alpha_sum_active = alpha_sum_active - alpha_struct
+                        alpha_prev = alpha_struct
+
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]

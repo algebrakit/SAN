@@ -6,11 +6,13 @@ seed: 20200814
 
 # Training parameters
 epoches: 50
-batch_size: 1 # needed to support the largest images
-eval_batch_size: 2  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
-max_batch_size: 32  # used for most images, which are much smaller than the largest
+batch_size: 3 # needed to support the largest images
+eval_batch_size: 5  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
+max_batch_size: 100  # used for most images, which are much smaller than the largest
 workers: 0  # REDUCED from 4 to eliminate multiprocessing memory overhead
-bucket_size_multiplier: 1000  # nr of data items per bucket is batch_size x bucket_size_multiplier
+bucket_percentiles: [0, 30, 60, 90, 98, 99.7, 99.9, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+bucket_trunc_largest: 7
+# bucket_size_multiplier: 1000  # nr of data items per bucket is batch_size x bucket_size_multiplier
 use_dynamic_batching: True  # Adjust batch_size per bucket: short sequences get larger batches for better GPU utilization
 min_samples_per_step: 32 # default: equal to max_batch_size
 optimizer: Adadelta
@@ -62,7 +64,8 @@ decoder:
   input_size: 256
   hidden_size: 256
   inverse: False
-
+  eos_penalty: True
+  
 # Attention parameters
 attention:
   attention_dim: 512
@@ -80,7 +83,7 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
+finetune: True
 checkpoint: "checkpoints/best.pth"
 
 # TensorBoard path
