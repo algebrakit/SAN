@@ -79,10 +79,10 @@ def load_checkpoint(model, optimizer, path):
 
     state = torch.load(path, map_location='cpu')
 
-    if 'optimizer' in state:
-        optimizer.load_state_dict(state['optimizer'])
-    else:
-        print(f'No optimizer in the pretrained model')
+    # if 'optimizer' in state:
+    #     optimizer.load_state_dict(state['optimizer'])
+    # else:
+    #     print(f'No optimizer in the pretrained model')
 
     model.load_state_dict(state['model'], strict=False)
 

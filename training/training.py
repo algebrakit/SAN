@@ -4,6 +4,36 @@ from tqdm import tqdm
 from utils.utils import updata_lr, Meter, cal_score
 
 
+def get_batch_memory_info(images, image_masks, batch):
+    """
+    Compute batch characteristics for bucket identification.
+
+    Returns formatted string with: batch size, max pixels, avg pixels, effective memory load
+    """
+    batch_heights = []
+    batch_widths = []
+
+    for i in range(batch):
+        # Find actual image dimensions (non-zero regions in mask)
+        h_mask = image_masks[i, 0, :, 0].sum()  # Height used
+        w_mask = image_masks[i, 0, 0, :].sum()  # Width used
+        if h_mask > 0:
+            batch_heights.append(int(h_mask.item()))
+        if w_mask > 0:
+            batch_widths.append(int(w_mask.item()))
+
+    if batch_heights and batch_widths:
+        max_pixels = max(h * w for h, w in zip(batch_heights, batch_widths))
+        avg_pixels = sum(h * w for h, w in zip(batch_heights, batch_widths)) / len(batch_heights)
+        effective_load = batch * avg_pixels  # Effective memory load
+    else:
+        max_pixels = 0
+        avg_pixels = 0
+        effective_load = 0
+
+    return f"Batch: {batch} samples, Max pixels: {max_pixels:,}, Avg pixels: {avg_pixels:,.0f}, Effective load: {effective_load:,.0f}"
+
+
 def train(params, model, optimizer, epoch, train_loader, writer=None):
 
     model.train()
@@ -96,9 +126,11 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             mem_use = torch.cuda.max_memory_allocated() / 1e9
             if mem_use > peak_mem:
                 peak_mem = mem_use
-                print(f"Peak memory: {peak_mem:.2f} GB")
+                batch_info = get_batch_memory_info(images, image_masks, batch)
+                print(f"Peak memory: {peak_mem:.2f} GB | {batch_info}")
             if batch_idx % 3000 == 0:
-                print(f"Peak memory: {peak_mem:.2f} GB")
+                batch_info = get_batch_memory_info(images, image_masks, batch)
+                print(f"Peak memory: {peak_mem:.2f} GB | {batch_info}")
 
             # Step optimizer when we've accumulated enough samples OR at end of epoch (if configured)
             is_last_batch = (batch_idx + 1) == len(train_loader)

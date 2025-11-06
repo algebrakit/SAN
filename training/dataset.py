@@ -130,12 +130,13 @@ class BucketBatchSampler(Sampler):
 
         # Get image sizes for all samples (bucketing by image size instead of sequence length)
         print("BucketBatchSampler: Computing image sizes...")
-        self.image_sizes = []
+        self.image_sizes = []  # Now stores (height, width, pixels) tuples
         for idx in range(len(dataset)):
             name = dataset.name_list[idx]
             image = dataset.images[name]
-            # Use total pixels (height × width) as size metric for bucketing
-            img_size = image.shape[0] * image.shape[1]
+            # Store dimensions and pixels to compute worst-case batch allocation later
+            height, width = image.shape[0], image.shape[1]
+            img_size = (height, width, height * width)
             self.image_sizes.append(img_size)
 
         # Validate dataset is not empty
@@ -147,8 +148,8 @@ class BucketBatchSampler(Sampler):
             )
 
         # Sort indices by image size (pixels)
-        self.sorted_indices = sorted(range(len(self.image_sizes)), key=lambda i: self.image_sizes[i])
-        sorted_sizes = [self.image_sizes[idx] for idx in self.sorted_indices]
+        self.sorted_indices = sorted(range(len(self.image_sizes)), key=lambda i: self.image_sizes[i][2])
+        sorted_sizes = [self.image_sizes[idx][2] for idx in self.sorted_indices]  # Extract pixels for display
         if params['bucket_trunc_largest'] is not None:
             N = params['bucket_trunc_largest']
             print(f"Largest image sizes: {sorted_sizes[-20:]}")
@@ -209,10 +210,14 @@ class BucketBatchSampler(Sampler):
 
             self.bucket_batch_sizes = []
             for bucket in self.buckets:
-                image_sizes = [self.image_sizes[idx] for idx in bucket]  # Image sizes (pixels)
+                image_dims = [self.image_sizes[idx] for idx in bucket]  # List of (h, w, pixels) tuples
 
-                bucket_max_image_size = max(image_sizes)  # Max image pixels in this bucket
-                dynamic_batch_size = max(1, min(target_pixels_per_batch // max(bucket_max_image_size, 1), absolute_max_batch_size))
+                # Calculate worst-case area (max_height × max_width) for actual memory allocation
+                max_height = max(dims[0] for dims in image_dims)
+                max_width = max(dims[1] for dims in image_dims)
+                bucket_worst_case_area = max_height * max_width  # CRITICAL: matches collate_fn allocation
+
+                dynamic_batch_size = max(1, min(target_pixels_per_batch // max(bucket_worst_case_area, 1), absolute_max_batch_size))
                 self.bucket_batch_sizes.append(dynamic_batch_size)
 
             # Print dynamic batching info
@@ -249,16 +254,25 @@ class BucketBatchSampler(Sampler):
         total_nr_batches = 0
         for i in sample_indices:
             bucket = self.buckets[i]
-            sizes_in_bucket = [self.image_sizes[idx] for idx in bucket]
+            dims_in_bucket = [self.image_sizes[idx] for idx in bucket]  # (h, w, pixels) tuples
+            pixels_in_bucket = [dims[2] for dims in dims_in_bucket]  # Extract pixels for stats
+
+            # Calculate worst-case dimensions
+            max_h = max(dims[0] for dims in dims_in_bucket)
+            max_w = max(dims[1] for dims in dims_in_bucket)
+            worst_case_area = max_h * max_w
+
             batch_size_for_bucket = self.bucket_batch_sizes[i]
             num_batches = (len(bucket) + batch_size_for_bucket - 1) // batch_size_for_bucket
             total_nr_batches+= num_batches
-            avg_pixels = batch_size_for_bucket * np.mean(sizes_in_bucket)
+            avg_pixels = batch_size_for_bucket * np.mean(pixels_in_bucket)
+            avg_worst_case = batch_size_for_bucket * worst_case_area
+
             print(f"  Bucket {i}: {len(bucket):,} samples → ~{num_batches:,} batches, "
-                  f"size range [{min(sizes_in_bucket):,}, {max(sizes_in_bucket):,}] pixels, "
-                  f"mean={np.mean(sizes_in_bucket):,.0f}, "
+                  f"pixel range [{min(pixels_in_bucket):,}, {max(pixels_in_bucket):,}], "
+                  f"dims [{max_h}×{max_w}], "
                   f"batch_size={batch_size_for_bucket}, "
-                  f"avg_pixels/batch={avg_pixels:,.0f}")
+                  f"worst_case_pixels/batch={avg_worst_case:,.0f}")
         print(f"Nr of batches: {total_nr_batches}")
             
 

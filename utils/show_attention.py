@@ -4,7 +4,7 @@ import numpy as np
 
 # Visualize attention for a specific timestep
 def visualize_attention(image, alpha, query_alpha, coverage_alpha, timestep, predicted_symbol):
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14,8))
+    fig, ((ax1, ax2), (ax4, ax3)) = plt.subplots(2, 2, figsize=(14,8))
     show_bar = False
 
     # Original image
