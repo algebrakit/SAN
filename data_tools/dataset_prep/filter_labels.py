@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
+from utils.Expression import Expression
 
 def should_skip_line(latex_str: str) -> bool:
     """

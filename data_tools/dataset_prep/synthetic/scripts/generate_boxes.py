@@ -90,6 +90,33 @@ class LaTeXToDVIBoxes:
 
         return tokens
 
+    def identify_letter_groups(self, tokens: List[str]) -> List[Tuple[int, int]]:
+        """
+        Identify consecutive letter sequences that should have normalized heights.
+        Examples: 'cos', 'sin', 'km', 'minute', 'of'
+
+        Args:
+            tokens: List of tokens after expansion
+
+        Returns:
+            List of (start_index, end_index) tuples for letter groups
+        """
+        groups = []
+        i = 0
+        while i < len(tokens):
+            # Check if current token is a single letter
+            if len(tokens[i]) == 1 and tokens[i].isalpha():
+                start = i
+                # Count consecutive letters
+                while i < len(tokens) and len(tokens[i]) == 1 and tokens[i].isalpha():
+                    i += 1
+                # Only group if 2+ consecutive letters
+                if i - start >= 2:
+                    groups.append((start, i))
+            else:
+                i += 1
+        return groups
+
     def create_latex_document(self, expression: str) -> str:
         """
         Create a minimal LaTeX document containing the expression.
@@ -224,8 +251,8 @@ ${expression}$
         if width > height * 2:  # Horizontal line
             # Check if this is a sqrt overline (part of radical symbol)
             # Heuristic: if we have \\sqrt in tokens, check if this box is at high y-position
-            # Sqrt overlines are typically at y > 10
-            if '\\sqrt' in tokens and y > 10.0:
+            # Sqrt overlines are typically at y > 5
+            if '\\sqrt' in tokens and y > 5.0:
                 # This is likely the sqrt overline, which is already part of the radical glyph
                 return None
 
@@ -330,13 +357,22 @@ ${expression}$
         # Expand multi-character tokens (like \cos -> c, o, s) to match DVI glyphs
         tokens = self.expand_latex_tokens(tokens)
 
+        # Identify consecutive letter groups for height normalization
+        letter_groups = self.identify_letter_groups(tokens)
+
+        # Create lookup for fast checking during token processing
+        token_group_map = {}
+        for start, end in letter_groups:
+            for idx in range(start, end):
+                token_group_map[idx] = (start, end)
+
         # Find sqrt overline boxes for proper sqrt sizing
         sqrt_boxes = {}  # Maps glyph index to sqrt overline box
         if '\\sqrt' in tokens:
             for box in boxes:
                 box_x, box_y, box_width, box_height = box
                 # Sqrt overlines are at high y-position and wide
-                if box_y > 10.0 and box_width > 5.0:
+                if box_y > 5.0 and box_width > 2.0:
                     # Find the sqrt glyph this box corresponds to
                     for i, (glyph_x, glyph_y, char, glyph_width) in enumerate(glyphs):
                         # Sqrt radical glyph starts near the box start
@@ -364,7 +400,10 @@ ${expression}$
                 continue
             # Skip structural tokens and spacing commands that don't render as glyphs
             # Note: \frac is skipped here (only renders as box), but \sqrt produces a glyph
-            elif token in ['^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad'] or \
+            # Font-changing commands (\mathrm, \mathbf, etc.) don't produce glyphs, only style content
+            elif token in ['^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
+                          '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
+                          '\\mathfrak', '\\mathnormal'] or \
                token.startswith('\\frac') or \
                token.startswith('\\begin') or token.startswith('\\end'):
                 continue
@@ -399,31 +438,83 @@ ${expression}$
                 # Use the sqrt overline box to determine proper extent
                 box_x, box_y, box_width, box_height = sqrt_boxes[glyph_idx]
 
-                # Sqrt should extend from the radical to the end of the overline
+                # Sqrt should extend from the radical to the end of actual content
                 # and from the top of the overline down to cover all content below
                 sqrt_x_min = x
-                sqrt_x_max = box_x + box_width
+                sqrt_x_max = box_x  # Start with box position
 
-                # Find the minimum Y (most negative) among all subsequent glyphs
-                # to determine how far down the sqrt should extend
-                # Also consider height of those glyphs
+                # Find both horizontal and vertical extent by scanning content glyphs
+                # Content glyphs are at baseline (y ≈ 0), radical is elevated (y ≈ 8)
+                # In DVI coords: y increases downward, so max_y is the bottom
                 min_y = y
-                max_extent = y
-                for next_glyph_x, next_glyph_y, _, next_width in glyphs[glyph_idx + 1:]:
-                    if next_glyph_x < sqrt_x_max + 5.0:  # Glyphs within sqrt extent
-                        min_y = min(min_y, next_glyph_y)
-                        # Estimate how far down this glyph extends
-                        glyph_height = next_width * 1.2
-                        max_extent = min(max_extent, next_glyph_y - glyph_height)
+                max_y = y
+                radicand_glyph_count = 0  # Count glyphs in radicand to skip them later
 
-                # Create bbox that covers from top of overline to bottom of content
+                # The overline box width tells us the horizontal extent of the radicand
+                # box_x is where the overline starts, box_width is its length
+                radicand_x_max = box_x + box_width
+
+                for next_glyph_x, next_glyph_y, _, next_width in glyphs[glyph_idx + 1:]:
+                    # Content glyphs are at baseline (y ≈ 0)
+                    # Only include glyphs within the sqrt overline box extent
+                    if abs(next_glyph_y) < 2.0 and next_glyph_x < radicand_x_max:
+                        radicand_glyph_count += 1  # Count this radicand glyph
+
+                        # Update horizontal extent based on actual glyph position
+                        glyph_right = next_glyph_x + next_width
+                        sqrt_x_max = max(sqrt_x_max, glyph_right)
+
+                        # Update vertical extent
+                        min_y = min(min_y, next_glyph_y)
+                        glyph_height = next_width * 1.2
+                        max_y = max(max_y, next_glyph_y + glyph_height)
+                    # Stop if we've gone past the overline box or hit an elevated glyph
+                    elif next_glyph_x >= radicand_x_max or next_glyph_y > 5.0:
+                        break
+
+                # Create bbox that covers from top of radicand to bottom of content
+                # In standard coords (negated DVI): yMin=bottom, yMax=top
                 bbox = {
                     "token": token,
                     "xMin": float(sqrt_x_min),
-                    "yMin": float(-box_y - box_height),  # Top of overline
+                    "yMin": float(-max_y - 2.0),  # Bottom of content (most negative)
                     "xMax": float(sqrt_x_max),
-                    "yMax": float(-max_extent + 2.0)  # Bottom extent + small padding
+                    "yMax": float(-min_y + 2.0)  # Top of radicand (least negative)
                 }
+                bboxes.append(bbox)
+                glyph_idx += 1  # Skip the radical glyph
+
+                # Create separate bboxes for radicand content
+                # The radicand glyphs need their own bboxes so they get synthesized
+                for _ in range(radicand_glyph_count):
+                    if glyph_idx >= len(glyphs):
+                        break
+
+                    # Get radicand glyph info
+                    x, y, char, width = glyphs[glyph_idx]
+                    height = width * 1.2
+
+                    # Get corresponding token (should be the radicand content)
+                    radicand_token = tokens[token_idx] if token_idx < len(tokens) else char
+
+                    # Create bbox for this radicand glyph
+                    radicand_bbox = {
+                        "token": radicand_token,
+                        "xMin": float(x),
+                        "yMin": float(-y - height),
+                        "xMax": float(x + width),
+                        "yMax": float(-y)
+                    }
+                    bboxes.append(radicand_bbox)
+
+                    glyph_idx += 1
+                    token_idx += 1
+
+                # Skip any spacing tokens like '\ ' that don't correspond to glyphs
+                while token_idx < len(tokens) and tokens[token_idx] in ['\\ ', '\\,', '\\;', '\\:', '\\!', ' ']:
+                    token_idx += 1
+
+                continue  # Skip the common bbox append at line 510
             # Special handling for \lognl custom macro
             # \lognl{n} expands to: superscript 'n' + 'l' + 'o' + 'g'
             elif token == '\\lognl':
@@ -480,6 +571,41 @@ ${expression}$
                         token_idx += 1  # Skip ']'
                 # Continue to next token without appending another bbox
                 continue
+            # Check if this token is part of a letter group (for height normalization)
+            elif (token_idx - 1) in token_group_map:  # -1 because we incremented at line 389
+                group_start, group_end = token_group_map[token_idx - 1]
+
+                # Check if we're at the START of the group (process once for entire group)
+                if token_idx - 1 == group_start:
+                    group_size = group_end - group_start
+
+                    # Collect all glyphs in this letter group
+                    group_glyphs = []
+                    for i in range(group_size):
+                        if glyph_idx + i < len(glyphs):
+                            group_glyphs.append(glyphs[glyph_idx + i])
+
+                    # Calculate max height for normalization (same technique as \lognl)
+                    max_height = 0.0
+                    for g_x, g_y, g_char, g_width in group_glyphs:
+                        estimated_height = g_width * 1.2
+                        max_height = max(max_height, estimated_height)
+
+                    # Create bboxes with normalized heights
+                    for g_x, g_y, g_char, g_width in group_glyphs:
+                        bbox = {
+                            "token": g_char,  # Use actual character
+                            "xMin": float(g_x),
+                            "yMin": float(-g_y - max_height),  # Normalized height!
+                            "xMax": float(g_x + g_width),
+                            "yMax": float(-g_y)
+                        }
+                        bboxes.append(bbox)
+
+                    # Advance indices to skip the entire group
+                    glyph_idx += group_size
+                    token_idx += group_size - 1  # -1 because main loop will increment
+                    continue  # Skip standard bbox creation
             else:
                 # Standard bbox calculation
                 # Estimate height (simplified - would need font metrics for accuracy)

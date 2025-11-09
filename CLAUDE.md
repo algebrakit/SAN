@@ -458,3 +458,12 @@ Based on the CVPR 2022 paper:
 - **CROHME 2019**: ~60% expression recognition rate
 - Competitive with or better than previous state-of-the-art methods
 - Especially strong on expressions with complex nested structures
+
+---
+
+## Synthetic Data Generation
+
+For documentation on the synthetic handwritten math expression generation system, see:
+- **`data_tools/dataset_prep/synthetic/CLAUDE.md`** - Complete pipeline documentation
+
+The system generates training data by compiling LaTeX to DVI format, extracting glyph positions, and replacing symbols with real handwritten strokes from a library of 6,423 InkML files.

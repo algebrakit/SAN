@@ -27,6 +27,7 @@
 
 ## symbols
 - \angle
+- \triangle
 -  €, $
 
 ## Optional:  Words and sentences
