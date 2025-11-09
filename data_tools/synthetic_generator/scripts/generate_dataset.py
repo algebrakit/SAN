@@ -77,7 +77,7 @@ class DatasetGenerator:
         """
         try:
             with open(latex_file, 'r', encoding='utf-8') as f:
-                expressions = [line.strip() for line in f if line.strip()]
+                expressions = [line.strip() for line in f if line.strip() and line.strip()[0]!='#']
             return expressions
         except Exception as e:
             print(f"Error reading LaTeX file: {e}")

@@ -1,166 +1,154 @@
+## cases
+## -------
 \begin{cases}x+y=1\\x-y=2\end{cases}
 \begin{cases}x=-9\\y=9\end{cases}
-224,79\ euro
-s=\sqrt{4\ }of\ s=-\sqrt{4}
-s=2\ of\ s=-2
-5,52
-13\ minuten\ 12\ seconden
-13\ min\ en\ 12\ \sec
-40\ 000\ x\ 492\ =\ 20\ miljoen
-40000\ x\ 492\ =\ 20000000\ km
-4,5
-1,1\times10=11dm
-5,5\times11\times4=242dm^{3}
-\cos\ \angle A=\frac{4}{5}
-\angle A=37^o
-\frac{7}{20}x=-1\frac{15}{20}
-c\left(4,2\right)=\frac{4\cdot3}{2\cdot1}=6
-N=6470000\cdot1,042^{t}
-N=6,47\cdot1,042^{t}
-5,83
-f(x)=3-\frac{3}{\left(3x-7\right)^{2}}
-3,5\ \times\ 1,15\ =2,25\ euro
-2\times4\times3=24cm^{3}
-3,29\times10^{-7}
-15\%
-100+1,9=101,9
-101,9:100=1,019
-1,019x22,85=23,28415
-u_{n}=u_{1}+\left(n-1\right)\cdot v
-u_{n}=5+\left(n-1\right)\cdot7
-dus\ 1t\ =\ 20
-16,2
-170+2,04=172,04
-14,4\ meter
-47,1cm^{3}
-2827,43\ cm^{2}
-400km
-x=0\ arba\ x+6=0
-x=0\ arba\ x=-6
-7,5cm^{2}
-a=11\ of\ a=-2
-32cm^{2}
 \begin{cases}y\ -x\ =\ 15\\8x\ =\ 5y\end{cases}
 \begin{cases}5y\ -5x\ =\ 75\\8x\ =\ 5y\end{cases}
 \begin{cases}5y\ -5x\ +8x\ =75\ +5y\\8x\ =\ 5y\end{cases}
 \begin{cases}5y+3x\ =75\ +5y\\8x\ =\ 5y\end{cases}
 \begin{cases}3x\ =75\\8x\ =\ 5y\end{cases}
-x\ =\ 2\ of\ x\ =\ -3
-x\ =\ -2\ of\ x\ =\ 3
-x=10\ arba\ x=-2
-x=-\frac{29}{3}\vee\ x=-6
-x=-\frac{29}{3}\vee x=-6\vee y=-6\vee y=5
-16,5\ km
-165\ km
-38\ euro
-13600cm^{2}
-13600cm^{2}
-13600cm^{2}>
-13600cm^{2}
-920\ euro
-\begin{cases}4x-7y=27\\2x-4y-14=0\end{cases}
-\left\{x=3,\ y=-3\right\}\vee\left\{x=-3,\ y=0\right\}
-\left\{x=3,\ y=-3\right\}\vee\left\{x=-3,\ y=0\right\}
+\begin{cases}x+y=-8\\x-y=-21\end{cases}\begin{cases}x=-29\\y=21\end{cases}
+\begin{cases}x+y=-8\\x-y=-21\end{cases}\begin{cases}x=-\frac{29}{2}\\y=\frac{13}{2}\end{cases}
+\begin{cases}x=-\frac{29}{2}\\y=\frac{13}{2}\end{cases}
+\begin{cases}\frac{x}{x^{2}-y^{2}}+\frac{3}{x+y}=0,6\\x=15-y\end{cases}
 \begin{cases}13x^{2+65x+104y=-468}\\8x^{2}\end{cases}
-10,57\ euro
-50,7cm
-2\ euro
-38\ x\ 8\ =\ 304\ cm^{3}
-3km
-22km
-21\ km
-50cm=0.5m
-2,9km
-3x4=12\ euro
-\lognl[ 2]{ 60}
-14,20\ euro
-x=27\vee x=-27
+\begin{cases}4x-7y=27\\2x-4y-14=0\end{cases}
 \begin{cases}-x+6y-28=0\\5x-8y+30=0\end{cases}
 \begin{cases}-5x+30y-140=0\\5x-8y+30=0\end{cases}
-\left(x,\ y\right)=\left(-8,\ 5\right)\ arba\ \left(-\frac{17}{2},\ 4\right)
+
+## euro
+## -------
+224,79\ euro
+3,5\ \times\ 1,15\ =2,25\ euro
+3x4=12\ euro
+14,20\ euro
 2\ euro
 4,50\ euro
 4,70\ euro
 200000+9000\times18=362000euro
-\frac{2\pi}{365}\left(x-77\right)=\arcsin\left(-\frac{5}{19}\right)\ +k\cdot2\pi\ \vee\frac{2\pi}{365}\left(x-77\right)
-=\left(\pi-\arcsin\left(-\frac{5}{19}\right)\right)+k\cdot2\pi
-\left(x-77\right)=\arcsin\left(-\frac{5}{19}\right)\cdot\frac{365}{2\pi}\ +k\cdot365\ 
-\vee\left(x-77\right) =\left(\pi-\arcsin\left(-\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+k\cdot365
-x=\arcsin\left(-\frac{5}{19}\right)\cdot\frac{365}{2\pi}+77\ +k\cdot365
-\vee x=\left(\pi-\arcsin\left(-\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+77+k\cdot365
-x=-\arcsin\left(\frac{5}{19}\right)\cdot\frac{365}{2\pi}+77\ +k\cdot365
-\vee x=\left(\pi+\arcsin\left(\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+77+k\cdot365
-x=61\ \vee x=274
+38\ euro
+10,57\ euro
+2\ euro
+920\ euro
 231,20\ euro
-0,5\times50\times30=750cm^{2}
-\frac{4}{3}\times\pi\times32^{3\ }=\ 137258\ cm^{3}
 300\ euro
-x=-6\ of\ x=-2
-0,9\times1,2=1,08km
-0,9\times1,2=1,08\ km
-p=-4\vee p=3
-1,053\ \times4,25
 4,48\ euro
-180^o-35^o-90^o=\angle k\ 55^o
-180^o-35^o-90^o=\angle k\ =55^o
-28x35=980cm2
 371250\ euro
 \frac{371250}{0,11}=3375000\ euro
 \frac{3375000}{0,79}4272151,8\ euro
 \frac{3375000}{0,79}=4272151,9\ euro
 897000\ euro
 47,31euro
+2,68\ euro
+32,80euro
+2,20\ euro
+1,31\ euro
+10\ euro
+2086,40\ euro
+
+## \vee
+## -------
+x=-\frac{29}{3}\vee\ x=-6
+x=-\frac{29}{3}\vee x=-6\vee y=-6\vee y=5
+\left\{x=3,\ y=-3\right\}\vee\left\{x=-3,\ y=0\right\}
+\left\{x=3,\ y=-3\right\}\vee\left\{x=-3,\ y=0\right\}
+x=27\vee x=-27
+\frac{2\pi}{365}\left(x-77\right)=\arcsin\left(-\frac{5}{19}\right)\ +k\cdot2\pi\ \vee\frac{2\pi}{365}\left(x-77\right)
+\vee\left(x-77\right) =\left(\pi-\arcsin\left(-\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+k\cdot365
+\vee x=\left(\pi-\arcsin\left(-\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+77+k\cdot365
+\vee x=\left(\pi+\arcsin\left(\frac{5}{19}\right)\right)\cdot\frac{365}{2\pi}+77+k\cdot365
+x=61\ \vee x=274
+p=-4\vee p=3
+t=2\vee t=-2
+x=\frac{-98-\sqrt{10000}}{2\times11}\vee x=\frac{-98+\sqrt{10000}}{2\times11}
+x=-9\vee x=1
+x=-9\vee x=\frac{1}{11}
+x=\frac{1}{13}\vee x=-8
+x=0\ \vee\sqrt{3-x}=0
+x=0\ \vee3-x=0
+x=0\ \vee x=3
+\neg A\wedge\neg\left(B\vee C\right)
+x=0\ \vee x=\frac{3}{7}
+x=-5\vee x=1
+
+## of
+## -------
+s=\sqrt{4\ }of\ s=-\sqrt{4}
+s=2\ of\ s=-2
+a=11\ of\ a=-2
+x\ =\ 2\ of\ x\ =\ -3
+x\ =\ -2\ of\ x\ =\ 3
+x=-6\ of\ x=-2
 x=6\ of\ x=2
+x-6=\sqrt{20}of\ x-6=-\sqrt{20}
+x=\sqrt{20}+6\ of\ x=-\sqrt{20}+6
+x=3\ of\ x=-\frac{3}{2}\ of\ x=\frac{1,98}{2}
+x-1,75=3,25\ of\ x-1,75=-3,25
+x=5\ of\ x=-1,5
+x=\ 0\ of\ x^{2}\ -4x\ +3\ =\ 0
+x=\ 0\ of\ \left(x-3\right)\left(x-1\right)\ =0
+x=\ 0\ of\ x=3\ of\ x\ =1
+x=-7\ of\ x=7
+
+## words
+## -------
+13\ minuten\ 12\ seconden
+13\ min\ en\ 12\ \sec
+40\ 000\ x\ 492\ =\ 20\ miljoen
+14,4\ meter
+x=0\ arba\ x+6=0
+x=0\ arba\ x=-6
+x=10\ arba\ x=-2
+\left(x,\ y\right)=\left(-8,\ 5\right)\ arba\ \left(-\frac{17}{2},\ 4\right)
+2\ uur\ en\ 50\ minuten
+2\ uur
+x=6\ of\ x=3
+dus\ 1t\ =\ 20
+
+## units
+## -------
+40000\ x\ 492\ =\ 20000000\ km
+1,1\times10=11dm
+5,5\times11\times4=242dm^{3}
+2\times4\times3=24cm^{3}
+47,1cm^{3}
+2827,43\ cm^{2}
+400km
+7,5cm^{2}
+32cm^{2}
+16,5\ km
+165\ km
+13600cm^{2}
+50,7cm
+38\ x\ 8\ =\ 304\ cm^{3}
+3km
+22km
+21\ km
+50cm=0.5m
+2,9km
+0,5\times50\times30=750cm^{2}
+\frac{4}{3}\times\pi\times32^{3\ }=\ 137258\ cm^{3}
+0,9\times1,2=1,08km
+0,9\times1,2=1,08\ km
+28x35=980cm^{2}
 h=32\ cm
 S=43\ 200\sqrt{3}cm^{2}
 V=460\ 800\ \sqrt{3}cm^{3}
 3\ cm^{2}
 150\ cm^{2}
-t=2\vee t=-2
 P\ =\ 20\ cm
 6\ uur
 5005\ km
-x-6=\sqrt{20}of\ x-6=-\sqrt{20}
-x=\sqrt{20}+6\ of\ x=-\sqrt{20}+6
-x=\frac{-98-\sqrt{10000}}{2\times11}\vee x=\frac{-98+\sqrt{10000}}{2\times11}
-x=-9\vee x=1
-x=-9\vee x=\frac{1}{11}
 k=\frac{7}{2}cm
 V=\frac{1053}{49}cm^{3}
 0.95\ \frac{km}{min}
 1\ \frac{km}{min}
 40cm^{2}
-2,68\ euro
-x=\frac{1}{13}\vee x=-8
-\lognl[ 2]{ x^{2}}=\lognl[ 2]{ x^{2}}+3
-\left(\lognl[ 2]{ x}\right)^{2}=\lognl[ 2]{ x^{2}}+\lognl[ 2]{ 2^{3}}
-\neg A\wedge\neg\left(B\vee C\right)
 62,5\ \frac{km}{uur}
-4,25\times0,053=\ 0,23
-100\%+5,3\%=105,3\%
 7,8\ cm
-\begin{cases}x+y=-8\\x-y=-21\end{cases}\begin{cases}x=-29\\y=21\end{cases}
-\begin{cases}x+y=-8\\x-y=-21\end{cases}\begin{cases}x=-\frac{29}{2}\\y=\frac{13}{2}\end{cases}
-\begin{cases}x=-\frac{29}{2}\\y=\frac{13}{2}\end{cases}
 20\ cm^{2}
-y=\frac{-13+\sqrt{121}}{2\cdot\left(-1\right)}=\frac{-13+11}{2\cdot\left(-1\right)}
-y=\frac{-2}{-2}=1
-arba\ y=\frac{-13-\sqrt{121}}{2\cdot\left(-1\right)}=\frac{-13-11}{-2}=12
-32,80euro
-x=0\ \vee\sqrt{3-x}=0
-x=0\ \vee3-x=0
-x=0\ \vee x=3
-10\ euro
-2x\ 2\ x\ \pi\ =\ 12\ x\ 6\ =\ 72\ cm\ ^{3\ }-\ 6\ cm\ ^{3\ }=66cm\ ^{3}
-2x\ 2\ x\ \pi\ =\ 12\ x\ 6\ =\ 72\ cm\ ^{3\ }-\ 6\ cm\ ^{3\ }=66cm\ ^{3}\ 
-2\ uur\ en\ 50\ minuten
-2\ uur
-x=0\ \vee x=\frac{3}{7}
-x=6\ of\ x=3
 300\ km
-\begin{cases}\frac{x}{x^{2}-y^{2}}+\frac{3}{x+y}=0,6\\x=15-y\end{cases}
 2030\div7=290\ km
-2,20\ euro
 6km
 6+6=12km
 12km
@@ -169,10 +157,9 @@ x=6\ of\ x=3
 12.3=36km
 8km
 A\ =\ 78,54\ cm^{2}
-x=3\ of\ x=-\frac{3}{2}\ of\ x=\frac{1,98}{2}
-1,31\ euro
-x-1,75=3,25\ of\ x-1,75=-3,25
-x=5\ of\ x=-1,5
+
+## \lognl
+## -------
 g\left(x\right)=81+\lognl[ 3]{ x}
 g\left(x\right)=a+\lognl[ 3]{ \frac{x}{81}}
 g\left(x\right)=\lognl[ 3]{ \frac{x}{81}}
@@ -180,10 +167,31 @@ g\left(x\right)=81\cdot\lognl[ 3]{ x}
 g\left(x\right)=\frac{\lognl[ 3]{ x}}{81}
 g\left(x\right)=\lognl[ 3]{ \frac{x}{81}}
 g\left(x\right)=9+\lognl[ 3]{ x}
-x=-5\vee x=1
-x=\ 0\ of\ x^{2}\ -4x\ +3\ =\ 0
-x=\ 0\ of\ \left(x-3\right)\left(x-1\right)\ =0
-x=\ 0\ of\ x=3\ of\ x\ =1
-2086,40\ euro
-x=-7\ of\ x=7
-\frac{2}{3}
+\lognl[ 2]{ 60}
+\lognl[ 2]{ x^{2}}=\lognl[ 2]{ x^{2}}+3
+\left(\lognl[ 2]{ x}\right)^{2}=\lognl[ 2]{ x^{2}}+\lognl[ 2]{ 2^{3}}
+
+## \angle
+## -------
+\cos\ \angle A=\frac{4}{5}
+\angle A=37^o
+180^o-35^o-90^o=\angle k\ 55^o
+180^o-35^o-90^o=\angle k\ =55^o
+
+## decimal comma
+## --------
+5,52
+4,5
+5,83
+N=6470000\cdot1,042^{t}
+N=6,47\cdot1,042^{t}
+3,29\times10^{-7}
+100+1,9=101,9
+101,9:100=1,019
+1,019\times 22,85=23,28415
+16,2
+170+2,04=172,04
+1,053\ \times4,25
+4,25\times0,053=\ 0,23
+100\%+5,3\%=105,3\%
+

@@ -392,14 +392,31 @@ ${expression}$
             if token == '\\{' and '\\begin{cases}' in tokens:
                 # Find the vertical extent of all content after the brace
                 # In DVI coords: smaller y is higher, larger y is lower
-                min_y = y  # Highest point (most negative in standard coords)
-                max_y = y  # Lowest point (most positive in standard coords)
+                # Initialize to extreme values so content determines extent (not brace position)
+                min_y = float('inf')  # Will be updated to smallest y (highest position)
+                max_y = float('-inf')  # Will be updated to largest y (lowest position)
+
+                prev_glyph_right = x + width  # Track previous glyph's right edge
+
                 for next_glyph_x, next_glyph_y, _, next_width, next_height, next_depth in glyphs[glyph_idx + 1:]:
-                    min_y = min(min_y, next_glyph_y)  # Find highest DVI y (top)
-                    max_y = max(max_y, next_glyph_y)  # Find lowest DVI y (bottom)
+                    gap = next_glyph_x - prev_glyph_right
+
+                    # Stop if we hit another elevated glyph (another brace)
+                    # Braces are at highly elevated y-positions (> 15.0 in DVI coords)
+                    # Fraction numerators are at y ≈ 10-11, so use 15.0 threshold
+                    if next_glyph_y > 15.0:
+                        break
+
+                    # Stop if there's a large horizontal gap (indicates next cases environment)
+                    if gap > 10.0:
+                        break
+
+                    min_y = min(min_y, next_glyph_y)
+                    max_y = max(max_y, next_glyph_y)
                     # Use actual glyph height (extends downward in DVI)
                     glyph_total_height = next_height + next_depth
                     max_y = max(max_y, next_glyph_y + glyph_total_height)
+                    prev_glyph_right = next_glyph_x + next_width
 
                 # Create bbox that spans all content lines
                 # Note: DVI y goes down, we negate for standard math convention
@@ -410,6 +427,9 @@ ${expression}$
                     "xMax": float(x + width),
                     "yMax": float(-min_y + 2.0)  # Highest point in standard coords + padding
                 }
+                bboxes.append(bbox)
+                glyph_idx += 1  # Skip the brace glyph
+                continue  # Skip common bbox append
             # Special handling for sqrt radical
             elif token == '\\sqrt' and glyph_idx in sqrt_boxes:
                 # Use the sqrt overline box to determine proper extent
@@ -418,10 +438,8 @@ ${expression}$
                 # Sqrt should extend from the radical to the end of actual content
                 # and from the top of the overline down to cover all content below
                 sqrt_x_min = x
-                sqrt_x_max = box_x  # Start with box position
 
-                # Find both horizontal and vertical extent by scanning content glyphs
-                # Content glyphs are at baseline (y ≈ 0), radical is elevated (y ≈ 8)
+                # Find vertical extent by scanning all glyphs under the overline
                 # In DVI coords: y increases downward, so max_y is the bottom
                 min_y = y
                 max_y = y
@@ -431,31 +449,39 @@ ${expression}$
                 # box_x is where the overline starts, box_width is its length
                 radicand_x_max = box_x + box_width
 
+                prev_glyph_right = box_x  # Track previous glyph's right edge
+
                 for next_glyph_x, next_glyph_y, _, next_width, next_height, next_depth in glyphs[glyph_idx + 1:]:
-                    # Content glyphs are at baseline (y ≈ 0)
-                    # Only include glyphs within the sqrt overline box extent
-                    if abs(next_glyph_y) < 2.0 and next_glyph_x < radicand_x_max:
-                        radicand_glyph_count += 1  # Count this radicand glyph
-
-                        # Update horizontal extent based on actual glyph position
-                        glyph_right = next_glyph_x + next_width
-                        sqrt_x_max = max(sqrt_x_max, glyph_right)
-
-                        # Update vertical extent using actual glyph height
-                        min_y = min(min_y, next_glyph_y)
-                        glyph_total_height = next_height + next_depth
-                        max_y = max(max_y, next_glyph_y + glyph_total_height)
-                    # Stop if we've gone past the overline box or hit an elevated glyph
-                    elif next_glyph_x >= radicand_x_max or next_glyph_y > 5.0:
+                    # Stop if we've gone past the overline box or hit another sqrt
+                    if next_glyph_x >= radicand_x_max or next_glyph_y > 5.0:
                         break
 
+                    # Detect gaps that indicate non-continuous content
+                    # - Backwards jump (gap < -1.0) indicates fraction denominator or other content
+                    # - Large forward gap (> 5.0) indicates next expression part
+                    # Stop processing entirely - vertical extent should only cover continuous content
+                    gap = next_glyph_x - prev_glyph_right
+                    if gap < -1.0 or gap > 5.0:
+                        break
+
+                    # Count continuous radicand glyphs and update extents
+                    radicand_glyph_count += 1
+                    prev_glyph_right = next_glyph_x + next_width
+
+                    # Update vertical extent for continuous radicand glyphs only
+                    min_y = min(min_y, next_glyph_y)
+                    glyph_total_height = next_height + next_depth
+                    max_y = max(max_y, next_glyph_y + glyph_total_height)
+
                 # Create bbox that covers from top of radicand to bottom of content
+                # Use overline box width for horizontal extent (not actual glyph positions)
+                # This ensures the sqrt bbox covers the full radicand including fractions
                 # In standard coords (negated DVI): yMin=bottom, yMax=top
                 bbox = {
                     "token": token,
                     "xMin": float(sqrt_x_min),
                     "yMin": float(-max_y - 2.0),  # Bottom of content (most negative)
-                    "xMax": float(sqrt_x_max),
+                    "xMax": float(radicand_x_max),  # Use overline box width
                     "yMax": float(-min_y + 2.0)  # Top of radicand (least negative)
                 }
                 bboxes.append(bbox)

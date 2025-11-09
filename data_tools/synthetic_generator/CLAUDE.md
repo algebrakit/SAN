@@ -112,7 +112,10 @@ bbox = {
    - **Skip radicand tokens**: `token_idx += radicand_glyph_count`
    - **Skip spacing tokens**: `\\ `, `\,`, etc.
 
-**Recent Bug Fix**: Radicand glyphs were being processed twice (once in sqrt bbox, once as separate tokens). Now properly skipped to prevent duplicates.
+**Recent Bug Fixes**:
+- Radicand glyphs were being processed twice (once in sqrt bbox, once as separate tokens). Now properly skipped to prevent duplicates.
+- **Radicand glyph detection** (lines 434-454): Previously only included glyphs at baseline (`abs(y) < 2.0`), missing superscripts, subscripts, and fraction content. Now includes ALL glyphs within the horizontal extent of the overline box, regardless of vertical position. This fixes mispositioning of sqrt symbols in expressions like `\sqrt{x^2}`, `\sqrt{1+\frac{2}{x}}`, and `\sqrt{\frac{a}{b}}`.
+- **Gap detection and extent limiting** (lines 439-454): When scanning radicand glyphs, the algorithm now detects large gaps (backwards jumps < -1.0 or forward gaps > 5.0) that indicate non-continuous content like fraction denominators or separate sqrt expressions. **Crucially, it now stops scanning entirely when a gap is detected**, preventing both the radicand_glyph_count AND the vertical extent (min_y, max_y) from including disconnected content. The horizontal extent uses the overline box width directly (`radicand_x_max`). This fixes oversized sqrt symbols that were extending into fraction denominators in expressions like `x=\frac{-98-\sqrt{10000}}{2\times11}\vee x=\frac{-98+\sqrt{10000}}{2\times11}`.
 
 ### Fractions (`\frac`)
 
@@ -125,10 +128,27 @@ bbox = {
 
 ### Case Environment (`\begin{cases}`)
 
-**Processing** (lines 358-396):
+**Challenge**: `\begin{cases}x+y=-8\\x-y=-21\end{cases}` produces:
+- 1 glyph: left curly brace at elevated y position
+- N glyphs: content of all case lines
+- No glyphs for `\\` or `\end{cases}`
+
+**Processing** (lines 392-430):
 - Map `\begin{cases}` → `\{` token
-- Extend bbox vertically to span all case lines
+- Extend bbox vertically to span all case lines within the environment
 - Skip `\\` and `\end{cases}` tokens (no glyphs)
+
+**Recent Bug Fixes**:
+
+1. **Unbounded vertical scan** (lines 392-430): When scanning glyphs to determine the vertical extent of a cases brace, the algorithm previously scanned ALL remaining glyphs without stopping. This caused the first brace in expressions with multiple adjacent cases environments (e.g., `\begin{cases}x+y=-8\\x-y=-21\end{cases}\begin{cases}x=-29\\y=21\end{cases}`) to include the second environment's content, resulting in incorrect yMin values (e.g., -46.92 instead of -17.04). Now includes two stopping conditions:
+   - **Elevated glyph detection** (`if next_glyph_y > 15.0: break`): Stops when encountering another brace at highly elevated y position (> 15.0). Originally used 10.0 threshold, but fraction numerators appear at y ≈ 10-11, so threshold was increased to 15.0 to avoid stopping on regular content.
+   - **Large horizontal gap detection** (`if gap > 10.0: break`): Stops when encountering spatial separation between environments
+   - This ensures each brace only spans its own cases environment content
+
+2. **Incorrect initialization for vertical extent** (lines 396-397): The algorithm previously initialized `min_y` and `max_y` to the brace glyph's y-position (y ≈ 17, since braces are vertically centered). This caused braces to be too small when containing fractions, as content glyphs (especially fraction numerators and denominators at y ≈ -11 to 11) would not properly extend `max_y` beyond the brace's initial position. For example, in `\begin{cases}x=-\frac{29}{2}\\y=\frac{13}{2}\end{cases}`, the brace would not extend down to cover the fraction denominators. Now initializes to extreme values:
+   - `min_y = float('inf')`: Updated to smallest content y (highest visual position)
+   - `max_y = float('-inf')`: Updated to largest content y (lowest visual position)
+   - This allows the brace to correctly span the full vertical extent of all content, including fraction numerators and denominators
 
 ### Custom Macro (`\lognl`)
 
