@@ -3,9 +3,9 @@ import torch
 # import sys
 # sys.path.append('../..') # only for local testing
 from utils.Expression.gtd_parser import parse_gtd
-from utils.utils import load_config, load_checkpoint
-from inference.Backbone import Backbone
-from training.dataset import Words
+from model.utils.utils import load_config, load_checkpoint
+from model.inference.Backbone import Backbone
+from model.training.dataset import Words
 
 class Inference:
     def __init__(self, confPath='config.yaml'):
