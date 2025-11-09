@@ -50,7 +50,7 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
                 if child_list[i][2].lower() == 'inside':
                     inside = convert(child_list[i][1], gtd_list)
             for i in range(len(child_list)):
-                if child_list[i][2].lower() in ['l_sup']:
+                if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
             if inside is None:
                 inside = Expression.fromLatex(' ')
@@ -58,6 +58,17 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside)
             else:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup)
+        elif gtd_list[nodeid][0] == '\\lognl':
+            l_sup = None, sup = None
+            for i in range(len(child_list)):
+                if child_list[i][2].lower() in ['l-sup']:
+                    l_sup = convert(child_list[i][1], gtd_list)
+                if child_list[i][2].lower() in ['sup']:
+                    sup = convert(child_list[i][1], gtd_list)
+            if l_sup is None:
+                item = Symbol(value='\\log', sup=sup)
+            else:
+                item = LogNLConstruct(construct_type='\\lognl', l_sup=l_sup, sup=sup)
 
         elif gtd_list[nodeid][0] == '\\stack':
             inside = None

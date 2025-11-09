@@ -5,9 +5,9 @@ import cv2
 import pickle as pkl
 
 
-image_path = '/Users/martijnslob/github/SAN/data/mathwriting-matrix/test/images'
+image_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/images'
 image_out = 'test_image.pkl'
-label_path = '/Users/martijnslob/github/SAN/data/mathwriting-matrix/test/hyb'
+label_path = '/Users/martijnslob/github/SAN/data/chrome2013/test/hyb'
 label_out = 'test_label.pkl'
 
 images = glob.glob(os.path.join(image_path, '*.bmp'))

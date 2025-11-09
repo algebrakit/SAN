@@ -76,10 +76,12 @@ def _handleStackConstructs(items) -> List[LatexItem]:
         item = _items[ii]
         if isinstance(item, StackConstruct):
             #get the bracket types to determine the kind of matrix
-            matrix_type = 'matrix'
-            if ii > 0 and ii + 1 < len(_items):
-                prev_item = _items[ii - 1]
-                next_item = _items[ii + 1]
+            matrix_type = None
+            prev_item, next_item = None, None
+            if ii > 0: prev_item = _items[ii - 1]
+            if ii + 1 < len(_items): next_item = _items[ii + 1]
+
+            if not(prev_item is None and next_item is None):
                 if isinstance(prev_item, Symbol) and isinstance(next_item, Symbol):
                     prev_symbol = prev_item.value
                     next_symbol = next_item.value
@@ -101,10 +103,24 @@ def _handleStackConstructs(items) -> List[LatexItem]:
                             matrix_type = 'vmatrix'
                     elif prev_symbol == r'\Vert' and next_symbol == r'\Vert':
                         matrix_type = 'Vmatrix'
-            if matrix_type != 'matrix':
-                _items.pop(ii+1)
-                _items.pop(ii-1)
-                ii -= 1
+
+                    if not (matrix_type is None):
+                        _items.pop(ii+1)
+                        _items.pop(ii-1)
+                        ii -= 1
+
+
+            if matrix_type is None and not (prev_item is None):
+                # might be a system of equations: \begin{cases} .. \\ .. \end{cases}
+                prev_symbol = prev_item.value
+                if prev_symbol == r'\{':
+                    matrix_type = 'cases'
+                    _items.pop(ii-1)
+                    ii -= 1
+
+            if matrix_type is None:
+                matrix_type = 'matrix'
+
             item.set_matrix_type(matrix_type)
 
         ii += 1

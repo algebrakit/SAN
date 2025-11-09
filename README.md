@@ -9,25 +9,32 @@ The codebase has been reorganized for better modularity and maintainability:
 ```
 SAN/
 ├── app/                      # Web application
-│   ├── backend/             # API server for stroke-based inference
+│   ├── backend/             # Flask API server for stroke-based inference
 │   └── frontend/            # Web UI for handwriting input
-├── san_model/               # Core ML model package
-│   ├── backbone.py         # Main model architecture
-│   ├── encoder/            # CNN encoder (DenseNet)
-│   └── decoder/            # Hierarchical attention decoder
-├── training/                # Training pipeline
-│   ├── train.py            # Main training script
-│   ├── dataset.py          # Dataset loaders
-│   └── config/             # Training configurations
-├── inference/               # Standalone inference tools
-│   └── inference.py        # CLI inference tool
+├── model/                    # Core ML model package (inference + training)
+│   ├── san_model/           # Core model architecture
+│   │   ├── backbone.py     # Main model combining encoder+decoder
+│   │   ├── encoder/        # CNN encoder (DenseNet)
+│   │   └── decoder/        # Hierarchical attention decoder
+│   ├── training/            # Training pipeline
+│   │   ├── train.py        # Main training script
+│   │   ├── dataset.py      # Dataset loaders
+│   │   └── training.py     # Training loop
+│   ├── inference/           # Inference-specific modules
+│   │   ├── Backbone.py     # Inference-optimized backbone
+│   │   └── san_decoder.py  # Inference-optimized decoder
+│   ├── utils/               # Model utilities
+│   ├── inference.py         # CLI inference tool
+│   └── config.yaml          # Main inference configuration
 ├── data_tools/              # Data processing utilities
-│   ├── stroke_processing/  # Stroke-to-image conversion
-│   └── dataset_prep/        # Dataset preparation scripts
-├── data/                    # Datasets
+│   ├── dataset_prep/        # Dataset preparation scripts (CROHME)
+│   ├── synthetic_generator/ # Synthetic data generation system
+│   └── stroke_processing/   # Stroke-to-image conversion
+├── utils/                    # Shared utilities
+│   └── Expression/          # LaTeX expression parsing
+├── data/                    # Datasets (train/test pickles)
 ├── checkpoints/             # Model checkpoints
-├── tests/                   # Test suite
-└── docs/                    # Documentation
+└── logs/                    # TensorBoard logs
 ```
 
 ## Installation
@@ -72,16 +79,16 @@ docker run -p 8080:8080 san-backend:latest
 cd data_tools/dataset_prep
 python prepare_crohme_data.py
 python gen_hybrid_data.py
-python convert_hybrid_to_pkl.py
+python gen_pkl.py
 
 # Train the model
-cd ../../training
-python train.py --config config/config.yaml
+cd ../../model/training
+python train.py --config config.yaml
 ```
 
 ### Inference
 ```bash
-cd inference
+cd model
 python inference.py --config config.yaml --image_path ../data/test_images --label_path ../data/test_caption.txt
 ```
 

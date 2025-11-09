@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
+from utils.Expression import Expression
 
 def should_skip_line(latex_str: str) -> bool:
     """
@@ -202,6 +203,7 @@ def handle_matrices(latex_expr: str) -> str:
      -  Similar for bmatrix, Bmatrix, vmatrix, Vmatrix
      -  \begin{array}{ccc}..\\..\end{array} --> \stack{.. \\ ...}
      -  \binom{n}{k} into (\stack{a \\ b})
+     -  \begin{cases}...\end{cases} into \{\stack{.. \\ ..}
     """
     
     # handle matrices
@@ -211,12 +213,14 @@ def handle_matrices(latex_expr: str) -> str:
     res = res.replace("\\begin{Vmatrix}", "\\Vert\\stack{")
     res = res.replace("\\begin{bmatrix}", "[\\stack{")
     res = res.replace("\\begin{Bmatrix}", "\\{\\stack{")
+    res = res.replace("\\begin{cases}", "\\{\\stack{")
     res = res.replace("\\end{matrix}", "}")
     res = res.replace("\\end{pmatrix}", "})")
     res = res.replace("\\end{bmatrix}", "}]")
     res = res.replace("\\end{Bmatrix}", "}\\}")
     res = res.replace("\\end{vmatrix}", "}|")
     res = res.replace("\\end{Vmatrix}", "}\\Vert")
+    res = res.replace("\\end{cases}", "}")
 
     # handle array. Remove first argument block with alignment indicators
     pattern = r'(\\begin\{array\})\{[^\}]+\}'
