@@ -1,0 +1,35 @@
+224,79\ euro
+s=\sqrt{4\ }of\ s=-\sqrt{4}
+s=2\ of\ s=-2
+\begin{cases}x=-9\end{cases}
+\begin{cases}x=-9\\y=9\end{cases}
+5,52
+13\ minuten\ 12\ seconden
+13\ min\ en\ 12\ \sec
+40\ 000\ x\ 492\ =\ 20\ miljoen
+40000\ x\ 492\ =\ 20000000\ km
+4,5
+1,1\times10=11dm
+5,5\times11\times4=242dm^{3}
+\cos\ \angle A=\frac{4}{5}
+\angle A=37\degree
+\frac{7}{20}x=-1\frac{15}{20}
+c\left(4,2\right)=\frac{4\cdot3}{2\cdot1}=6
+N=6470000\cdot1,042^{t}
+N=6,47\cdot1,042^{t}
+5,83
+f'(x)=3-\frac{3}{\left(3x-7\right)^{2}}
+3,5\ \times\ 1,15\ =2,25\ euro
+2\times4\times3=24cm^{3}
+3,29\times10^{-7}
+15\%
+100+1,9=101,9
+101,9:100=1,019
+1,019x22,85=23,28415
+u_{n}=u_{1}+\left(n-1\right)\cdot v
+u_{n}=5+\left(n-1\right)\cdot7
+dus\ 1t\ =\ 20
+16,2
+170+2,04=172,04
+14,4\ meter
+

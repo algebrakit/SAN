@@ -7,9 +7,15 @@ handwriting recognition training data. It parses LaTeX into a tree structure,
 applies normalization rules, and reconstructs the normalized expression.
 """
 
+import os
+import re
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+
 from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
+
 from utils.Expression.defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
 COMMAND_SINGLE_ARGUMENT = ACCENT_COMMANDS_ABOVE.union(ACCENT_COMMANDS_BELOW).union({'\\stack'})
 
@@ -77,7 +83,7 @@ class Tokenizer:
 
             # Handle special single-character commands including escaped braces and backslash
             char = self.current_char()
-            if char in ',;:>! {}\\':
+            if char in ',;:>! {}\\%':
                 command += char
                 self.advance()
                 return command
@@ -1145,6 +1151,8 @@ def run_test_suite():
 
 
 if __name__ == "__main__":
-    result = normalize_latex('\\hat\\nu_i')
-    print("Normalized LaTeX:", result)
+    latex = r'5.3\%'
+    result = normalize_latex(latex)
+    print("LaTeX:", latex)
+    print("Normalized:", result)
     # run_test_suite()

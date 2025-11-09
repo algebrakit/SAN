@@ -50,7 +50,7 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
                 if child_list[i][2].lower() == 'inside':
                     inside = convert(child_list[i][1], gtd_list)
             for i in range(len(child_list)):
-                if child_list[i][2].lower() in ['l_sup']:
+                if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
             if inside is None:
                 inside = Expression.fromLatex(' ')

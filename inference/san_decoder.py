@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from san_model.decoder.attention import Attention
 from utils.Expression.defs import ABOVE_BELOW_COMMANDS, ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
-from utils.show_attention import visualize_attention
+from utils.Expression.utils import get_allowed_relations
 
 class SAN_decoder(nn.Module):
 
@@ -132,71 +132,13 @@ class SAN_decoder(nn.Module):
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
-                    if p_word_str == '\\frac':
-                        if word_str == 'above':
-                            p_re = 'Above'
-                        elif word_str == 'below':
-                            p_re = 'Below'
-                        else:
-                            # illegal relation for fraction, neglect
-                            pass
-                    elif p_word_str == '\\sqrt':
-                        if word_str == 'L-sup':
-                            p_re = 'l_sup'
-                        elif word_str == 'inside':
-                            p_re = 'Inside'
-                        elif word_str == 'sup':
-                            p_re = 'Sup'
-                        else:
-                            # illegal relation for sqrt, neglect
-                            pass
-                    elif p_word_str == '\\stack':
-                        if word_str == 'inside':
-                            p_re = 'Inside'
-                        else:
-                            # illegal relation for stack, neglect
-                            pass
-                    elif p_word_str == '\\row':
-                        if word_str == 'inside':
-                            p_re = 'Inside'
-                        if word_str == 'below':
-                            p_re = 'Below'
-                        else:
-                            # illegal relation for stack, neglect
-                            pass
-                    elif p_word_str in ABOVE_BELOW_COMMANDS:
-                        if word_str in ['below', 'sub']:
-                            p_re = 'Below'
-                        elif word_str in ['above', 'sup']:
-                            p_re = 'Above'
-                        else:
-                            # illegal relation for sum/prod, neglect
-                            pass
-                    elif p_word_str in ACCENT_COMMANDS_ABOVE:
-                        if word_str == 'sup':
-                            p_re = 'Sup'
-                        elif word_str == 'sub':
-                            p_re = 'Sub'
-                        elif word_str == 'below':
-                            p_re = 'Below'
-                        else:
-                            # illegal relation for accent above, neglect
-                            pass    
-                    elif p_word_str in ACCENT_COMMANDS_BELOW:
-                        if word_str == 'sup':
-                            p_re = 'Sup'
-                        elif word_str == 'sub':
-                            p_re = 'Sub'
-                        elif word_str == 'above':
-                            p_re = 'Above'
-                        else:
-                            # illegal relation for accent above, neglect
-                            pass    
+
+                    allowed_relations = get_allowed_relations(p_word_str)
+                    if word_str in allowed_relations:
+                        p_re = word_str
                     else:
-                        if word_str == 'sub':
-                            p_re = 'Sub'
-                        elif word_str == 'sup':
-                            p_re = 'Sup'
+                        pass
+
                 elif word_str == '<eos>':
                     if len(struct_list) == 0:
                         break
@@ -214,23 +156,7 @@ class SAN_decoder(nn.Module):
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
                     word_str = self.params['words'].words_index_dict[word]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
-
-                    if word_str == 'inside':
-                        p_re = 'Inside'
-                    elif word_str == 'sub' or (word_str == 'below' and p_word_str in ABOVE_BELOW_COMMANDS):
-                        p_re = 'Sub'
-                    elif word_str == 'sup' or (word_str == 'above' and p_word_str in ABOVE_BELOW_COMMANDS):
-                        p_re = 'Sup'
-                    elif word_str == 'above':
-                        p_re = 'Above'
-                    elif word_str == 'below':
-                        p_re = 'Below'
-                    elif word_str == 'L-sup':
-                        p_re = 'l_sup'
-                    elif word_str == 'inside':
-                        p_re = 'Inside'
-                    elif word_str == 'right':
-                        p_re = 'Right'
+                    p_re = word_str # above, below, sub, sup, etc
                 else:
                     # symbol or construct head (e.g. \frac, \sum, etc.)
                     if word.item():
@@ -238,7 +164,7 @@ class SAN_decoder(nn.Module):
                         result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
 
                     # in default left-to-right, the current symbol is the parent of the next
-                    p_re = 'Right'
+                    p_re = 'right'
                     pid = cid 
                     word_embedding = self.embedding(word)
                     parent_hidden = hidden.clone()
@@ -246,6 +172,7 @@ class SAN_decoder(nn.Module):
                     alpha_prev = word_alpha
 
                 # show attention heatmap
+                # from utils.show_attention import visualize_attention
                 # image = images[0,0,:,:]
                 # alpha = word_alpha[0,:,:]
                 # visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
