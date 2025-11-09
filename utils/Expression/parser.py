@@ -4,7 +4,7 @@ from typing import List, Optional
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
 from .base import LatexItem
 from .expression import Expression
-from .constructs import AccentConstruct, RowConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct, StackConstruct
+from .constructs import AccentConstruct, RowConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct, StackConstruct, LogNLConstruct
 
 def parse_latex(latex: str) -> Optional[Expression]:
     """Parse an Expression object from LaTeX syntax.
@@ -74,6 +74,8 @@ def parse_latex(latex: str) -> Optional[Expression]:
                 return self.parse_frac()
             elif token == '\\sqrt':
                 return self.parse_sqrt()
+            elif token == '\\lognl':
+                return self.parse_lognl()
             elif token == '\\stack':
                 return self.parse_stack()
             elif token == '\\row':
@@ -231,6 +233,31 @@ def parse_latex(latex: str) -> Optional[Expression]:
 
             # Check for superscript on the sqrt
             return self.apply_sub_sup(sqrt)
+
+        def parse_lognl(self):
+            """Parse \\lognl [ base ] """
+            self.advance()  # skip '\lognl'
+
+            l_sup = None
+
+            # Check for base in brackets
+            if self.current() == '[':
+                self.advance()
+                # Parse content until ]
+                items = []
+                while self.current() and self.current() != ']':
+                    item = self.parse_item()
+                    if item:
+                        items.append(item)
+                l_sup = Expression(items)
+
+                if self.current() == ']':
+                    self.advance()
+
+            lognl = LogNLConstruct(construct_type='\\lognl', l_sup=l_sup)
+
+            # Check for superscript on the lognl
+            return self.apply_sub_sup(lognl)
 
         def parse_accent(self, construct_type, is_above):
             """Parse constructs like \\bar{..} and \\underline{..}"""

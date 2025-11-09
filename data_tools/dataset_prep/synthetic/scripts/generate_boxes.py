@@ -104,7 +104,7 @@ class LaTeXToDVIBoxes:
 \\usepackage{{amsmath}}
 \\usepackage{{amssymb}}
 \\pagestyle{{empty}}
-\\newcommand\\lognl[1]{{\\mathop{{ {{}}^{{#1}}\\mathrm{{log}} }} }}
+\\newcommand\\lognl[1][]{{\\mathop{{ {{}}^{{#1}}\\mathrm{{log}} }} }}
 \\begin{{document}}
 ${expression}$
 \\end{{document}}
@@ -266,11 +266,13 @@ ${expression}$
             Expanded list of tokens matching DVI glyphs
         """
         # Function names that render as individual letters
+        # NOTE: Only include built-in LaTeX function names here, NOT custom macros
+        # Custom macros like \lognl should NOT be expanded to letters
         function_names = {
             'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
             'sinh', 'cosh', 'tanh', 'coth',
             'arcsin', 'arccos', 'arctan',
-            'log', 'lognl', 'ln', 'exp',
+            'log', 'ln', 'exp',
             'lim', 'sup', 'inf',
             'max', 'min',
             'det', 'dim', 'deg',
@@ -345,8 +347,11 @@ ${expression}$
         # Simple strategy: match tokens to glyphs sequentially
         # Skip tokens that don't produce glyphs (like ^, _, etc.)
         glyph_idx = 0
+        token_idx = 0
 
-        for token in tokens:
+        while token_idx < len(tokens):
+            token = tokens[token_idx]
+            token_idx += 1
             if glyph_idx >= len(glyphs):
                 break
 
@@ -419,6 +424,62 @@ ${expression}$
                     "xMax": float(sqrt_x_max),
                     "yMax": float(-max_extent + 2.0)  # Bottom extent + small padding
                 }
+            # Special handling for \lognl custom macro
+            # \lognl{n} expands to: superscript 'n' + 'l' + 'o' + 'g'
+            elif token == '\\lognl':
+                # \lognl produces 4 glyphs: superscript digit, then 'l', 'o', 'g'
+                # We need to create separate bboxes for each glyph
+
+                # First glyph: superscript (current glyph)
+                superscript_x, superscript_y, superscript_char, superscript_width = glyphs[glyph_idx]
+                superscript_height = superscript_width * 1.2
+                bbox = {
+                    "token": superscript_char,  # Use the actual digit character
+                    "xMin": float(superscript_x),
+                    "yMin": float(-superscript_y - superscript_height),
+                    "xMax": float(superscript_x + superscript_width),
+                    "yMax": float(-superscript_y)
+                }
+                bboxes.append(bbox)
+                glyph_idx += 1
+
+                # Next 3 glyphs: 'l', 'o', 'g'
+                # Collect all three glyphs first to normalize their heights
+                log_glyphs = []
+                for i in range(3):
+                    if glyph_idx + i >= len(glyphs):
+                        break
+                    log_glyphs.append(glyphs[glyph_idx + i])
+
+                # Calculate max height among the 'log' letters for normalization
+                max_height = 0.0
+                for log_x, log_y, log_char, log_width in log_glyphs:
+                    estimated_height = log_width * 1.2
+                    max_height = max(max_height, estimated_height)
+
+                # Create bboxes with normalized heights
+                for log_x, log_y, log_char, log_width in log_glyphs:
+                    # Use max_height for all letters to make them uniform
+                    bbox = {
+                        "token": log_char,  # 'l', 'o', or 'g'
+                        "xMin": float(log_x),
+                        "yMin": float(-log_y - max_height),  # Normalized height
+                        "xMax": float(log_x + log_width),
+                        "yMax": float(-log_y)
+                    }
+                    bboxes.append(bbox)
+                    glyph_idx += 1
+
+                # Skip the next 3 tokens: '[', digit, ']'  (e.g., [3] in \lognl[3]{x})
+                # \lognl takes an optional argument in square brackets
+                if token_idx < len(tokens) and tokens[token_idx] == '[':
+                    token_idx += 1  # Skip '['
+                    if token_idx < len(tokens):
+                        token_idx += 1  # Skip the digit
+                    if token_idx < len(tokens) and tokens[token_idx] == ']':
+                        token_idx += 1  # Skip ']'
+                # Continue to next token without appending another bbox
+                continue
             else:
                 # Standard bbox calculation
                 # Estimate height (simplified - would need font metrics for accuracy)

@@ -332,6 +332,46 @@ class SqrtConstruct(Construct):
             regions.append(('sup', self.sup))
         return regions
 
+class LogNLConstruct(Construct):
+    """Represents a Dutch logarithm: \\lognl[l_sup]"""
+
+    def __init__(self,
+                 construct_type: str,
+                 l_sup: Optional['Expression'] = None,
+                 sup: Optional['Expression'] = None,
+                 parent: Optional['Expression'] = None):
+        super().__init__(construct_type, sup, parent)
+        self.l_sup = l_sup  # base (the [n] in \\lognl[n])
+
+        # Set parent references
+        if self.l_sup:
+            self.l_sup.parent = self
+
+    def toLatex(self) -> str:
+        """Convert square root to LaTeX: \\log[base]^{superscript}"""
+
+        if self.l_sup:
+            result = f"{self.construct_type} [ {self.l_sup.toLatex()} ]"
+        else:
+            result = f"\\log"
+
+        if self.sup:
+            result += f" ^ {{ {self.sup.toLatex()} }}"
+
+        return result
+
+    def get_regions(self) -> List[Tuple[str, 'Expression']]:
+        """Get ordered list of (region_name, Expression) tuples for hybrid syntax.
+
+        Returns regions in order: L-sup, inside, sup (only if they exist).
+        """
+        regions = []
+        if self.l_sup:
+            regions.append(('L-sup', self.l_sup))
+        if self.sup:
+            regions.append(('sup', self.sup))
+        return regions
+
 
 class AboveBelowConstruct(Construct):
     """Represents constructs with above/below relations: \\sum, \\prod, \\int, etc."""

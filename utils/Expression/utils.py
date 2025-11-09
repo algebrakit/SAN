@@ -7,6 +7,8 @@ def get_allowed_relations(p_word_str:str)->list[str]:
         allowed_relations = ['above','below']
     elif p_word_str == '\\sqrt':
         allowed_relations = ['L-sup','inside','sup']
+    elif p_word_str == '\\lognl':
+        allowed_relations = ['L-sup','sup']
     elif p_word_str == '\\stack':
         allowed_relations = ['inside']
     elif p_word_str == '\\row':
