@@ -15,6 +15,35 @@
 \begin{cases}4x-7y=27\\2x-4y-14=0\end{cases}
 \begin{cases}-x+6y-28=0\\5x-8y+30=0\end{cases}
 \begin{cases}-5x+30y-140=0\\5x-8y+30=0\end{cases}
+\begin{cases}-8x+y=15\\-5x+2y=8\end{cases}
+\begin{cases}16x-2y=-30\\-5x+2y=8\end{cases}
+\begin{cases}x=-2\\y=-1\end{cases}
+\begin{cases}2x+2y=22\\2x^{2}+2y^{2}=146\end{cases}
+\begin{cases}2\times3+2\times8=22\\2\times3^{2}+2\times8^{2}=146\end{cases}
+\begin{cases}2x+2y=22\\2x^{2}+2y^{2}=146\end{cases}
+\begin{cases}\frac{17}{x}+\frac{17}{y}=1\\x-y=2\end{cases}
+\begin{cases}\frac{17}{x}+\frac{17}{y}=1\\x=y+2\end{cases}
+\begin{cases}\frac{6}{y}+\frac{6}{x}=1\\y=x-16\end{cases}
+\begin{cases}y=-8+7x\\-2x+5y-26=0\end{cases}
+\begin{cases}y-7x=-8\\-2x+5y=26\end{cases}
+\begin{cases}y=-8=7x\\-2x=26-5y\end{cases}
+\begin{cases}3x\ -\ 2y\ =\ -4\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}9x\ -\ 6y\ =\ -12\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}-12=\ -12\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}9x\ -\ 6y\ =\ -12\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}waar\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}x=1\\y=6\end{cases}
+\begin{cases}y=-27+8x\\3y+13=7x\end{cases}
+\begin{cases}27-8x=-y\\3y+13=7x\end{cases}
+\begin{cases}27-8x+y=0\\3y+13-7x=0\end{cases}
+\begin{cases}-81+24-3y=0\\3y+13-7y=0\end{cases}
+\begin{cases}-81+24-3y=0\\3y+13-7y=0\end{cases}
+\begin{cases}-8x+y+27=0\\-7x+3y+13=0\end{cases}
+\begin{cases}-24x-3y-81=0\\-7x+3y+13=0\end{cases}
+\begin{cases}-24x+3y+81=0\\-7x+3y+13=0\end{cases}
+\begin{cases}-v+2=-4+v\\w-7=-w+3\end{cases}
+\begin{cases}-2v=-6\\w-7=-w+3\end{cases}
+\begin{cases}-2v=-6\\2w=10\end{cases}
 
 ## euro
 ## -------
@@ -45,6 +74,16 @@
 1,31\ euro
 10\ euro
 2086,40\ euro
+het\ boek\ kost\ 15\ euro
+1,31\ euro
+1,30\ euro
+bedrag(€)=190+70\times=260\ euro
+260\ euro
+8\ euro
+bedrag\ in\ euro's\ =\ 50\ +\ 50\ x\ tijd\ in\ maanden
+34\ euro
+19\ euro
+630-278=\ 352\ euro
 
 ## \vee
 ## -------
@@ -70,6 +109,39 @@ x=0\ \vee x=3
 \neg A\wedge\neg\left(B\vee C\right)
 x=0\ \vee x=\frac{3}{7}
 x=-5\vee x=1
+\left\{x=-15,y=-3\right\}\vee\left\{x=3,y=-15\right\}
+\left\{x=-15,y=-3\right\}\vee\left\{x=3,y=15\right\}
+\neg A\wedge\neg\left(B\vee C\right)
+x=2\vee x=\frac{1}{2}
+y=\frac{11+\sqrt{25}}{2}\vee y=\frac{11-\sqrt{25}}{2}
+y=8\vee y=3
+\left\{x=3,y=8\right\}\vee\left\{x=8,y=3\right\}
+x=3\vee y=8
+n=2x\ \vee\ e=2\left(x+18\right)
+a=12\vee a=-12
+x=\frac{\sqrt{20}}{1}\vee x=0.
+x=\frac{\sqrt{20}m}{1}\vee x=0.
+x=\frac{21}{4}\vee-\frac{33}{4}
+x=\frac{-3+5}{-2}\vee x=\frac{-3-5}{-2}
+x=\frac{3-5}{2}\vee x=\frac{3+5}{2}
+x=\frac{-2}{2}\vee x=\frac{8}{2}
+x=-1\vee x=4
+x=\frac{-20+\sqrt{100}}{2}\vee x=\frac{-20-\sqrt{100}}{2}
+x=-15\vee x=-5
+\neg A\wedge\neg\left(B\vee C\right)
+x=0\vee x=9
+t=15\ \vee\ t=-15
+x=\frac{14}{2}\vee x=\frac{12}{2}
+x=7\vee x=6
+x=\frac{1+13}{2}\vee x=\frac{1-13}{2}
+x=7\vee x=-6
+2x=0\vee x-4=0
+x=0\ \vee x=4
+t=8\vee t=-8
+a=4\vee a=-4
+x=\left(-\frac{2}{6}\right)\vee x=5
+-11\vee3
+x=\frac{1}{5}\vee x=2
 
 ## of
 ## -------
@@ -89,6 +161,13 @@ x=\ 0\ of\ x^{2}\ -4x\ +3\ =\ 0
 x=\ 0\ of\ \left(x-3\right)\left(x-1\right)\ =0
 x=\ 0\ of\ x=3\ of\ x\ =1
 x=-7\ of\ x=7
+x=2\ of\ x=0
+x=\sqrt{2}\ of\ x=-\sqrt{2}
+x=-2\ of\ x=-10
+x= \ \frac{\frac{3}{2}+\sqrt{\frac{1}{4}}}{2}\ of\ x=\frac{\frac{3}{2}-\sqrt{\frac{1}{4}}}{2}
+x=1\ of\ x=\frac{1}{2}
+x=2\ of\ x\ =-\frac{1}{3}
+x=0\ of\ x=-\sqrt{12\ }of\ x=\sqrt{12}
 
 ## words
 ## -------
@@ -99,14 +178,239 @@ x=-7\ of\ x=7
 x=0\ arba\ x+6=0
 x=0\ arba\ x=-6
 x=10\ arba\ x=-2
+x=\ 16\ arba\ -40
+y=16\ arba\ -40
+kan\ niet\ korter.
+bij\ 18,3\ meter\ per\ seconde
 \left(x,\ y\right)=\left(-8,\ 5\right)\ arba\ \left(-\frac{17}{2},\ 4\right)
 2\ uur\ en\ 50\ minuten
 2\ uur
 x=6\ of\ x=3
 dus\ 1t\ =\ 20
+7\ keer
+100\%-84,03755869=16\%\ korting
+747,7\ miljoen=747.700.000
+aantal\ inwoners=814.245.300
+De\ kans\ dat\ de\ leerling\ een\ meisje\ is\ \frac{7}{26}
+60-10x3\ =30\ liter\ 
+60-10x3\ =30\ liter\ -
+0,25\ tegels
+0,25\ tegels
+0.25\ tegels
+gewoon\ alles\ bij\ elkaar\ optellen
+11x11xpi=380,13dm^{2}
+7,87Zwitserse\ frank
+inhoud\ \left(l\right)100+20\times tijd\ \left(minuten\right)
+inhoud\ \left(l\right)100\times20-tijd\ \left(minuten\right)
+39uur
+ze\ zitten\ gemiddeld\ 4\ uur\ op\ hun\ scherm\ want\ :
+2\ uur\ gemiddeld\ op\ hun\ scherm\ want\ 80\ totaal\ uren\ \div25=3.2
+inhoud\left(L\right)=50000-6000\times tijd\left(uren\right)
+5\ maal\ 3\ doen\ is\ 15
+3\ val.\times60=180\ min.
+3\ val.\times60=180\ min.
+353\ derdeklassers
+dus\ het\ antwoord\ is\ 2,0\%
+x<\frac{5-\sqrt{29}}{4}\ arba\ x>\frac{5+\sqrt{29}}{4}
+Hij\ heeft\ minstenn\ 28\ dozen\ nodig
+Hij\ heeft\ minstenn\ 27\ dozen\ nodig
+6x5x2=60personen
+dus\ er\ zijn\ 19\ blikjes\ met\ te\ weinig\ frisdrank
+haar\ cijfer\ voor\ engels\ is\ een\ 6,0
+4\ Roemeense\ leu
+154:5=30\ rest1\ 110:5=22
+4\ van\ \frac{3}{4}=3
+50tientallen\ 
+500tientallen
+5\ duizendtallen\ 
+Ze\ kunnen\ 11\ zakjes\ kopen
+83.8\ \frac{rad}{s}
+260\ maanden
+5,4-100=\ 94,6\ word\ 0,946
+dus\ het\ is\ 3,14\ cm\ 
+dus\ het\ is\ 3,14\ 
+5;3:\ totaal\ 5\ mogelijkheden
+1+2+2=\ 5\ mogelijkheden
+x=0\ arba\ 18x-7=0
+25\%\ is\ 100\ dus\ 75\%\ is\ 300
+Dus\ het\ kost\ 4,38
+707,3\ miljoen
+dus\ moet\ hij\ \text{€}10,30\ contant\ betalen
+dus\ moet\ hij\ \text{€}10,30\ contant\ betalen
+70\ leden
+ongeveer\ 51,26\%\ plekken\ zijn\ bezet
+In\ driehoek\ KLM\ met\ K\ 90\ graden
+224\ mensen\ 
+t\ =\ \sqrt{2\ }\ arba\ t\ =-\sqrt{2}
+geen\ oplossing
+geen\ vergelijking
+ze\ zijn\ niet\ gelijk\ aan\ elkaar
+kan\ niet
+1800\ delen\ door\ 60\ is\ 30\ liter\ per\ minuut
+30\ gedeeld\ door\ 0,75=40
+60\ \times10,52\ =\ 631,20\ zweedse\ kronen
+66,5\ miljoen
+in\ totaal\ is\ het\ een\ 6,7
+4\ meter
+4\ meter
+291,25=72,50+0,35x\ afstand
+vaziavo\ 62\ kilometru\ per\ val
+291,25=72,50+0,35\times afstand
+p-15=0\ arba\ p+15=0
+p=15\ arba\ p=-15
+je\ kan\ 245\ kilometer\ rijden
+180\ per\ uur
+15\ grill\ chips
+6x6=36\ blokjes
+256\ wedstrijden\ 
+48\ graden
+80,2\ -\ 17,6\ =\ 62,6\ miljoen
+6278seconden
+oppervlakte\ zijkanten
+boven\ en\ onderkant=80\times30=2400\times2=4800
+boven\ en\ onderkant=80\times30=2400\times2=4800
+zijkanten\ 2\ keer=80\times40=3200\times2=6400
+andere\ zijkanten=30\times40=1200\times2=2400
+boven\ en\ onderkant=80\times30=2400\times2=4800
+zijkanten\ 2\ keer=80\times40=3200\times2=6400
+andere\ zijkanten=30\times40=1200\times2=2400
+ze\ de\ prijns\ van\ de\ kortings\ is\ 4,39
+kan\ niet
+niet\ waar
+4\cdot7=28\ en\ 28+5=33
+4\cdot-7=-28\ en\ -28+5=-23
+x=-4\ or\ x=-2
+3\cdot1\ =3\ en\ 7\ \cdot6=\ 56\ =56+3=59
 
 ## units
 ## -------
+1,500\ kg
+1500\ kg
+75\ kg
+11,2cm
+0,5\times50\times30=750cm^{2}
+37.5dm=375cm
+375cm^{3}-262.144cm^{3}=112.86
+46\ cm
+0,46\ m
+P\ =\ 45\ cm
+20km
+25,0\ cm
+15355\ m
+11494,04cm^{3}
+11494,04cm^{3}
+11494,04cm^{3}
+11,2\ cm
+525mm^{2}
+5250mm^{2}
+304,5mm^{2}
+260\ mm\ 
+8\ kg
+9202?77208\ cm^{3}
+9202,77208\ cm^{3}
+9202,77\ cm^{3}
+2769\ mm^{2}
+2769\ mm^{2}\ =\ \frac{\pi}{4}d^{2}
+60\ mm^{2}
+60\ mm
+4,5\ cm^{2}
+25\ m^{2}
+71,04cm^{2}
+0,85km
+0,8km
+1km
+V=14137,17\ cm^{3}
+245km
+868cm
+9,1\ cm
+M=\frac{F}{g}
+F=p\cdot A\ =\ 6,0*10^{5}\ \frac{N}{^{m^{2}}}\cdot15cm^{2}
+F=p\cdot A\ =\ 6,0*10^{5}\ \frac{N}{^{m^{2}}}\cdot15cm^{2}=9\cdot10^{6}
+m=\frac{F}{g}=\ 9\cdot\frac{10^{6}}{9,81}
+30,6\ \frac{m}{s}
+6,5cm^{2}
+1,6\ cm=18,75\ km
+0,5\times3\times3=4,5\ mm
+0,5\times3\times3=4,5\ mm
+4800+6400+2400=13600\ cm^{2}
+4800+6400+2400=13600\ cm^{2}
+180\ cm
+2106000\ cm^{3}
+70\ cm
+4900\pi\ cm^{2}
+318500\pi\ cm^{3}
+1105402,74\ cm^{3}
+V=276350,68\ cm^{3}
+V=276351\ cm^{3}
+5572,453333cm
+\text{-}77+ 56 m 
+11,31\ m
+PQ=33\ mm
+-32m
+60\degree
+75\degree
+51\degree
+51\degree
+52\degree
+\cos\left(61\degree-106\degree\right)
+\cos\left(-45\degree\right)
+0\degree C
+\tan\left(30\degree+9\sqrt{3}\right)
+90\degree
+35\degree
+45\degree
+55\degree
+55\degree
+72\degree
+5\degree K
+62\degree
+\tan\left(40\degree+5\degree\right)=\tan\left(45\degree\right)=1
+28\degree
+180\degree
+180\degree
+75\degree
+70\degree
+-5\degree c
+-5\degree
+\pi\ x\ 25\degree2
+66\degree
+lG\ 97\degree
+124\degree
+65\degree
+144\ graden
+n=11,896\ jaar
+87\ graden
+1250\ ml
+\begin{pmatrix}\cos\left(45\degree\right)\cdot4\\\sin\left(45\degree\right)\cdot4\end{pmatrix}
+\begin{pmatrix}\cos\left(30\degree\right)\cdot12\\\sin\left(30\degree\right)\cdot12\end{pmatrix}-\begin{pmatrix}\cos\left(45\degree\right)\cdot4\\\sin\left(45\degree\right)\cdot4\end{pmatrix}
+\begin{pmatrix}\cos\left(30\degree\right)\cdot12-\cos\left(45\degree\right)\cdot4\\\sin\left(30\degree\right)\cdot12-\sin\left(45\degree\right)\cdot4\end{pmatrix}
+€4,48per uur.
+70\ graden
+80\ graden
+10\cdot365=3650\ dagen
+3650\cdot24=87600\ uren
+800000000:87600=9132,42\ \frac{km}{uur}
+245kilometer
+6,26\ procent
+6,260\ procent
+6,2601\ procent
+60-10x3=30\ liter
+60-10x3=30\ liter
+180\degree
+35\ graden
+3400\ kWh
+2690\ kWh
+7371miljoen
+16\times18=88mm^{2}
+360-158=202\ graden
+40\ cm
+9,6km
+8,73\ cm
+1152mm^{2}
+93\degree
+20\ leerlingen
+97\ procent
+100\ graden
 40000\ x\ 492\ =\ 20000000\ km
 1,1\times10=11dm
 5,5\times11\times4=242dm^{3}
@@ -157,6 +461,13 @@ V=\frac{1053}{49}cm^{3}
 12.3=36km
 8km
 A\ =\ 78,54\ cm^{2}
+2\ uur
+180+5=185\ min.
+180+5=185\ min
+2857\ gram
+16,8\ promille
+
+
 
 ## \lognl
 ## -------
@@ -170,6 +481,12 @@ g\left(x\right)=9+\lognl[ 3]{ x}
 \lognl[ 2]{ 60}
 \lognl[ 2]{ x^{2}}=\lognl[ 2]{ x^{2}}+3
 \left(\lognl[ 2]{ x}\right)^{2}=\lognl[ 2]{ x^{2}}+\lognl[ 2]{ 2^{3}}
+a=\lognl[\frac{1}{4}]{9}
+a=\frac{1}{-2}\cdot\lognl[2]{9x}
+a=-\lognl[4]{9}
+\lognl[ 8]{ 2}=3
+\lognl[ 2]{ 8}=3
+n=\lognl[ 1,06]{ 2}
 
 ## \angle
 ## -------
@@ -177,6 +494,12 @@ g\left(x\right)=9+\lognl[ 3]{ x}
 \angle A=37^o
 180^o-35^o-90^o=\angle k\ 55^o
 180^o-35^o-90^o=\angle k\ =55^o
+\angle c2=60\degree
+\angle c2=60\degree
+\angle C=\angle E=75\degree
+\angle k=180-35-90=55\degree
+\angle C_{1}=19\degree
+\angle C_{1}=20\degree
 
 ## decimal comma
 ## --------
@@ -194,4 +517,58 @@ N=6,47\cdot1,042^{t}
 1,053\ \times4,25
 4,25\times0,053=\ 0,23
 100\%+5,3\%=105,3\%
+0,039\times189000000000=
+0,05
+6,6
+6,5
+12,6
+h(t)=-0,5t+4
+p=0,5.Q^{\frac{1}{3}}
+100\%-2,5\%=97,5\%:100=0,975\times4,50=4,39
+4,39
+0,6\cdot150
+90,0\ Nm
+0,2
+747700000\div100\times105,4=788075800
+V=\left\{0,4\right\}
+0,8p-0,7p=0,2+0,6
+1,5p=0,8
+0,1p=0,8
+72,50+0,35\times0\ =72,50
+291,25=72,50+0,35\times afstand
+3,1
+69,99-44,50=25.49
+\frac{25,49}{69,99}
+\frac{25,49}{69,99}\times100\%
+36,40
+40\cdot1,35=54
+0,5
+4,47
+64,35
+x\ =-1,2
+F=p\cdot A\ =\ 6,0*10^{5}\ \frac{N}{^{m^{2}}}\cdot15cm^{2}
+10,08\div0,12=84
+14,9
+2+6\cdot6,4-\frac{6,4}{2}
+34,8
+37,2
+6,75
+3,9\%
+1,2l
+0,49+0,84+0,81
+3,1
+6,7
+43,8
+0,02
+0,2
+0,02
+0,4
+0,04
+\frac{9^{0,3}}{9^{2,3}}=9^{2}
+\frac{9^{0,3}}{9^{2,3}}=9^{-2}
+214,1
+43,200+360=433,560
+335,45
+1,9
+1,89
 
