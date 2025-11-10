@@ -4,7 +4,7 @@ from typing import List, Optional
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
 from .base import LatexItem
 from .expression import Expression
-from .constructs import AccentConstruct, RowConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct, StackConstruct, LogNLConstruct
+from .constructs import AccentConstruct, RowConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct, StackConstruct, LogConstruct
 
 def parse_latex(latex: str) -> Optional[Expression]:
     """Parse an Expression object from LaTeX syntax.
@@ -76,6 +76,8 @@ def parse_latex(latex: str) -> Optional[Expression]:
                 return self.parse_sqrt()
             elif token == '\\lognl':
                 return self.parse_lognl()
+            elif token == '\\log':
+                return self.parse_log()
             elif token == '\\stack':
                 return self.parse_stack()
             elif token == '\\row':
@@ -159,6 +161,9 @@ def parse_latex(latex: str) -> Optional[Expression]:
                 if sup_expr:
                     item.sup = sup_expr
                     sup_expr.parent = item
+                if sub_expr and isinstance(item, LogConstruct):
+                    item.sub = sub_expr
+                    sub_expr.parent = item
             if isinstance(item, AccentConstruct):        
                 if sub_expr:
                     item.sub = sub_expr
@@ -254,10 +259,19 @@ def parse_latex(latex: str) -> Optional[Expression]:
                 if self.current() == ']':
                     self.advance()
 
-            lognl = LogNLConstruct(construct_type='\\lognl', l_sup=l_sup)
+            lognl = LogConstruct(construct_type='\\log', l_sup=l_sup)
 
             # Check for superscript on the lognl
             return self.apply_sub_sup(lognl)
+
+        def parse_log(self):
+            """Parse \\log _ base  """
+            self.advance()  # skip '\log'
+
+            log = LogConstruct(construct_type='\\log')
+
+            # Check for subscript and superscript on the log
+            return self.apply_sub_sup(log)
 
         def parse_accent(self, construct_type, is_above):
             """Parse constructs like \\bar{..} and \\underline{..}"""

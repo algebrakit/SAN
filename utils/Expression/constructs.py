@@ -332,28 +332,37 @@ class SqrtConstruct(Construct):
             regions.append(('sup', self.sup))
         return regions
 
-class LogNLConstruct(Construct):
-    """Represents a Dutch logarithm: \\lognl[l_sup]"""
+class LogConstruct(Construct):
+    """Represents a logarithm, including the Dutch notation: \\lognl[l_sup]"""
 
     def __init__(self,
                  construct_type: str,
                  l_sup: Optional['Expression'] = None,
                  sup: Optional['Expression'] = None,
+                 sub: Optional['Expression'] = None,
                  parent: Optional['Expression'] = None):
         super().__init__(construct_type, sup, parent)
         self.l_sup = l_sup  # base (the [n] in \\lognl[n])
+        self.sub = sub
 
         # Set parent references
         if self.l_sup:
             self.l_sup.parent = self
+        if self.sub:
+            self.sub.parent = self
+        if self.sup:
+            self.sup.parent = self
 
     def toLatex(self) -> str:
         """Convert square root to LaTeX: \\log[base]^{superscript}"""
 
         if self.l_sup:
-            result = f"{self.construct_type} [ {self.l_sup.toLatex()} ]"
+            result = f"\\lognl [ {self.l_sup.toLatex()} ]"
+            # sub not allowed
         else:
             result = f"\\log"
+            if self.sub:
+                result+= f" _ {{ {self.sub.toLatex()} }}"
 
         if self.sup:
             result += f" ^ {{ {self.sup.toLatex()} }}"
@@ -368,6 +377,9 @@ class LogNLConstruct(Construct):
         regions = []
         if self.l_sup:
             regions.append(('L-sup', self.l_sup))
+        elif self.sub:
+            regions.append(('sub', self.sup))
+
         if self.sup:
             regions.append(('sup', self.sup))
         return regions
