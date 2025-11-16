@@ -1,7 +1,7 @@
 from typing import Optional, List
 from .base import LatexItem
 from .expression import Expression
-from .constructs import AccentConstruct, RowConstruct, StackConstruct, Symbol, Construct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
+from .constructs import AccentConstruct, RowConstruct, StackConstruct, Symbol, LogConstruct, FractionConstruct, SqrtConstruct, AboveBelowConstruct
 from .defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW, ABOVE_BELOW_COMMANDS
 
 def parse_gtd(gtd_list) -> Optional[Expression]:
@@ -58,8 +58,8 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside)
             else:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup)
-        elif gtd_list[nodeid][0] == '\\lognl':
-            l_sup = None, sup = None
+        elif gtd_list[nodeid][0] == '\\log':
+            l_sup, sup = None, None
             for i in range(len(child_list)):
                 if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
@@ -68,7 +68,7 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
             if l_sup is None:
                 item = Symbol(value='\\log', sup=sup)
             else:
-                item = LogNLConstruct(construct_type='\\lognl', l_sup=l_sup, sup=sup)
+                item = LogConstruct(construct_type='\\lognl', l_sup=l_sup, sup=sup)
 
         elif gtd_list[nodeid][0] == '\\stack':
             inside = None

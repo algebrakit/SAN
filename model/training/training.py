@@ -2,9 +2,9 @@ import torch
 from tqdm import tqdm
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from model.utils.utils import updata_lr, Meter, cal_score
+from utils.utils import updata_lr, Meter, cal_score
 
 
 def get_batch_memory_info(images, image_masks, batch):

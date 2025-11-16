@@ -534,7 +534,7 @@ class Normalizer:
 
         # Spacing commands to remove
         self.spacing_commands = {
-            '\\,', '\\;', '\\:', '\\>', '\\!', '\\ ', '\\quad', '\\qquad'
+            '\\,', '\\;', '\\:', '\\>', '\\ ', '\\quad', '\\qquad'
         }
 
         # Command synonyms to replace
@@ -683,6 +683,18 @@ class Normalizer:
 
         return True
 
+    def _is_single_letter(self, node: ParseNode) -> bool:
+        """Check if node is a TEXT node containing a single letter (a-zA-Z)."""
+        return (node.type == NodeType.TEXT and
+                len(node.value) == 1 and
+                node.value.isalpha())
+
+    def _is_single_letter_or_digit(self, node: ParseNode) -> bool:
+        """Check if node is a TEXT node containing a single letter or digit."""
+        return (node.type == NodeType.TEXT and
+                len(node.value) == 1 and
+                node.value.isalnum())
+
     def _normalize_node(self, node: ParseNode) -> Optional[ParseNode]:
         """Recursively normalize a node and its children."""
         if node.type == NodeType.COMMAND:
@@ -722,7 +734,7 @@ class Normalizer:
 
         # Remove spacing commands entirely
         if command in self.spacing_commands:
-            return None  # Remove the command
+            return ParseNode(NodeType.TEXT, r"\space", [])
 
         # \binom{n}{k} --> (\stack{n \\ k})
         if command == "\\binom":
@@ -835,6 +847,72 @@ class Normalizer:
             res = transformed_node
 
         return res
+
+    def _filter_space_tokens(self, node: ParseNode) -> ParseNode:
+        """
+        Remove \\space tokens that don't meet the spacing rule.
+
+        Keep \\space only if:
+          - Preceded by TEXT node with single letter (a-zA-Z)
+          - Followed by TEXT node with single letter (a-zA-Z)
+
+        All other \\space tokens are removed.
+
+        Args:
+            node: Parse tree node to filter
+
+        Returns:
+            New node with filtered children
+        """
+        if node.type in [NodeType.ROOT, NodeType.GROUP]:
+            # Filter children based on sibling context
+            filtered_children = []
+
+            for i, child in enumerate(node.children):
+                # Check if this child is a \\space token
+                if child.type == NodeType.TEXT and child.value == r"\space":
+                    # Get previous and next siblings
+                    prev_node = node.children[i-1] if i > 0 else None
+                    next_node = node.children[i+1] if i < len(node.children)-1 else None
+
+                    # Keep \\space only if it meets the rule:
+                    # prev = single letter AND next = single letter (NOT digit)
+                    should_keep = (
+                        prev_node is not None and
+                        next_node is not None and
+                        self._is_single_letter(prev_node) and
+                        self._is_single_letter(next_node)
+                    )
+
+                    if should_keep:
+                        filtered_children.append(child)
+                    # else: skip this \\space token (removes it)
+                else:
+                    # Recursively process non-\\space nodes
+                    filtered_child = self._filter_space_tokens(child)
+                    filtered_children.append(filtered_child)
+
+            return ParseNode(node.type, node.value, filtered_children, node.parent)
+
+        elif node.type == NodeType.OPERATOR:
+            # Recursively process operator's children (base and exponent/subscript)
+            filtered_children = []
+            for child in node.children:
+                filtered_child = self._filter_space_tokens(child)
+                filtered_children.append(filtered_child)
+            return ParseNode(node.type, node.value, filtered_children, node.parent)
+
+        elif node.type == NodeType.COMMAND:
+            # Recursively process command arguments
+            filtered_children = []
+            for child in node.children:
+                filtered_child = self._filter_space_tokens(child)
+                filtered_children.append(filtered_child)
+            return ParseNode(node.type, node.value, filtered_children, node.parent)
+
+        else:
+            # TEXT nodes: return as-is
+            return node
 
 
 class LaTeXGenerator:
@@ -990,6 +1068,9 @@ def normalize_latex(latex_str: str) -> str:
         normalizer = Normalizer()
         normalized_tree = normalizer.normalize(tree)
 
+        # Filter space tokens based on context
+        normalized_tree = normalizer._filter_space_tokens(normalized_tree)
+
         # Generate LaTeX
         generator = LaTeXGenerator()
         result = generator.generate(normalized_tree)
@@ -1058,6 +1139,16 @@ def run_test_suite():
         ("\\vec{x}+y", "x+y", "Remove accents"),
         ("x\\,+\\;y", "x+y", "Remove spacing"),
         ("\\mbox{hello}", "hello", "Remove text styling"),
+
+        # Space normalization test cases
+        ("a\\,b", "a \\space b", "Keep space between single letters"),
+        ("a\\,b\\,c", "a \\space b \\space c", "Keep spaces in letter chain"),
+        ("a\\,1", "a 1", "Remove space: letter + digit"),
+        ("x\\;y\\:z", "x \\space y \\space z", "Multiple spacing commands"),
+        ("1\\,2", "1 2", "Remove space: digit + digit"),
+        ("\\sin\\,x", "\\sin x", "Remove space: command + letter"),
+        ("x\\,+\\,y", "x+y", "Remove space: around operators"),
+        ("\\frac{a\\,b}{c\\,1}", "\\frac{a \\space b}{c 1}", "Spaces in frac arguments"),
 
         # Edge cases
         ("\\sqrt{x}", "\\sqrt{x}", "Valid sqrt unchanged"),
@@ -1151,8 +1242,4 @@ def run_test_suite():
 
 
 if __name__ == "__main__":
-    latex = r'5.3\%'
-    result = normalize_latex(latex)
-    print("LaTeX:", latex)
-    print("Normalized:", result)
-    # run_test_suite()
+    run_test_suite()

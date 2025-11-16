@@ -5,15 +5,18 @@ experiment: "SAN"
 seed: 20200814
 
 # Training parameters
-epoches: 50
-batch_size: 5 # needed to support the largest images
-eval_batch_size: 7  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
-max_batch_size: 32  # used for most images, which are much smaller than the largest
+epoches: 200
+batch_size: 25 # needed to support the largest images
+eval_batch_size: 50  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
+max_batch_size: 1000  # used for most images, which are much smaller than the largest
 workers: 2  
 
 # Bucketing strategy - choose ONE:
 # Option 1: Percentile-based (recommended for skewed distributions - maximizes diversity for small images)
-bucket_percentiles: [0, 70, 85, 95, 98, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+bucket_percentiles: [0, 30,60, 90, 98, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+# bucket_percentiles: [0, 80, 98, 99.5, 99.9, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+# bucket_percentiles: [0, 70, 98, 99.7, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+# bucket_trunc_largest: None
 # Option 2: Fixed-size (fallback - comment out bucket_percentiles to use this)
 # bucket_size_multiplier: 10000  # nr of data items per bucket is batch_size x bucket_size_multiplier
 
@@ -24,7 +27,7 @@ lr: 0.1
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
-weight_decay: 1e-3
+weight_decay: 1e-4
 beta: 0.9
 image_resize: True
 image_width: 1600
@@ -39,11 +42,11 @@ use_label_mask: False
 use_amp: True
 
 # Training data
-train_image_path: '../data/chrome/train_image.pkl'
-train_label_path: '../data/chrome/train_label.pkl'
-eval_image_path: '../data/chrome/test_image.pkl'
-eval_label_path: '../data/chrome/test_label.pkl'
-word_path: '../data/chrome/word.txt'
+train_image_path: '../data/train_image.pkl'
+train_label_path: '../data/train_label.pkl'
+eval_image_path: '../data/test_image.pkl'
+eval_label_path: '../data/test_label.pkl'
+word_path: '../data/word.txt'
 
 # Encoder selection
 encoder:
@@ -88,7 +91,7 @@ hybrid_tree:
   threshold: 0.5
 
 # Training weights save path
-optimizer_save: False
+optimizer_save: True
 checkpoint_dir: 'checkpoints'
 finetune: True
 checkpoint: "checkpoints/best.pth"

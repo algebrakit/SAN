@@ -150,7 +150,7 @@ class BucketBatchSampler(Sampler):
         # Sort indices by image size (pixels)
         self.sorted_indices = sorted(range(len(self.image_sizes)), key=lambda i: self.image_sizes[i][2])
         sorted_sizes = [self.image_sizes[idx][2] for idx in self.sorted_indices]  # Extract pixels for display
-        if params['bucket_trunc_largest'] is not None:
+        if params.get('bucket_trunc_largest') is not None:
             N = params['bucket_trunc_largest']
             print(f"Largest image sizes: {sorted_sizes[-20:]}")
             print(f"Removing largest {N} items")

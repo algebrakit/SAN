@@ -1,5 +1,6 @@
 
 from utils.Expression.defs import ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
+import re
 
 def _convert_to_gtd(lines):
     gtd_list = [ ['<sos>', 0, -1, '<sos>'] ]
@@ -125,5 +126,9 @@ def _iter(nodeid, gtd_list, swapSubSup:bool):
 
 def hybrid_to_latex(nodeid, lines, swapSubSup=False): 
     gtd_list = _convert_to_gtd(lines)
-    return ' '.join(_iter(nodeid, gtd_list, swapSubSup))
+    latex = ' '.join(_iter(nodeid, gtd_list, swapSubSup))
+
+    pattern = r'\\log \['
+    latex = re.sub(pattern, r'\\lognl [', latex)
+    return latex
 

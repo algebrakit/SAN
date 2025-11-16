@@ -101,10 +101,14 @@ class LaTeXToDVIBoxes:
             Complete LaTeX document as string
         """
         return f"""\\documentclass{{article}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[T1]{{fontenc}}
 \\usepackage{{amsmath}}
 \\usepackage{{amssymb}}
+\\usepackage{{textcomp}}
 \\pagestyle{{empty}}
 \\newcommand\\lognl[1][]{{\\mathop{{ {{}}^{{#1}}\\mathrm{{log}} }} }}
+\\newcommand\\degree{{^\\circ}}
 \\begin{{document}}
 ${expression}$
 \\end{{document}}
@@ -142,6 +146,54 @@ ${expression}$
             )
 
             dvi_file = work_dir / "document.dvi"
+            log_file = work_dir / "document.log"
+
+            # Check for LaTeX compilation errors in log file
+            if log_file.exists():
+                log_content = log_file.read_text(encoding='utf-8', errors='ignore')
+
+                # Check for critical errors
+                error_patterns = [
+                    '! Undefined control sequence',
+                    '! LaTeX Error:',
+                    '! Missing',
+                    '! Emergency stop'
+                ]
+
+                for pattern in error_patterns:
+                    if pattern in log_content:
+                        # Extract context around the error for better diagnostics
+                        lines = log_content.split('\n')
+                        for i, line in enumerate(lines):
+                            if pattern in line:
+                                print(f"  LaTeX compilation error detected:")
+                                print(f"  {pattern}")
+                                if '! Undefined control sequence' in pattern and i + 1 < len(lines):
+                                    # Try to extract the undefined command
+                                    next_line = lines[i + 1]
+                                    if next_line.strip():
+                                        print(f"  {next_line.strip()}")
+                                break
+                        return None
+
+                # Check for warnings about missing characters
+                warning_patterns = [
+                    'Missing character:',
+                    'Some font shapes were not available',
+                ]
+
+                for pattern in warning_patterns:
+                    if pattern in log_content:
+                        print(f"  LaTeX compilation warning detected:")
+                        lines = log_content.split('\n')
+                        warning_lines = [line.strip() for line in lines if pattern in line]
+                        # Show first few warnings for context
+                        for warning in warning_lines[:3]:
+                            print(f"  {warning}")
+                        if len(warning_lines) > 3:
+                            print(f"  ... and {len(warning_lines) - 3} more warnings")
+                        return None
+
             if dvi_file.exists():
                 return dvi_file
             else:
@@ -295,6 +347,12 @@ ${expression}$
         # Sizing commands that don't produce glyphs
         sizing_commands = {'left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'bigl', 'bigr', 'Bigl', 'Bigr'}
 
+        # Custom macro expansions (defined in LaTeX preamble)
+        # These macros expand to other symbols that exist in the symbol library
+        macro_expansions = {
+            'degree': '\\circ',  # \degree is defined as ^\circ in preamble
+        }
+
         expanded = []
 
         for token in tokens:
@@ -306,8 +364,11 @@ ${expression}$
                 if cmd_name in sizing_commands:
                     continue
 
+                # Expand custom macros
+                if cmd_name in macro_expansions:
+                    expanded.append(macro_expansions[cmd_name])
                 # Expand function names to individual letters
-                if cmd_name in function_names:
+                elif cmd_name in function_names:
                     expanded.extend(list(cmd_name))
                 else:
                     # Keep as-is (Greek letters, special symbols, etc.)
@@ -317,6 +378,136 @@ ${expression}$
                 expanded.append(token)
 
         return expanded
+
+    def handle_environment_token(
+        self,
+        token: str,
+        tokens: List[str],
+        glyphs: List[Tuple[float, float, str, float, float, float]],
+        glyph_idx: int
+    ) -> Tuple[bool, Optional[str], Optional[Dict]]:
+        """
+        Handle \begin{...} and \end{...} environment tokens.
+
+        This function centralizes all logic for environment constructs like
+        cases, pmatrix, bmatrix, etc.
+
+        Args:
+            token: The current token being processed
+            tokens: Full list of LaTeX tokens
+            glyphs: List of (x, y, char, width, height, depth) from DVI
+            glyph_idx: Current index in glyphs list
+
+        Returns:
+            Tuple of (should_skip, mapped_token, bbox_dict):
+            - should_skip: True if token should be skipped without consuming a glyph
+            - mapped_token: Mapped token string (e.g., '(' for pmatrix), or None to skip
+            - bbox_dict: Precomputed bbox dictionary if special handling is needed, None otherwise
+        """
+        # Matrix environments: pmatrix, bmatrix, Bmatrix, matrix
+        # These produce large delimiter glyphs from cmex10 font
+        matrix_delimiters = {
+            '\\begin{pmatrix}': '(',
+            '\\end{pmatrix}': ')',
+            '\\begin{bmatrix}': '[',
+            '\\end{bmatrix}': ']',
+            '\\begin{Bmatrix}': '\\{',
+            '\\end{Bmatrix}': '\\}',
+        }
+
+        if token in matrix_delimiters:
+            # Matrix delimiters produce large extended glyphs from cmex10 font
+            # Check if current glyph is a matrix delimiter
+            if glyph_idx < len(glyphs):
+                x, y, char, width, height, depth = glyphs[glyph_idx]
+
+                # Matrix delimiters have:
+                # - Large depth (> 20.0) to span multiple rows
+                # - Elevated y-position (vertically centered)
+                # - Minimal height
+                is_matrix_delimiter = (depth > 15.0 and y > 5.0)
+
+                if is_matrix_delimiter:
+                    # Matrix delimiters need to be centered on the actual content
+                    # Determine if this is opening or closing delimiter based on token
+                    is_opening = token.startswith('\\begin{')
+
+                    # Scan glyphs to find content vertical extent in DVI coords
+                    content_top_dvi = float('inf')  # Smallest y = highest visual position
+                    content_bottom_dvi = float('-inf')  # Largest y = lowest visual position
+
+                    if is_opening:
+                        # Opening delimiter: scan forward for content
+                        for next_x, next_y, _, next_w, next_h, next_d in glyphs[glyph_idx + 1:]:
+                            # Stop if we hit another matrix delimiter (closing one)
+                            if next_d > 15.0 and next_y > 5.0:
+                                break
+
+                            # Note: Extended delimiters from \left( and \right) don't appear in DVI glyphs
+                            # They're created during bbox mapping, so no need to filter by depth here
+
+                            # Track vertical extent of content
+                            # In DVI: y is reference point, extends up by height and down by depth
+                            glyph_top = next_y - next_h
+                            glyph_bottom = next_y + next_d
+                            content_top_dvi = min(content_top_dvi, glyph_top)
+                            content_bottom_dvi = max(content_bottom_dvi, glyph_bottom)
+                    else:
+                        # Closing delimiter: scan backward for content
+                        for prev_x, prev_y, _, prev_w, prev_h, prev_d in reversed(glyphs[:glyph_idx]):
+                            # Stop if we hit another matrix delimiter (opening one)
+                            if prev_d > 15.0 and prev_y > 5.0:
+                                break
+
+                            # Note: Extended delimiters from \left( and \right) don't appear in DVI glyphs
+                            # They're created during bbox mapping, so no need to filter by depth here
+
+                            # Track vertical extent of content
+                            glyph_top = prev_y - prev_h
+                            glyph_bottom = prev_y + prev_d
+                            content_top_dvi = min(content_top_dvi, glyph_top)
+                            content_bottom_dvi = max(content_bottom_dvi, glyph_bottom)
+
+                    # Convert DVI coords to negated coords (our output system)
+                    # In DVI: smaller y = higher visual position
+                    # In output: larger y = higher visual position (negated)
+                    content_top_negated = -content_top_dvi     # Highest visual position
+                    content_bottom_negated = -content_bottom_dvi  # Lowest visual position
+
+                    # Calculate content height and add 10% padding for visual breathing room
+                    content_height = content_top_negated - content_bottom_negated
+                    padding = content_height * 0.10
+
+                    # Position delimiter to span content with padding
+                    # This aligns delimiter extent with actual content, not an abstract center point
+                    mapped_token = matrix_delimiters[token]
+                    bbox = {
+                        "token": mapped_token,
+                        "xMin": float(x),
+                        "yMin": float(content_bottom_negated - padding),  # Bottom edge with padding
+                        "xMax": float(x + width),
+                        "yMax": float(content_top_negated + padding)      # Top edge with padding
+                    }
+                    return (False, mapped_token, bbox)
+
+            # If glyph doesn't match matrix delimiter characteristics, skip token
+            return (True, None, None)
+
+        # Handle \begin{matrix} and \end{matrix} (no delimiters)
+        if token in ['\\begin{matrix}', '\\end{matrix}']:
+            return (True, None, None)
+
+        # Handle cases environment
+        if token == '\\begin{cases}':
+            # Map to \{ token for symbol library matching
+            return (False, '\\{', None)  # Will use standard bbox calculation with special extent
+
+        # Handle \end{cases} and \\ (line breaks) - no glyphs
+        if token == '\\end{cases}' or token == '\\\\':
+            return (True, None, None)
+
+        # Not an environment token
+        return (False, None, None)
 
     def map_glyphs_to_tokens(
         self,
@@ -368,21 +559,32 @@ ${expression}$
             if glyph_idx >= len(glyphs):
                 break
 
-            # Special handling for cases environment - it produces a left brace glyph
-            if token == '\\begin{cases}':
-                # Map to \{ token for symbol library matching
-                token = '\\{'
-            elif token == '\\end{cases}' or token == '\\\\':
-                # \end{cases} and \\ (line break) produce no glyphs, skip them
+            # Handle environment tokens (cases, pmatrix, bmatrix, etc.)
+            should_skip, mapped_token, precomputed_bbox = self.handle_environment_token(
+                token, tokens, glyphs, glyph_idx
+            )
+
+            if should_skip:
+                # Token produces no glyph, skip it
                 continue
+
+            if precomputed_bbox:
+                # Environment token with special bbox handling (e.g., matrix delimiters)
+                bboxes.append(precomputed_bbox)
+                glyph_idx += 1
+                continue
+
+            if mapped_token:
+                # Environment token mapped to different token (e.g., \begin{cases} -> \{)
+                token = mapped_token
+
             # Skip structural tokens and spacing commands that don't render as glyphs
             # Note: \frac is skipped here (only renders as box), but \sqrt produces a glyph
             # Font-changing commands (\mathrm, \mathbf, etc.) don't produce glyphs, only style content
-            elif token in ['^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
-                          '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
-                          '\\mathfrak', '\\mathnormal'] or \
-               token.startswith('\\frac') or \
-               token.startswith('\\begin') or token.startswith('\\end'):
+            if token in ['^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
+                        '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
+                        '\\mathfrak', '\\mathnormal'] or \
+               token.startswith('\\frac'):
                 continue
 
             # Get glyph info

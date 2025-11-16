@@ -107,7 +107,7 @@ class DatasetGenerator:
 
             if bbox_data:
                 results.append(bbox_data)
-                print(f"  ✓ Generated {len(bbox_data['bboxes'])} bounding boxes")
+                # print(f"  ✓ Generated {len(bbox_data['bboxes'])} bounding boxes")
             else:
                 results.append(None)
                 self.stats["failed_bbox"] += 1
@@ -144,14 +144,12 @@ class DatasetGenerator:
                 skip_missing=True
             )
 
-            if stroke_set:
+            if stroke_set and metadata['symbols_skipped']==0:
                 results.append(stroke_set)
-                print(f"  ✓ Placed {metadata['symbols_placed']} symbols "
-                      f"(skipped {metadata['symbols_skipped']})")
             else:
                 results.append(None)
                 self.stats["failed_synthesis"] += 1
-                print(f"  ✗ Failed to synthesize")
+                print(f"  ✗ Failed to synthesize (unknown symbols {metadata['missing_symbols']})")
 
         return results
 
@@ -182,7 +180,7 @@ class DatasetGenerator:
 
             # Generate filename
             safe_expr = expression.replace('\\', '').replace('{', '').replace('}', '')
-            safe_expr = safe_expr.replace('/', '_').replace(' ', '_')
+            safe_expr = safe_expr.replace('/', '_').replace(' ', '_').replace('.', '_')
             if len(safe_expr) > 40:
                 safe_expr = safe_expr[:40]
 

@@ -378,10 +378,8 @@ class LogConstruct(Construct):
         if self.l_sup:
             regions.append(('L-sup', self.l_sup))
         elif self.sub:
-            regions.append(('sub', self.sup))
+            regions.append(('sub', self.sub))
 
-        if self.sup:
-            regions.append(('sup', self.sup))
         return regions
 
 

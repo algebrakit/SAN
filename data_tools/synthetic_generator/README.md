@@ -29,21 +29,15 @@ synthetic/
 
 Generate a complete dataset with one command:
 
-```bash
-cd /Users/martijnslob/github/SAN/data_tools/dataset_prep/synthetic
+1. create symbols index
+   `python3 scripts/index_symbols.py --symbols-dir symbols --output output/symbol_index.json`
 
-# Generate InkML files and labels from LaTeX expressions
-python3 scripts/generate_dataset.py \
-  --input latex.txt \
-  --output-dir output/dataset \
-  --seed 42
+2. create dataset
+   `python3 scripts/generate_dataset.py --input latex.txt --output-dir output/dataset`
 
 # Output:
 #   output/dataset/inkml/        - InkML files
 #   output/dataset/labels.txt    - InkML-LaTeX mappings
-```
-
-**That's it!** No intermediate steps needed.
 
 ---
 

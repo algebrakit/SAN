@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import sys
 sys.path.append('..')
-from san_model.decoder.attention import Attention
+from model.san_model.decoder.attention import Attention
 from utils.Expression.defs import ABOVE_BELOW_COMMANDS, ACCENT_COMMANDS_ABOVE, ACCENT_COMMANDS_BELOW
 from utils.Expression.utils import get_allowed_relations
 

@@ -77,197 +77,6 @@
 \begin{cases}q^{4}=16\\u_{1}=\frac{10}{q}\end{cases} 
 \begin{cases}q=2\ of\ q=-2\\u_{1}=\frac{10}{q}\end{cases} 
 \begin{cases}q=2\ of\ q=-2\\u_{1}=5\ of\ u_{1}=-5\end{cases} 
-\begin{cases}x+y=3\\x-y=4\end{cases}
-\begin{cases}x=-7\\y=8\end{cases}
-\begin{cases}y-x=12\\6x=4y\end{cases}
-\begin{cases}4y-4x=48\\6x=4y\end{cases}
-\begin{cases}4y-4x+6x=48+4y\\6x=4y\end{cases}
-\begin{cases}4y+2x=48+4y\\6x=4y\end{cases}
-\begin{cases}2x=48\\6x=4y\end{cases}
-\begin{cases}x+y=-5\\x-y=-18\end{cases}\begin{cases}x=-23\\y=18\end{cases}
-\begin{cases}x+y=-5\\x-y=-18\end{cases}\begin{cases}x=-\frac{23}{2}\\y=\frac{13}{2}\end{cases}
-\begin{cases}x=-\frac{31}{2}\\y=\frac{17}{2}\end{cases}
-\begin{cases}15x^{2+75x+120y=-540}\\9x^{2}\end{cases}
-\begin{cases}3x-5y=18\\2x-3y-12=0\end{cases}
-\begin{cases}-x+7y-35=0\\4x-9y+27=0\end{cases}
-\begin{cases}-4x+28y-140=0\\4x-9y+27=0\end{cases}
-\begin{cases}-7x+y=13\\-4x+2y=6\end{cases}
-\begin{cases}14x-2y=-26\\-4x+2y=6\end{cases}
-\begin{cases}x=-3\\y=-2\end{cases}
-\begin{cases}3x+3y=33\\3x^{2}+3y^{2}=219\end{cases}
-\begin{cases}3\times4+3\times7=33\\3\times4^{2}+3\times7^{2}=219\end{cases}
-\begin{cases}3x+3y=33\\3x^{2}+3y^{2}=219\end{cases}
-\begin{cases}\frac{20}{x}+\frac{20}{y}=1\\x-y=3\end{cases}
-\begin{cases}\frac{20}{x}+\frac{20}{y}=1\\x=y+3\end{cases}
-\begin{cases}\frac{8}{y}+\frac{8}{x}=1\\y=x-14\end{cases}
-\begin{cases}y=-6+5x\\-3x+4y-22=0\end{cases}
-\begin{cases}y-5x=-6\\-3x+4y=22\end{cases}
-\begin{cases}y=-6=5x\\-3x=22-4y\end{cases}
-\begin{cases}4x-3y=-6\\12x-9y+18=0\end{cases}
-\begin{cases}12x-9y=-18\\12x-9y+18=0\end{cases}
-\begin{cases}-18=-18\\12x-9y+18=0\end{cases}
-\begin{cases}12x-9y=-18\\12x-9y+18=0\end{cases}
-\begin{cases}waar\\12x-9y+18=0\end{cases}
-\begin{cases}x=2\\y=7\end{cases}
-\begin{cases}y=-32+9x\\4y+15=8x\end{cases}
-\begin{cases}32-9x=-y\\4y+15=8x\end{cases}
-\begin{cases}32-9x+y=0\\4y+15-8x=0\end{cases}
-\begin{cases}-96+27-4y=0\\4y+15-8y=0\end{cases}
-\begin{cases}-96+27-4y=0\\4y+15-8y=0\end{cases}
-\begin{cases}-9x+y+32=0\\-8x+4y+15=0\end{cases}
-\begin{cases}-27x-4y-96=0\\-8x+4y+15=0\end{cases}
-\begin{cases}-27x+4y+96=0\\-8x+4y+15=0\end{cases}
-\begin{cases}-u+3=-5+u\\v-8=-v+4\end{cases}
-\begin{cases}-2u=-8\\v-8=-v+4\end{cases}
-\begin{cases}-2u=-8\\2v=12\end{cases}
-\begin{cases}d=\frac{142}{16}\\a_{1}=-\frac{1275}{16}\end{cases}
-\begin{cases}3a+3b=42\\3a^{2}+3b^{2}=390\end{cases}
-\begin{cases}x\ge0\\x+4\ge0\end{cases}
-\begin{cases}x\le0\\x+4\le0\end{cases}
-\begin{cases}x\ge0\\x\ge-4\end{cases}
-\begin{cases}x\le0\\x\le-4\end{cases}
-\begin{cases}xy=108\\2x+2y=42\end{cases}\begin{cases}xy=108\\2x=42-2y\end{cases}\begin{cases}xy=108\\x=21-y\end{cases}
-\begin{cases}2x+2y=24\\2x^{2}+2y^{2}=152\end{cases}
-\begin{cases}x=12-y\\2x^{2}+2y^{2}=152\end{cases}
-\begin{cases}y=8\\x=12-y=4\end{cases}
-\begin{cases}y=4\\x=12-y=8\end{cases}
-\begin{cases}x=7-y\\\frac{120}{7-y}+\frac{55}{y}=2\end{cases}
-\begin{cases}20x-45=0\\x-5\ne0\end{cases}
-\begin{cases}-24x+4y=-35\\4x-4y=16\end{cases}
-\begin{cases}x=2\\y=-4\end{cases}
-\begin{cases}x=12+12y\\-6x-42y=-198\end{cases}
-\begin{cases}4x=-18+y\\x\cdot y+8y=30\end{cases}
-\begin{cases}x+y=320\\1,50x+1,80y=518\end{cases}
-\begin{cases}1,50x+1,50y=480\\1,50x+1,80y=518\end{cases}
-\begin{cases}y-22=-10x\\-x=y-x^{2}\end{cases}
-\begin{cases}\sqrt[6]{729}a+d=15\\\sqrt[6]{64}a+d=6\end{cases}
-\begin{cases}3a+d=15\\2a+d=6\end{cases}
-\begin{cases}a=9\\2a+d=6\end{cases}
-\begin{cases}a=9\\d=-12\end{cases}
-\begin{cases}-14x+3y=20\\-6x+3y=24\end{cases}
-\begin{cases}-14x+3y=40\\-6x+3y=24\end{cases}
-\begin{cases}6y+30=-9x\\-20+8x=-10y\end{cases}
-\begin{cases}u_{6}=u_{1}\cdot q^{5}\\u_{4}=u_{1}\cdot q^{3}\end{cases}
-\begin{cases}u_{1}^{2}q^{8}=2500\\u_{1}=\frac{15}{q}\end{cases}
-\begin{cases}\left(\frac{15}{q}\right)^{2}q^{8}=2500\\u_{1}=\frac{15}{q}\end{cases}
-\begin{cases}\frac{225}{q^{2}}\cdot q^{8}=2500\\u_{1}=\frac{15}{q}\end{cases}
-\begin{cases}q^{6}=\frac{100}{9}\\u_{1}=\frac{15}{q}\end{cases}
-\begin{cases}q=\frac{10}{3}\ of\ q=-\frac{10}{3}\\u_{1}=\frac{15}{q}\end{cases}
-\begin{cases}q=\frac{10}{3}\ of\ q=-\frac{10}{3}\\u_{1}=\frac{9}{2}\ of\ u_{1}=-\frac{9}{2}\end{cases}
-\begin{cases}2x+3y=15\\x-2y=-8\end{cases}
-\begin{cases}x=-5\\y=6\end{cases}
-\begin{cases}y-2x=18\\7x=3y\end{cases}
-\begin{cases}3y-6x=54\\7x=3y\end{cases}
-\begin{cases}3y-6x+7x=54+3y\\7x=3y\end{cases}
-\begin{cases}3y+x=54+3y\\7x=3y\end{cases}
-\begin{cases}x=54\\7x=3y\end{cases}
-\begin{cases}x+y=-7\\x-y=-24\end{cases}\begin{cases}x=-31\\y=24\end{cases}
-\begin{cases}x+y=-7\\x-y=-24\end{cases}\begin{cases}x=-\frac{31}{2}\\y=\frac{17}{2}\end{cases}
-\begin{cases}x=-\frac{41}{2}\\y=\frac{23}{2}\end{cases}
-\begin{cases}17x^{2+85x+136y=-612}\\10x^{2}\end{cases}
-\begin{cases}5x-8y=25\\3x-5y-18=0\end{cases}
-\begin{cases}-2x+9y-45=0\\5x-10y+40=0\end{cases}
-\begin{cases}-10x+45y-225=0\\5x-10y+40=0\end{cases}
-\begin{cases}-9x+2y=16\\-5x+3y=9\end{cases}
-\begin{cases}18x-4y=-32\\-5x+3y=9\end{cases}
-\begin{cases}x=-4\\y=-3\end{cases}
-\begin{cases}4x+4y=44\\4x^{2}+4y^{2}=292\end{cases}
-\begin{cases}4\times5+4\times6=44\\4\times5^{2}+4\times6^{2}=292\end{cases}
-\begin{cases}4x+4y=44\\4x^{2}+4y^{2}=292\end{cases}
-\begin{cases}\frac{24}{x}+\frac{24}{y}=1\\x-y=4\end{cases}
-\begin{cases}\frac{24}{x}+\frac{24}{y}=1\\x=y+4\end{cases}
-\begin{cases}\frac{10}{y}+\frac{10}{x}=1\\y=x-12\end{cases}
-\begin{cases}y=-8+6x\\-4x+5y-28=0\end{cases}
-\begin{cases}y-6x=-8\\-4x+5y=28\end{cases}
-\begin{cases}y=-8=6x\\-4x=28-5y\end{cases}
-\begin{cases}5x-4y=-8\\15x-12y+24=0\end{cases}
-\begin{cases}15x-12y=-24\\15x-12y+24=0\end{cases}
-\begin{cases}-24=-24\\15x-12y+24=0\end{cases}
-\begin{cases}15x-12y=-24\\15x-12y+24=0\end{cases}
-\begin{cases}waar\\15x-12y+24=0\end{cases}
-\begin{cases}x=3\\y=8\end{cases}
-\begin{cases}y=-36+10x\\5y+18=9x\end{cases}
-\begin{cases}36-10x=-y\\5y+18=9x\end{cases}
-\begin{cases}36-10x+y=0\\5y+18-9x=0\end{cases}
-\begin{cases}-108+30-5y=0\\5y+18-9y=0\end{cases}
-\begin{cases}-108+30-5y=0\\5y+18-9y=0\end{cases}
-\begin{cases}-10x+y+36=0\\-9x+5y+18=0\end{cases}
-\begin{cases}-30x-5y-108=0\\-9x+5y+18=0\end{cases}
-\begin{cases}-30x+5y+108=0\\-9x+5y+18=0\end{cases}
-\begin{cases}-w+4=-6+w\\z-9=-z+5\end{cases}
-\begin{cases}-2w=-10\\z-9=-z+5\end{cases}
-\begin{cases}-2w=-10\\2z=14\end{cases}
-\begin{cases}d=\frac{153}{17}\\a_{1}=-\frac{1386}{17}\end{cases}
-\begin{cases}4a+4b=56\\4a^{2}+4b^{2}=520\end{cases}
-\begin{cases}x\ge0\\x+5\ge0\end{cases}
-\begin{cases}x\le0\\x+5\le0\end{cases}
-\begin{cases}x\ge0\\x\ge-5\end{cases}
-\begin{cases}x\le0\\x\le-5\end{cases}
-\begin{cases}xy=120\\2x+2y=44\end{cases}\begin{cases}xy=120\\2x=44-2y\end{cases}\begin{cases}xy=120\\x=22-y\end{cases}
-\begin{cases}3x+3y=30\\3x^{2}+3y^{2}=180\end{cases}
-\begin{cases}x=10-y\\3x^{2}+3y^{2}=180\end{cases}
-\begin{cases}y=6\\x=10-y=4\end{cases}
-\begin{cases}y=4\\x=10-y=6\end{cases}
-\begin{cases}x=8-y\\\frac{132}{8-y}+\frac{60}{y}=2\end{cases}
-\begin{cases}22x-50=0\\x-6\ne0\end{cases}
-\begin{cases}-27x+5y=-40\\5x-5y=20\end{cases}
-\begin{cases}x=3\\y=-5\end{cases}
-\begin{cases}x=14+14y\\-7x-48y=-232\end{cases}
-\begin{cases}5x=-21+y\\x\cdot y+9y=36\end{cases}
-\begin{cases}x+y=350\\1,60x+1,90y=598\end{cases}
-\begin{cases}1,60x+1,60y=560\\1,60x+1,90y=598\end{cases}
-\begin{cases}y-24=-11x\\-x=y-x^{2}\end{cases}
-\begin{cases}\sqrt[7]{2187}a+d=18\\\sqrt[7]{128}a+d=8\end{cases}
-\begin{cases}3a+d=18\\2a+d=8\end{cases}
-\begin{cases}a=10\\2a+d=8\end{cases}
-\begin{cases}a=10\\d=-12\end{cases}
-\begin{cases}-16x+4y=23\\-7x+4y=28\end{cases}
-\begin{cases}-16x+4y=46\\-7x+4y=28\end{cases}
-\begin{cases}7y+33=-10x\\-22+9x=-11y\end{cases}
-\begin{cases}u_{7}=u_{1}\cdot q^{6}\\u_{5}=u_{1}\cdot q^{4}\end{cases}
-\begin{cases}u_{1}^{2}q^{10}=3600\\u_{1}=\frac{18}{q}\end{cases}
-\begin{cases}\left(\frac{18}{q}\right)^{2}q^{10}=3600\\u_{1}=\frac{18}{q}\end{cases}
-\begin{cases}\frac{324}{q^{2}}\cdot q^{10}=3600\\u_{1}=\frac{18}{q}\end{cases}
-\begin{cases}q^{8}=\frac{100}{9}\\u_{1}=\frac{18}{q}\end{cases}
-\begin{cases}q=\sqrt{\frac{10}{3}}\ of\ q=-\sqrt{\frac{10}{3}}\\u_{1}=\frac{18}{q}\end{cases}
-\begin{cases}q=\sqrt{\frac{10}{3}}\ of\ q=-\sqrt{\frac{10}{3}}\\u_{1}=\frac{18\sqrt{3}}{\sqrt{10}}\ of\ u_{1}=-\frac{18\sqrt{3}}{\sqrt{10}}\end{cases}
-\begin{cases}3x+4y=20\\2x-3y=-14\end{cases}
-\begin{cases}x=-6\\y=7\end{cases}
-\begin{cases}y-3x=21\\8x=4y\end{cases}
-\begin{cases}4y-12x=84\\8x=4y\end{cases}
-\begin{cases}4y-12x+8x=84+4y\\8x=4y\end{cases}
-\begin{cases}4y-4x=84+4y\\8x=4y\end{cases}
-\begin{cases}-4x=84\\8x=4y\end{cases}
-\begin{cases}x+y=-9\\x-y=-28\end{cases}\begin{cases}x=-37\\y=28\end{cases}
-\begin{cases}x+y=-9\\x-y=-28\end{cases}\begin{cases}x=-\frac{37}{2}\\y=\frac{19}{2}\end{cases}
-\begin{cases}x=-\frac{47}{2}\\y=\frac{25}{2}\end{cases}
-\begin{cases}19x^{2+95x+152y=-684}\\11x^{2}\end{cases}
-\begin{cases}6x-9y=30\\4x-6y-24=0\end{cases}
-\begin{cases}-3x+10y-50=0\\6x-11y+44=0\end{cases}
-\begin{cases}-18x+60y-300=0\\6x-11y+44=0\end{cases}
-\begin{cases}-10x+3y=18\\-6x+4y=12\end{cases}
-\begin{cases}20x-6y=-36\\-6x+4y=12\end{cases}
-\begin{cases}x=-5\\y=-4\end{cases}
-\begin{cases}5x+5y=55\\5x^{2}+5y^{2}=365\end{cases}
-\begin{cases}5\times6+5\times5=55\\5\times6^{2}+5\times5^{2}=365\end{cases}
-\begin{cases}5x+5y=55\\5x^{2}+5y^{2}=365\end{cases}
-\begin{cases}\frac{28}{x}+\frac{28}{y}=1\\x-y=5\end{cases}
-\begin{cases}\frac{28}{x}+\frac{28}{y}=1\\x=y+5\end{cases}
-\begin{cases}\frac{12}{y}+\frac{12}{x}=1\\y=x-10\end{cases}
-\begin{cases}y=-10+7x\\-5x+6y-34=0\end{cases}
-\begin{cases}y-7x=-10\\-5x+6y=34\end{cases}
-\begin{cases}y=-10=7x\\-5x=34-6y\end{cases}
-\begin{cases}6x-5y=-10\\18x-15y+30=0\end{cases}
-\begin{cases}18x-15y=-30\\18x-15y+30=0\end{cases}
-\begin{cases}-30=-30\\18x-15y+30=0\end{cases}
-\begin{cases}18x-15y=-30\\18x-15y+30=0\end{cases}
-\begin{cases}waar\\18x-15y+30=0\end{cases}
-\begin{cases}x=4\\y=9\end{cases}
-\begin{cases}y=-40+11x\\6y+20=10x\end{cases}
-\begin{cases}40-11x=-y\\6y+20=10x\end{cases}
-\begin{cases}40-11x+y=0\\6y+20-10x=0\end{cases}
-\begin{cases}-120+33-6y=0\\6y+20-10y=0\end{cases}
-\begin{cases}-120+33-6y=0\\6y+20-10y=0\end{cases}
 
 ## euro
 ## -------
@@ -496,6 +305,234 @@ p^{2}=-\sqrt{10}\vee p^{2}=\sqrt{10}
 n=4\vee n=7\vee n=9
 x=0\ \vee x=1
 u_{7}=320\vee u_{7}=-320
+x=-\frac{31}{4}\vee\ x=-7
+x=-\frac{31}{4}\vee x=-7\vee y=-7\vee y=6
+\left\{x=4,\ y=-4\right\}\vee\left\{x=-4,\ y=1\right\}
+\left\{x=5,\ y=-5\right\}\vee\left\{x=-5,\ y=2\right\}
+x=32\vee x=-32
+\frac{2\pi}{365}\left(x-82\right)=\arcsin\left(-\frac{6}{20}\right)\ +k\cdot2\pi\ \vee\frac{2\pi}{365}\left(x-82\right)
+\vee\left(x-82\right) =\left(\pi-\arcsin\left(-\frac{6}{20}\right)\right)\cdot\frac{365}{2\pi}+k\cdot365
+\vee x=\left(\pi-\arcsin\left(-\frac{6}{20}\right)\right)\cdot\frac{365}{2\pi}+82+k\cdot365
+\vee x=\left(\pi+\arcsin\left(\frac{6}{20}\right)\right)\cdot\frac{365}{2\pi}+82+k\cdot365
+x=68\ \vee x=281
+p=-5\vee p=4
+t=3\vee t=-3
+x=\frac{-102-\sqrt{11000}}{2\times12}\vee x=\frac{-102+\sqrt{11000}}{2\times12}
+x=-10\vee x=2
+x=-10\vee x=\frac{1}{12}
+x=\frac{1}{14}\vee x=-9
+x=0\ \vee\sqrt{4-x}=0
+x=0\ \vee4-x=0
+x=0\ \vee x=4
+\neg B\wedge\neg\left(C\vee D\right)
+x=0\ \vee x=\frac{4}{8}
+x=-6\vee x=2
+\left\{x=-18,y=-4\right\}\vee\left\{x=4,y=-18\right\}
+\left\{x=-18,y=-4\right\}\vee\left\{x=4,y=18\right\}
+\neg B\wedge\neg\left(C\vee D\right)
+x=3\vee x=\frac{1}{3}
+y=\frac{13+\sqrt{36}}{2}\vee y=\frac{13-\sqrt{36}}{2}
+y=9.5\vee y=3.5
+\left\{x=4,y=9\right\}\vee\left\{x=9,y=4\right\}
+x=4\vee y=9
+n=3x\ \vee\ e=3\left(x+20\right)
+a=14\vee a=-14
+x=\frac{\sqrt{24}}{1}\vee x=0.
+x=\frac{\sqrt{24}m}{1}\vee x=0.
+x=\frac{23}{5}\vee-\frac{35}{5}
+x=\frac{-4+6}{-2}\vee x=\frac{-4-6}{-2}
+x=\frac{4-6}{2}\vee x=\frac{4+6}{2}
+x=\frac{-2}{2}\vee x=\frac{10}{2}
+x=-1\vee x=5
+x=\frac{-22+\sqrt{121}}{2}\vee x=\frac{-22-\sqrt{121}}{2}
+x=-16.5\vee x=-5.5
+\neg C\wedge\neg\left(D\vee E\right)
+x=0\vee x=10
+t=16\ \vee\ t=-16
+x=\frac{15}{2}\vee x=\frac{13}{2}
+x=7.5\vee x=6.5
+x=\frac{2+14}{2}\vee x=\frac{2-14}{2}
+x=8\vee x=-6
+3x=0\vee x-5=0
+x=0\ \vee x=5
+t=9\vee t=-9
+a=5\vee a=-5
+x=\left(-\frac{3}{7}\right)\vee x=6
+-12\vee4
+x=\frac{1}{6}\vee x=3
+p=-\sqrt{8}\vee\sqrt{8}
+x=\sqrt{25}\vee x=9
+x\le-4\ \vee5<x\le7
+x=\arcsin\left(-0.3\right)+k\cdot2\pi\ \vee x=\pi-\arcsin\left(-0.3\right)+k\cdot2\pi
+x=-0.305+2\pi k\ \vee x=3.447+\ 2\pi k
+x=6.286+2\pi k\ \vee x=3.447+\ 2\pi k
+x=2\vee x=-5
+x=2\vee x=-5\vee x=-3
+x=2\vee x=-3\vee x=-5
+x=-5\ \vee x=11
+x=3\vee x=9
+\ x=-5\ \vee\ x=\frac{1}{4}
+x\ =\ 0\ \vee x\ =\ 4\ \vee x=-4
+t=\frac{1}{3}\pi\vee t=\frac{5}{3}\pi
+x=4\ \vee x=-2
+x=0\ \vee\ x=-0,18
+x=-\sqrt{\frac{115}{6}}\ \vee x=\sqrt{\frac{115}{6}}
+\neg D\wedge\neg\left(E\vee F\right)
+t=-4\vee t=-3
+x=3\pi k\vee x=\frac{\pi k}{10}
+x=3\pi k\vee10x=\pi k
+6x+\frac{1}{3}\pi=5x+\frac{1}{3}\pi+2\pi k\vee x=\frac{\pi k}{10}
+6x+\frac{1}{3}\pi=5x+\frac{1}{3}\pi+2\pi k\vee6x+\frac{1}{3}\pi=-\left(5x+\frac{1}{3}\pi\right)+2\pi k
+6x+\frac{1}{3}\pi=5x+\frac{1}{3}\pi+2\pi k\vee6x+\frac{1}{3}\pi=-5x-\frac{1}{3}\pi+2\pi k
+6x+\frac{1}{3}\pi=5x+\frac{1}{3}\pi+2\pi k\vee x=-\frac{1}{11}\pi+\frac{2}{11}\pi k
+x=3\pi k\vee x=-\frac{1}{11}\pi+\frac{2}{11}\pi k
+x=3\pi k\vee x=-\frac{\pi}{11}+\frac{2}{11}\pi k
+x=3\pi k\vee x=-\frac{\pi}{11}+\frac{2\pi k}{11}
+x=3\pi k\vee11x=-\pi+2\pi k
+t=-8\vee t=10
+x^{2}=-8\vee x^{2}=10
+x=-\sqrt{10}\vee x=\sqrt{10}
+\left\{x=-\sqrt{10},y=17,25\right\}\vee\left\{x=\sqrt{10},y=17,25\right\}
+\left(-\infty,-\frac{7}{8}\right)\ \vee\ \left(0,\infty\right)
+\alpha=-\frac{1}{4}\pi+k\cdot2\pi\ \vee\alpha=-\frac{3}{4}\pi+k\cdot2\pi
+\alpha=\frac{7}{4}\pi+k\cdot2\pi\ \vee\alpha=\frac{5}{4}\pi+k\cdot2\pi
+\left\{x=-12,y=132\right\}\ \vee\left(\left\{x=3,y=3\right\}\right)
+x=0\vee x=-\frac{4}{8}
+z=2\ \vee\ z=-5i\ \vee\ z=3i
+z=2i\ \vee z=3i\ \vee z=-5i
+x\approx1,73\vee-1,73
+x=0\ \vee x=5
+x=\frac{1}{4}\vee x=4
+x=\sqrt{9}\vee x=-\sqrt{9}
+k=22\vee k=-22
+\left(x^{2}-3\right)^{2}-6\ =\ 2\ \vee\left(x^{2}-3\right)^{2}-6\ =\ -2
+\left(x^{2}-3\right)^{2}=\ 8\ \vee\left(x^{2}-3\right)^{2}\ =\ 4
+x^{2}-3=\ \sqrt{8}\ \vee x^{2}-3\ =\ -\sqrt{8}\vee x^{2}-3\ =\ 2\ \vee x^{2}-3\ =-2
+x^{2}=\ \sqrt{8}\ +3\vee x^{2}\ =\ -\sqrt{8}+3\vee x^{2}\ =\ 5\ \vee x^{2}\ =1
+x=\ \sqrt{\sqrt{8}+3}\ \vee x=\ -\sqrt{\sqrt{8}+3}\vee x\ =\ \sqrt{5}\ \vee x\ =-\sqrt{5}\ \vee x\ =1\ \vee x=-1
+x=0.321+\pi\cdot n\ \vee x=1.432+n\cdot\pi
+x=0.321+m\cdot n\ \vee x=1.432+m\cdot\pi
+x=0.321+m\cdot\pi\ \vee x=1.432+m\cdot\pi
+x=-5\ \vee x\ =\ 5
+x\le\ -5\ \vee x\ \ge\ 5
+p^{2}=-\sqrt{12}\vee p^{2}=\sqrt{12}
+n=5\vee n=8\vee n=10
+x=0\ \vee x=2
+u_{8}=384\vee u_{8}=-384
+x=-\frac{37}{5}\vee\ x=-8
+x=-\frac{37}{5}\vee x=-8\vee y=-8\vee y=7
+\left\{x=6,\ y=-6\right\}\vee\left\{x=-6,\ y=3\right\}
+\left\{x=7,\ y=-7\right\}\vee\left\{x=-7,\ y=4\right\}
+x=36\vee x=-36
+\frac{2\pi}{365}\left(x-87\right)=\arcsin\left(-\frac{7}{21}\right)\ +k\cdot2\pi\ \vee\frac{2\pi}{365}\left(x-87\right)
+\vee\left(x-87\right) =\left(\pi-\arcsin\left(-\frac{7}{21}\right)\right)\cdot\frac{365}{2\pi}+k\cdot365
+\vee x=\left(\pi-\arcsin\left(-\frac{7}{21}\right)\right)\cdot\frac{365}{2\pi}+87+k\cdot365
+\vee x=\left(\pi+\arcsin\left(\frac{7}{21}\right)\right)\cdot\frac{365}{2\pi}+87+k\cdot365
+x=73\ \vee x=288
+p=-6\vee p=5
+t=4\vee t=-4
+x=\frac{-106-\sqrt{12100}}{2\times13}\vee x=\frac{-106+\sqrt{12100}}{2\times13}
+x=-11\vee x=3
+x=-11\vee x=\frac{1}{13}
+x=\frac{1}{15}\vee x=-10
+x=0\ \vee\sqrt{5-x}=0
+x=0\ \vee5-x=0
+x=0\ \vee x=5
+\neg E\wedge\neg\left(F\vee G\right)
+x=0\ \vee x=\frac{5}{9}
+x=-7\vee x=3
+\left\{x=-21,y=-5\right\}\vee\left\{x=5,y=-21\right\}
+\left\{x=-21,y=-5\right\}\vee\left\{x=5,y=21\right\}
+\neg F\wedge\neg\left(G\vee H\right)
+x=4\vee x=\frac{1}{4}
+y=\frac{15+\sqrt{49}}{2}\vee y=\frac{15-\sqrt{49}}{2}
+y=11\vee y=4
+\left\{x=5,y=10\right\}\vee\left\{x=10,y=5\right\}
+x=5\vee y=10
+n=4x\ \vee\ e=4\left(x+22\right)
+a=16\vee a=-16
+x=\frac{\sqrt{28}}{1}\vee x=0.
+x=\frac{\sqrt{28}m}{1}\vee x=0.
+x=\frac{25}{6}\vee-\frac{37}{6}
+x=\frac{-5+7}{-2}\vee x=\frac{-5-7}{-2}
+x=\frac{5-7}{2}\vee x=\frac{5+7}{2}
+x=\frac{-2}{2}\vee x=\frac{12}{2}
+x=-1\vee x=6
+x=\frac{-24+\sqrt{144}}{2}\vee x=\frac{-24-\sqrt{144}}{2}
+x=-18\vee x=-6
+\neg G\wedge\neg\left(H\vee I\right)
+x=0\vee x=11
+t=17\ \vee\ t=-17
+x=\frac{16}{2}\vee x=\frac{14}{2}
+x=8\vee x=7
+x=\frac{3+15}{2}\vee x=\frac{3-15}{2}
+x=9\vee x=-6
+4x=0\vee x-6=0
+x=0\ \vee x=6
+t=10\vee t=-10
+a=6\vee a=-6
+x=\left(-\frac{4}{8}\right)\vee x=7
+-13\vee5
+x=\frac{1}{7}\vee x=4
+p=-\sqrt{9}\vee\sqrt{9}
+x=\sqrt{36}\vee x=10
+x\le-5\ \vee6<x\le8
+x=\arcsin\left(-0.4\right)+k\cdot2\pi\ \vee x=\pi-\arcsin\left(-0.4\right)+k\cdot2\pi
+x=-0.412+2\pi k\ \vee x=3.554+\ 2\pi k
+x=6.393+2\pi k\ \vee x=3.554+\ 2\pi k
+x=3\vee x=-6
+x=3\vee x=-6\vee x=-4
+x=3\vee x=-4\vee x=-6
+x=-6\ \vee x=12
+x=4\vee x=10
+\ x=-6\ \vee\ x=\frac{1}{5}
+x\ =\ 0\ \vee x\ =\ 5\ \vee x=-5
+t=\frac{1}{4}\pi\vee t=\frac{3}{4}\pi
+x=5\ \vee x=-3
+x=0\ \vee\ x=-0,21
+x=-\sqrt{\frac{121}{7}}\ \vee x=\sqrt{\frac{121}{7}}
+\neg H\wedge\neg\left(I\vee J\right)
+t=-5\vee t=-4
+x=4\pi k\vee x=\frac{\pi k}{11}
+x=4\pi k\vee11x=\pi k
+7x+\frac{1}{4}\pi=6x+\frac{1}{4}\pi+2\pi k\vee x=\frac{\pi k}{11}
+7x+\frac{1}{4}\pi=6x+\frac{1}{4}\pi+2\pi k\vee7x+\frac{1}{4}\pi=-\left(6x+\frac{1}{4}\pi\right)+2\pi k
+7x+\frac{1}{4}\pi=6x+\frac{1}{4}\pi+2\pi k\vee7x+\frac{1}{4}\pi=-6x-\frac{1}{4}\pi+2\pi k
+7x+\frac{1}{4}\pi=6x+\frac{1}{4}\pi+2\pi k\vee x=-\frac{1}{13}\pi+\frac{2}{13}\pi k
+x=4\pi k\vee x=-\frac{1}{13}\pi+\frac{2}{13}\pi k
+x=4\pi k\vee x=-\frac{\pi}{13}+\frac{2}{13}\pi k
+x=4\pi k\vee x=-\frac{\pi}{13}+\frac{2\pi k}{13}
+x=4\pi k\vee13x=-\pi+2\pi k
+t=-9\vee t=11
+x^{2}=-9\vee x^{2}=11
+x=-\sqrt{11}\vee x=\sqrt{11}
+\left\{x=-\sqrt{11},y=19,75\right\}\vee\left\{x=\sqrt{11},y=19,75\right\}
+\left(-\infty,-\frac{9}{10}\right)\ \vee\ \left(0,\infty\right)
+\alpha=-\frac{1}{5}\pi+k\cdot2\pi\ \vee\alpha=-\frac{4}{5}\pi+k\cdot2\pi
+\alpha=\frac{9}{5}\pi+k\cdot2\pi\ \vee\alpha=\frac{6}{5}\pi+k\cdot2\pi
+\left\{x=-14,y=154\right\}\ \vee\left(\left\{x=4,y=4\right\}\right)
+x=0\vee x=-\frac{5}{9}
+z=3\ \vee\ z=-6i\ \vee\ z=4i
+z=3i\ \vee z=4i\ \vee z=-6i
+x\approx2,00\vee-2,00
+x=0\ \vee x=6
+x=\frac{1}{5}\vee x=5
+x=\sqrt{16}\vee x=-\sqrt{16}
+k=24\vee k=-24
+\left(x^{2}-4\right)^{2}-7\ =\ 3\ \vee\left(x^{2}-4\right)^{2}-7\ =\ -3
+\left(x^{2}-4\right)^{2}=\ 10\ \vee\left(x^{2}-4\right)^{2}\ =\ 4
+x^{2}-4=\ \sqrt{10}\ \vee x^{2}-4\ =\ -\sqrt{10}\vee x^{2}-4\ =\ 2\ \vee x^{2}-4\ =-2
+x^{2}=\ \sqrt{10}\ +4\vee x^{2}\ =\ -\sqrt{10}+4\vee x^{2}\ =\ 6\ \vee x^{2}\ =2
+x=\ \sqrt{\sqrt{10}+4}\ \vee x=\ -\sqrt{\sqrt{10}+4}\vee x\ =\ \sqrt{6}\ \vee x\ =-\sqrt{6}\ \vee x\ =\sqrt{2}\ \vee x=-\sqrt{2}
+x=0.432+\pi\cdot n\ \vee x=1.543+n\cdot\pi
+x=0.432+m\cdot n\ \vee x=1.543+m\cdot\pi
+x=0.432+m\cdot\pi\ \vee x=1.543+m\cdot\pi
+x=-6\ \vee x\ =\ 6
+x\le\ -6\ \vee x\ \ge\ 6
+p^{2}=-\sqrt{14}\vee p^{2}=\sqrt{14}
+n=6\vee n=9\vee n=11
+x=0\ \vee x=3
+u_{9}=448\vee u_{9}=-448
 
 ## of
 ## -------
@@ -579,6 +616,450 @@ m=120\ or\ m=-120
 m=120\ or\ m=240
 m=120\degree\ or\ m=240\degree
 x=6\ or\ x=1
+s=\sqrt{5}\ of\ s=-\sqrt{5}
+s=3\ of\ s=-3
+a=12\ of\ a=-3
+x\ =\ 4\ of\ x\ =\ -5
+x\ =\ -3\ of\ x\ =\ 4
+x=-7\ of\ x=-3
+x=8\ of\ x=3
+x-7=\sqrt{24}\ of\ x-7=-\sqrt{24}
+x=\sqrt{24}+7\ of\ x=-\sqrt{24}+7
+x=4\ of\ x=-\frac{5}{2}\ of\ x=\frac{2,14}{2}
+x-2,25=3,75\ of\ x-2,25=-3,75
+x=6\ of\ x=-1,5
+x=\ 0\ of\ x^{2}\ -5x\ +4\ =\ 0
+x=\ 0\ of\ \left(x-4\right)\left(x-1\right)\ =0
+x=\ 0\ of\ x=4\ of\ x\ =1
+x=-8\ or\ x=8
+x=3\ or\ x=0
+x=\sqrt{3}\ or\ x=-\sqrt{3}
+x=-3\ or\ x=-11
+x= \ \frac{\frac{5}{2}+\sqrt{\frac{9}{4}}}{2}\ or\ x=\frac{\frac{5}{2}-\sqrt{\frac{9}{4}}}{2}
+x=2\ or\ x=\frac{1}{4}
+x=3\ or\ x\ =-\frac{1}{4}
+x=0\ or\ x=-\sqrt{15}\ or\ x=\sqrt{15}
+x\ =\ 0.4231\ +\ 2\ \pi\ k\ or\ x\ =\ 2.8501\ +\ 2\ \pi\ k
+x\ =\ 0.4231\ arba\ x\ =\ 6.7063\ arba\ x\ =\ 2.8501\ arba\ x\ =\ 9.1333
+x\ =\ 0.423\ arba\ x\ =\ 6.706\ arba\ x\ =\ 2.850\ arba\ x\ =\ 9.133
+x=\frac{-2+\sqrt{196}}{-1}\ arba\ x=\frac{-2-\sqrt{196}}{-1}
+x=2-\sqrt{196}\ arba\ x=2+\sqrt{196}
+x=-12\ arba\ x=16
+x=0\ arba\ x=8
+x=2\ o\ x=-2
+x=3\ o\ x=5
+x=-4\ o\ x=7
+a=0\ o\ \left(32a-108\right)=0
+a=0\ o\ 8a-27=0
+a=0\ o\ 8a=27
+a=0\ o\ a=\frac{27}{8}
+b=10\ oder\ b=-10
+x=172,5\ oder\ x=163,5
+a\ =\ \sqrt{18}\ oder\ a\ =\ -\sqrt{18}
+x=9\ oder\ x=0
+a=-6\ oder\ a=-13\ oder\ a=13
+x=3\ ou\ x=21
+x=3\ ou\ x=21
+a=-5\ ou\ a=3
+x=0\ ou\ x=5
+x=0\ ou\ x=\ +14
+a=-12\ ali\ a=10
+a=12\ ali\ a=-10
+x=0\ ali\ x=3\ ali\ x=-3
+b=3\ ali\ b=-3
+x=0.6\ ou\ x=-0.5
+x=-2\ ou\ x=-5,5
+x=0\ ou\ x=-5
+z^{2}=\frac{5}{4}+i\ of\ z^{2}=\frac{5}{4}-i
+x=2,\ y=\frac{1}{3}\ of\ x=-2,\ y=-\frac{1}{3}
+x=-2,\ y=\frac{1}{3}\ of\ x=2,\ y=-\frac{1}{3}
+z=2+\frac{1}{3}i\ of\ z=2-\frac{1}{3}i\ of\ z=-2+\frac{1}{3}i\ of\ z=-2-\frac{1}{3}i
+x=-5,33\ or\ x=5,33
+x=-5,3\ or\ x=5,3
+10\ or\ 11\ or\ 12
+10\ or\ 11\ or\ 12\ or\ 13
+x-8=2x+9\ or\ x-8=-2x-9
+-x=17\ or\ 3x=-1
+x=-17\ or\ x=-\frac{1}{3}
+x=-4\ arba\ x=2
+x=2\ arba\ x=-2
+z=2\ arba\ z=-5i\ arba\ z=3i
+x=-4\ arba\ x=6
+x=-4\ arba\ x=6
+\left(x+4\right)=0\ arba\ \left(x-6\right)=0
+\begin{cases}q=3\ o\ q=-3\\u_{1}=\frac{12}{q}\end{cases}
+\begin{cases}q=3\ o\ q=-3\\u_{1}=4\ o\ u_{1}=-4\end{cases}
+\left\{q=3\ o\ u_{1}=4\right\}\ o\ \left\{q=-3\ o\ u_{1}=-4\right\}
+\left\{q=3\ u_{1}=4\right\}\ o\ \left\{q=-3\ u_{1}=-4\right\}
+\left\{q=3,\ u_{1}=4\right\}\ o\ \left\{q=-3,\ u_{1}=-4\right\}
+m=130\ oder\ m=-130
+m=130\ oder\ m=250
+m=130\degree\ oder\ m=250\degree
+x=7\ oder\ x=2
+s=\sqrt{6}\ oder\ s=-\sqrt{6}
+s=4\ oder\ s=-4
+a=13\ ou\ a=-4
+x\ =\ 5\ ou\ x\ =\ -6
+x\ =\ -4\ ou\ x\ =\ 5
+x=-8\ ou\ x=-4
+x=9\ ali\ x=4
+x-8=\sqrt{28}\ ali\ x-8=-\sqrt{28}
+x=\sqrt{28}+8\ ali\ x=-\sqrt{28}+8
+x=5\ ali\ x=-\frac{7}{2}\ ali\ x=\frac{2,56}{2}
+x-2,75=4,25\ ou\ x-2,75=-4,25
+x=7\ ou\ x=-1,5
+x=\ 0\ ou\ x^{2}\ -6x\ +5\ =\ 0
+x=\ 0\ ou\ \left(x-5\right)\left(x-1\right)\ =0
+x=\ 0\ ou\ x=5\ ou\ x\ =1
+x=-9\ of\ x=9
+x=4\ of\ x=0
+x=\sqrt{4}\ of\ x=-\sqrt{4}
+x=-4\ of\ x=-12
+x= \ \frac{\frac{7}{2}+\sqrt{\frac{25}{4}}}{2}\ of\ x=\frac{\frac{7}{2}-\sqrt{\frac{25}{4}}}{2}
+x=3\ of\ x=\frac{1}{2}
+x=4\ or\ x\ =-\frac{1}{5}
+x=0\ or\ x=-\sqrt{18}\ or\ x=\sqrt{18}
+x\ =\ 0.5123\ +\ 2\ \pi\ k\ or\ x\ =\ 2.9456\ +\ 2\ \pi\ k
+x\ =\ 0.5123\ or\ x\ =\ 6.7955\ or\ x\ =\ 2.9456\ or\ x\ =\ 9.2288
+x\ =\ 0.512\ arba\ x\ =\ 6.796\ arba\ x\ =\ 2.946\ arba\ x\ =\ 9.229
+x=\frac{-3+\sqrt{225}}{-1}\ arba\ x=\frac{-3-\sqrt{225}}{-1}
+x=3-\sqrt{225}\ arba\ x=3+\sqrt{225}
+x=-12\ arba\ x=18
+x=0\ o\ x=9
+x=3\ o\ x=-3
+x=4\ o\ x=6
+x=-5\ o\ x=8
+a=0\ oder\ \left(36a-120\right)=0
+a=0\ oder\ 9a-30=0
+a=0\ oder\ 9a=30
+a=0\ oder\ a=\frac{30}{9}
+b=11\ oder\ b=-11
+x=178,5\ ou\ x=169,5
+a\ =\ \sqrt{21}\ ou\ a\ =\ -\sqrt{21}
+x=10\ ou\ x=0
+a=-7\ ou\ a=-14\ ou\ a=14
+x=4\ ali\ x=24
+x=4\ ali\ x=24
+a=-6\ ali\ a=4
+x=0\ ali\ x=6
+x=0\ ou\ x=\ +16
+a=-13\ ou\ a=11
+a=13\ ou\ a=-11
+x=0\ ou\ x=4\ ou\ x=-4
+b=4\ of\ b=-4
+x=0.7\ of\ x=-0.6
+x=-3\ of\ x=-6,5
+x=0\ of\ x=-6
+z^{2}=\frac{7}{4}+i\ or\ z^{2}=\frac{7}{4}-i
+x=3,\ y=\frac{1}{4}\ or\ x=-3,\ y=-\frac{1}{4}
+x=-3,\ y=\frac{1}{4}\ or\ x=3,\ y=-\frac{1}{4}
+z=3+\frac{1}{4}i\ or\ z=3-\frac{1}{4}i\ or\ z=-3+\frac{1}{4}i\ or\ z=-3-\frac{1}{4}i
+x=-6,67\ arba\ x=6,67
+x=-6,7\ arba\ x=6,7
+11\ arba\ 12\ arba\ 13
+11\ arba\ 12\ arba\ 13\ arba\ 14
+x-9=2x+10\ o\ x-9=-2x-10
+-x=19\ o\ 3x=-1
+x=-19\ o\ x=-\frac{1}{3}
+x=-5\ o\ x=3
+x=3\ oder\ x=-3
+z=3\ oder\ z=-6i\ oder\ z=4i
+x=-5\ oder\ x=7
+x=-5\ ou\ x=7
+\left(x+5\right)=0\ ou\ \left(x-7\right)=0
+\begin{cases}q=4\ ou\ q=-4\\u_{1}=\frac{16}{q}\end{cases}
+\begin{cases}q=4\ ali\ q=-4\\u_{1}=4\ ali\ u_{1}=-4\end{cases}
+\left\{q=4\ ali\ u_{1}=4\right\}\ ali\ \left\{q=-4\ ali\ u_{1}=-4\right\}
+\left\{q=4\ u_{1}=4\right\}\ ali\ \left\{q=-4\ u_{1}=-4\right\}
+\left\{q=4,\ u_{1}=4\right\}\ ou\ \left\{q=-4,\ u_{1}=-4\right\}
+m=140\ ou\ m=-140
+m=140\ ou\ m=260
+m=140\degree\ ou\ m=260\degree
+x=8\ of\ x=3
+s=\sqrt{7}\ of\ s=-\sqrt{7}
+s=5\ of\ s=-5
+a=14\ of\ a=-5
+x\ =\ 6\ or\ x\ =\ -7
+x\ =\ -5\ or\ x\ =\ 6
+x=-9\ or\ x=-5
+x=10\ or\ x=5
+x-9=\sqrt{32}\ arba\ x-9=-\sqrt{32}
+x=\sqrt{32}+9\ arba\ x=-\sqrt{32}+9
+x=6\ arba\ x=-\frac{9}{2}\ arba\ x=\frac{2,78}{2}
+x-3,25=4,75\ o\ x-3,25=-4,75
+x=8\ o\ x=-1,5
+x=\ 0\ o\ x^{2}\ -7x\ +6\ =\ 0
+x=\ 0\ o\ \left(x-6\right)\left(x-1\right)\ =0
+x=\ 0\ oder\ x=6\ oder\ x\ =1
+x=-10\ oder\ x=10
+x=5\ oder\ x=0
+x=\sqrt{5}\ ou\ x=-\sqrt{5}
+x=-5\ ou\ x=-13
+x= \ \frac{\frac{9}{2}+\sqrt{\frac{49}{4}}}{2}\ ou\ x=\frac{\frac{9}{2}-\sqrt{\frac{49}{4}}}{2}
+x=4\ ali\ x=\frac{1}{2}
+x=5\ ali\ x\ =-\frac{1}{6}
+x=0\ ali\ x=-\sqrt{21}\ ali\ x=\sqrt{21}
+x\ =\ 0.6234\ +\ 2\ \pi\ k\ ou\ x\ =\ 3.0567\ +\ 2\ \pi\ k
+x\ =\ 0.6234\ ou\ x\ =\ 6.9066\ ou\ x\ =\ 3.0567\ ou\ x\ =\ 9.3399
+x\ =\ 0.623\ ou\ x\ =\ 6.907\ ou\ x\ =\ 3.057\ ou\ x\ =\ 9.340
+x=\frac{-4+\sqrt{256}}{-1}\ of\ x=\frac{-4-\sqrt{256}}{-1}
+x=4-\sqrt{256}\ of\ x=4+\sqrt{256}
+x=-12\ of\ x=20
+x=0\ of\ x=10
+x=4\ or\ x=-4
+x=5\ or\ x=7
+x=-6\ or\ x=9
+a=0\ or\ \left(40a-132\right)=0
+a=0\ arba\ 10a-33=0
+a=0\ arba\ 10a=33
+a=0\ arba\ a=\frac{33}{10}
+b=12\ arba\ b=-12
+x=184,5\ o\ x=175,5
+a\ =\ \sqrt{24}\ o\ a\ =\ -\sqrt{24}
+x=11\ o\ x=0
+a=-8\ o\ a=-15\ o\ a=15
+x=5\ oder\ x=27
+x=5\ oder\ x=27
+a=-7\ oder\ a=5
+x=0\ ou\ x=7
+x=0\ ou\ x=\ +18
+a=-14\ ou\ a=12
+a=14\ ou\ a=-12
+x=0\ ali\ x=5\ ali\ x=-5
+b=5\ ali\ b=-5
+x=0.8\ ali\ x=-0.7
+x=-4\ ou\ x=-7,5
+x=0\ ou\ x=-7
+z^{2}=\frac{9}{4}+i\ ou\ z^{2}=\frac{9}{4}-i
+x=4,\ y=\frac{1}{5}\ of\ x=-4,\ y=-\frac{1}{5}
+x=-4,\ y=\frac{1}{5}\ of\ x=4,\ y=-\frac{1}{5}
+z=4+\frac{1}{5}i\ of\ z=4-\frac{1}{5}i\ of\ z=-4+\frac{1}{5}i\ of\ z=-4-\frac{1}{5}i
+x=-7,83\ or\ x=7,83
+x=-7,8\ or\ x=7,8
+12\ or\ 13\ or\ 14
+12\ or\ 13\ or\ 14\ or\ 15
+x-10=2x+11\ arba\ x-10=-2x-11
+-x=21\ arba\ 3x=-1
+x=-21\ arba\ x=-\frac{1}{3}
+x=-6\ o\ x=4
+x=4\ o\ x=-4
+z=4\ o\ z=-7i\ o\ z=5i
+x=-6\ oder\ x=8
+x=-6\ oder\ x=8
+\left(x+6\right)=0\ oder\ \left(x-8\right)=0
+\begin{cases}q=5\ ou\ q=-5\\u_{1}=\frac{20}{q}\end{cases}
+\begin{cases}q=5\ ou\ q=-5\\u_{1}=4\ ou\ u_{1}=-4\end{cases}
+\left\{q=5\ ali\ u_{1}=4\right\}\ ali\ \left\{q=-5\ ali\ u_{1}=-4\right\}
+\left\{q=5\ u_{1}=4\right\}\ ali\ \left\{q=-5\ u_{1}=-4\right\}
+\left\{q=5,\ u_{1}=4\right\}\ ali\ \left\{q=-5,\ u_{1}=-4\right\}
+m=150\ ou\ m=-150
+m=150\ ou\ m=270
+m=150\degree\ ou\ m=270\degree
+x=9\ ou\ x=4
+s=\sqrt{8}\ of\ s=-\sqrt{8}
+s=6\ of\ s=-6
+a=15\ of\ a=-6
+x\ =\ 7\ of\ x\ =\ -8
+x\ =\ -6\ or\ x\ =\ 7
+x=-10\ or\ x=-6
+x=11\ or\ x=6
+x-10=\sqrt{36}\ or\ x-10=-\sqrt{36}
+x=\sqrt{36}+10\ arba\ x=-\sqrt{36}+10
+x=7\ arba\ x=-\frac{11}{2}\ arba\ x=\frac{3,12}{2}
+x-3,75=5,25\ o\ x-3,75=-5,25
+x=9\ o\ x=-1,5
+x=\ 0\ o\ x^{2}\ -8x\ +7\ =\ 0
+x=\ 0\ oder\ \left(x-7\right)\left(x-1\right)\ =0
+x=\ 0\ oder\ x=7\ oder\ x\ =1
+x=-11\ oder\ x=11
+x=6\ ou\ x=0
+x=\sqrt{6}\ ou\ x=-\sqrt{6}
+x=-6\ ou\ x=-14
+x= \ \frac{\frac{11}{2}+\sqrt{\frac{81}{4}}}{2}\ ali\ x=\frac{\frac{11}{2}-\sqrt{\frac{81}{4}}}{2}
+x=5\ ali\ x=\frac{1}{2}
+x=6\ ali\ x\ =-\frac{1}{7}
+x=0\ ou\ x=-\sqrt{24}\ ou\ x=\sqrt{24}
+x\ =\ 0.7345\ +\ 2\ \pi\ k\ ou\ x\ =\ 3.1678\ +\ 2\ \pi\ k
+x\ =\ 0.7345\ ou\ x\ =\ 7.0177\ ou\ x\ =\ 3.1678\ ou\ x\ =\ 9.4510
+x\ =\ 0.735\ of\ x\ =\ 7.018\ of\ x\ =\ 3.168\ of\ x\ =\ 9.451
+x=\frac{-5+\sqrt{289}}{-1}\ of\ x=\frac{-5-\sqrt{289}}{-1}
+x=5-\sqrt{289}\ of\ x=5+\sqrt{289}
+x=-12\ or\ x=22
+x=0\ or\ x=11
+x=5\ or\ x=-5
+x=6\ arba\ x=8
+x=-7\ arba\ x=10
+a=0\ arba\ \left(44a-144\right)=0
+a=0\ o\ 11a-36=0
+a=0\ o\ 11a=36
+a=0\ o\ a=\frac{36}{11}
+b=13\ o\ b=-13
+x=190,5\ oder\ x=181,5
+a\ =\ \sqrt{27}\ oder\ a\ =\ -\sqrt{27}
+x=12\ oder\ x=0
+a=-9\ ou\ a=-16\ ou\ a=16
+x=6\ ou\ x=30
+x=6\ ou\ x=30
+a=-8\ ali\ a=6
+x=0\ ali\ x=8
+x=0\ ali\ x=\ +20
+a=-15\ ou\ a=13
+a=15\ ou\ a=-13
+x=0\ ou\ x=6\ ou\ x=-6
+b=6\ of\ b=-6
+x=0.9\ of\ x=-0.8
+x=-5\ of\ x=-8,5
+x=0\ or\ x=-8
+z^{2}=\frac{11}{4}+i\ or\ z^{2}=\frac{11}{4}-i
+x=5,\ y=\frac{1}{6}\ or\ x=-5,\ y=-\frac{1}{6}
+x=-5,\ y=\frac{1}{6}\ arba\ x=5,\ y=-\frac{1}{6}
+z=5+\frac{1}{6}i\ arba\ z=5-\frac{1}{6}i\ arba\ z=-5+\frac{1}{6}i\ arba\ z=-5-\frac{1}{6}i
+x=-8,97\ o\ x=8,97
+x=-9,0\ o\ x=9,0
+13\ o\ 14\ o\ 15
+13\ oder\ 14\ oder\ 15\ oder\ 16
+x-11=2x+12\ oder\ x-11=-2x-12
+-x=23\ ou\ 3x=-1
+x=-23\ ou\ x=-\frac{1}{3}
+x=-7\ ou\ x=5
+x=5\ ali\ x=-5
+z=5\ ali\ z=-8i\ ali\ z=6i
+x=-7\ ali\ x=9
+x=-7\ ou\ x=9
+\left(x+7\right)=0\ ou\ \left(x-9\right)=0
+\begin{cases}q=6\ of\ q=-6\\u_{1}=\frac{24}{q}\end{cases}
+\begin{cases}q=6\ of\ q=-6\\u_{1}=4\ of\ u_{1}=-4\end{cases}
+\left\{q=6\ or\ u_{1}=4\right\}\ or\ \left\{q=-6\ or\ u_{1}=-4\right\}
+\left\{q=6\ u_{1}=4\right\}\ or\ \left\{q=-6\ u_{1}=-4\right\}
+\left\{q=6,\ u_{1}=4\right\}\ arba\ \left\{q=-6,\ u_{1}=-4\right\}
+m=160\ arba\ m=-160
+m=160\ arba\ m=280
+m=160\degree\ o\ m=280\degree
+x=10\ o\ x=5
+s=\sqrt{9}\ o\ s=-\sqrt{9}
+s=7\ oder\ s=-7
+a=16\ oder\ a=-7
+x\ =\ 8\ oder\ x\ =\ -9
+x\ =\ -7\ ou\ x\ =\ 8
+x=-11\ ou\ x=-7
+x=12\ ou\ x=7
+x-11=\sqrt{40}\ ali\ x-11=-\sqrt{40}
+x=\sqrt{40}+11\ ali\ x=-\sqrt{40}+11
+x=8\ ali\ x=-\frac{13}{2}\ ali\ x=\frac{3,46}{2}
+x-4,25=5,75\ ou\ x-4,25=-5,75
+x=10\ ou\ x=-1,5
+x=\ 0\ ou\ x^{2}\ -9x\ +8\ =\ 0
+x=\ 0\ of\ \left(x-8\right)\left(x-1\right)\ =0
+x=\ 0\ of\ x=8\ of\ x\ =1
+x=-12\ of\ x=12
+x=7\ or\ x=0
+x=\sqrt{7}\ or\ x=-\sqrt{7}
+x=-7\ or\ x=-15
+x= \ \frac{\frac{13}{2}+\sqrt{\frac{121}{4}}}{2}\ arba\ x=\frac{\frac{13}{2}-\sqrt{\frac{121}{4}}}{2}
+x=6\ arba\ x=\frac{1}{2}
+x=7\ o\ x\ =-\frac{1}{8}
+x=0\ o\ x=-\sqrt{27}\ o\ x=\sqrt{27}
+x\ =\ 0.8456\ +\ 2\ \pi\ k\ o\ x\ =\ 3.2789\ +\ 2\ \pi\ k
+x\ =\ 0.8456\ oder\ x\ =\ 7.1288\ oder\ x\ =\ 3.2789\ oder\ x\ =\ 9.5621
+x\ =\ 0.846\ oder\ x\ =\ 7.129\ oder\ x\ =\ 3.279\ oder\ x\ =\ 9.562
+x=\frac{-6+\sqrt{324}}{-1}\ ou\ x=\frac{-6-\sqrt{324}}{-1}
+x=6-\sqrt{324}\ ou\ x=6+\sqrt{324}
+x=-12\ ou\ x=24
+x=0\ ali\ x=12
+x=6\ ali\ x=-6
+x=7\ ali\ x=9
+x=-8\ ou\ x=11
+a=0\ ou\ \left(48a-156\right)=0
+a=0\ of\ 12a-39=0
+a=0\ of\ 12a=39
+a=0\ of\ a=\frac{39}{12}
+b=14\ of\ b=-14
+x=196,5\ or\ x=187,5
+a\ =\ \sqrt{30}\ or\ a\ =\ -\sqrt{30}
+x=13\ or\ x=0
+a=-10\ arba\ a=-17\ arba\ a=17
+x=7\ arba\ x=33
+x=7\ o\ x=33
+a=-9\ o\ a=7
+x=0\ o\ x=9
+x=0\ oder\ x=\ +22
+a=-16\ oder\ a=14
+a=16\ oder\ a=-14
+x=0\ ou\ x=7\ ou\ x=-7
+b=7\ ou\ b=-7
+x=1.0\ ou\ x=-0.9
+x=-6\ ali\ x=-9,5
+x=0\ ali\ x=-9
+z^{2}=\frac{13}{4}+i\ ali\ z^{2}=\frac{13}{4}-i
+x=6,\ y=\frac{1}{7}\ ou\ x=-6,\ y=-\frac{1}{7}
+x=-6,\ y=\frac{1}{7}\ ou\ x=6,\ y=-\frac{1}{7}
+z=6+\frac{1}{7}i\ of\ z=6-\frac{1}{7}i\ of\ z=-6+\frac{1}{7}i\ of\ z=-6-\frac{1}{7}i
+x=-10,11\ of\ x=10,11
+x=-10,1\ of\ x=10,1
+14\ or\ 15\ or\ 16
+14\ or\ 15\ or\ 16\ or\ 17
+x-12=2x+13\ arba\ x-12=-2x-13
+-x=25\ arba\ 3x=-1
+x=-25\ o\ x=-\frac{1}{3}
+x=-8\ o\ x=6
+x=6\ o\ x=-6
+z=6\ oder\ z=-9i\ oder\ z=7i
+x=-8\ oder\ x=10
+x=-8\ ou\ x=10
+\left(x+8\right)=0\ ou\ \left(x-10\right)=0
+\begin{cases}q=7\ ali\ q=-7\\u_{1}=\frac{28}{q}\end{cases}
+\begin{cases}q=7\ ali\ q=-7\\u_{1}=4\ ali\ u_{1}=-4\end{cases}
+\left\{q=7\ ou\ u_{1}=4\right\}\ ou\ \left\{q=-7\ ou\ u_{1}=-4\right\}
+\left\{q=7\ u_{1}=4\right\}\ ou\ \left\{q=-7\ u_{1}=-4\right\}
+\left\{q=7,\ u_{1}=4\right\}\ of\ \left\{q=-7,\ u_{1}=-4\right\}
+m=170\ of\ m=-170
+m=170\ of\ m=290
+m=170\degree\ or\ m=290\degree
+x=11\ or\ x=6
+s=\sqrt{10}\ or\ s=-\sqrt{10}
+s=8\ arba\ s=-8
+a=17\ arba\ a=-8
+x\ =\ 9\ arba\ x\ =\ -10
+x\ =\ -8\ o\ x\ =\ 9
+x=-12\ o\ x=-8
+x=13\ o\ x=8
+x-12=\sqrt{44}\ oder\ x-12=-\sqrt{44}
+x=\sqrt{44}+12\ oder\ x=-\sqrt{44}+12
+x=9\ oder\ x=-\frac{15}{2}\ oder\ x=\frac{3,82}{2}
+x-4,75=6,25\ ou\ x-4,75=-6,25
+x=11\ ou\ x=-1,5
+x=\ 0\ ou\ x^{2}\ -10x\ +9\ =\ 0
+x=\ 0\ ali\ \left(x-9\right)\left(x-1\right)\ =0
+x=\ 0\ ali\ x=9\ ali\ x\ =1
+x=-13\ ali\ x=13
+x=8\ ou\ x=0
+x=\sqrt{8}\ ou\ x=-\sqrt{8}
+x=-8\ ou\ x=-16
+x= \ \frac{\frac{15}{2}+\sqrt{\frac{169}{4}}}{2}\ of\ x=\frac{\frac{15}{2}-\sqrt{\frac{169}{4}}}{2}
+x=7\ of\ x=\frac{1}{2}
+x=8\ of\ x\ =-\frac{1}{9}
+x=0\ or\ x=-\sqrt{30}\ or\ x=\sqrt{30}
+x\ =\ 0.9567\ +\ 2\ \pi\ k\ or\ x\ =\ 3.3900\ +\ 2\ \pi\ k
+x\ =\ 0.9567\ arba\ x\ =\ 7.2399\ arba\ x\ =\ 3.3900\ arba\ x\ =\ 9.6732
+x\ =\ 0.957\ arba\ x\ =\ 7.240\ arba\ x\ =\ 3.390\ arba\ x\ =\ 9.673
+x=\frac{-7+\sqrt{361}}{-1}\ o\ x=\frac{-7-\sqrt{361}}{-1}
+x=7-\sqrt{361}\ o\ x=7+\sqrt{361}
+x=-12\ o\ x=26
+x=0\ oder\ x=13
+x=7\ oder\ x=-7
+x=8\ oder\ x=10
+x=-9\ ou\ x=12
+a=0\ ou\ \left(52a-168\right)=0
+a=0\ ali\ 13a-42=0
+a=0\ ali\ 13a=42
+a=0\ ali\ a=\frac{42}{13}
+b=15\ ou\ b=-15
+x=202,5\ ou\ x=193,5
+a\ =\ \sqrt{33}\ of\ a\ =\ -\sqrt{33}
+x=14\ of\ x=0
+a=-11\ of\ a=-18\ of\ a=18
+x=8\ or\ x=36
+x=8\ or\ x=36
 
 ## words
 ## -------
@@ -946,7 +1427,7 @@ x=5\ arba\ x=-\frac{1}{16}
 90\ graden
 als\ de\ 2\ 90\ graden\ in\ is\ de\ andere\ ook\ 90\ graden
 56,12\ euro
-Dat\ heb\ ik.
+Dat\ heb\ ik
 10000\ pincodes
 1km\ per\ min\ 10km=10min
 10\ minuten
@@ -1026,6 +1507,488 @@ Malika\ betaalt\ 54,55\ euro\ voor\ haar\ tankbeurt
 8,50\ :\ 100\ keer\ 21\ is\ 2\ euro
 26,9\ meter\ hoog
 26,9\ meter\ hoog
+waar
+false
+true
+onwaar
+tiesa
+netiesa
+teisybe
+melas
+res
+napacno
+pravilno
+lazno
+vrai
+faux
+verite
+mensonge
+wahr
+falsch
+Wahrheit
+Luege
+verdadeiro
+falso
+verdade
+mentira
+\begin{cases}waar\\9x\ -\ 6y\ +12\ =\ 0\end{cases}
+\begin{cases}true\\12x\ -\ 8y\ +16\ =\ 0\end{cases}
+\begin{cases}false\\15x\ -\ 10y\ +20\ =\ 0\end{cases}
+\begin{cases}tiesa\\8x\ -\ 5y\ +10\ =\ 0\end{cases}
+\begin{cases}netiesa\\10x\ -\ 7y\ +14\ =\ 0\end{cases}
+\begin{cases}res\\14x\ -\ 9y\ +18\ =\ 0\end{cases}
+\begin{cases}napacno\\16x\ -\ 11y\ +22\ =\ 0\end{cases}
+\begin{cases}vrai\\18x\ -\ 12y\ +24\ =\ 0\end{cases}
+\begin{cases}faux\\20x\ -\ 13y\ +26\ =\ 0\end{cases}
+\begin{cases}wahr\\22x\ -\ 14y\ +28\ =\ 0\end{cases}
+\begin{cases}falsch\\24x\ -\ 15y\ +30\ =\ 0\end{cases}
+\begin{cases}verdadeiro\\26x\ -\ 16y\ +32\ =\ 0\end{cases}
+\begin{cases}falso\\28x\ -\ 17y\ +34\ =\ 0\end{cases}
+x=2\ of\ q=-2\ dann\ u_{1}=5\ of\ u_{1}=-5
+x=3\ or\ q=-3\ then\ u_{1}=6\ or\ u_{1}=-6
+x=4\ arba\ q=-4\ tada\ u_{1}=7\ arba\ u_{1}=-7
+x=5\ ali\ q=-5\ potem\ u_{1}=8\ ali\ u_{1}=-8
+x=6\ ou\ q=-6\ alors\ u_{1}=9\ ou\ u_{1}=-9
+x=7\ oder\ q=-7\ dann\ u_{1}=10\ oder\ u_{1}=-10
+x=8\ ou\ q=-8\ entao\ u_{1}=11\ ou\ u_{1}=-11
+if\ x>0\ then\ y>0
+jei\ x>0\ tada\ y>0
+ce\ x>0\ potem\ y>0
+si\ x>0\ alors\ y>0
+wenn\ x>0\ dann\ y>0
+se\ x>0\ entao\ y>0
+for\ all\ x\in\mathbb{R}
+visiems\ x\in\mathbb{R}
+za\ vse\ x\in\mathbb{R}
+pour\ tout\ x\in\mathbb{R}
+fuer\ alle\ x\in\mathbb{R}
+para\ todo\ x\in\mathbb{R}
+there\ exists\ x\in\mathbb{Z}
+egzistuoja\ x\in\mathbb{Z}
+obstaja\ x\in\mathbb{Z}
+il\ existe\ x\in\mathbb{Z}
+es\ gibt\ x\in\mathbb{Z}
+existe\ x\in\mathbb{Z}
+such\ that\ x^{2}=4
+toks\ kad\ x^{2}=4
+tako\ da\ x^{2}=4
+tel\ que\ x^{2}=4
+sodass\ x^{2}=4
+tal\ que\ x^{2}=4
+maximum\ value
+maksimali\ reiksme
+maksimalna\ vrednost
+valeur\ maximale
+Maximalwert
+valor\ maximo
+minimum\ point
+minimalus\ taskas
+minimalna\ tocka
+point\ minimum
+Minimalpunkt
+ponto\ minimo
+derivative\ equals\ zero
+isvestine\ lygi\ nuliui
+odvod\ enak\ nic
+derivee\ egale\ zero
+Ableitung\ gleich\ null
+derivada\ igual\ zero
+integral\ from\ 0\ to\ 1
+integralas\ nuo\ 0\ iki\ 1
+integral\ od\ 0\ do\ 1
+integrale\ de\ 0\ a\ 1
+Integral\ von\ 0\ bis\ 1
+integral\ de\ 0\ ate\ 1
+limit\ as\ x\ approaches\ infinity
+riba\ kai\ x\ arteja\ begalybe
+limita\ ko\ x\ gre\ neskoncno
+limite\ quand\ x\ tend\ vers\ infini
+Grenzwert\ wenn\ x\ gegen\ unendlich
+limite\ quando\ x\ tende\ infinito
+continuous\ function
+tolydi\ funkcija
+zvezna\ funkcija
+fonction\ continue
+stetige\ Funktion
+funcao\ continua
+domain\ of\ f
+srityje\ f
+domena\ f
+domaine\ de\ f
+Definitionsbereich\ von\ f
+dominio\ de\ f
+range\ of\ g
+reiksmiu\ sritis\ g
+zaloga\ vrednosti\ g
+ensemble\ image\ de\ g
+Wertebereich\ von\ g
+contradominio\ de\ g
+inverse\ function
+atvirkstine\ funkcija
+inverzna\ funkcija
+fonction\ inverse
+Umkehrfunktion
+funcao\ inversa
+composition\ of\ functions
+funkciju\ kompozicija
+kompozicija\ funkcij
+composition\ des\ fonctions
+Verkettung\ von\ Funktionen
+composicao\ de\ funcoes
+even\ number
+lyginis\ skaicius
+sodo\ stevilo
+nombre\ pair
+gerade\ Zahl
+numero\ par
+odd\ integer
+nelyginis\ sveikasis
+liho\ celo\ stevilo
+entier\ impair
+ungerade\ ganze\ Zahl
+inteiro\ impar
+prime\ number
+pirminis\ skaicius
+prastevilo
+nombre\ premier
+Primzahl
+numero\ primo
+rational\ expression
+racionalusis\ reiskinys
+racionalen\ izraz
+expression\ rationnelle
+rationaler\ Ausdruck
+expressao\ racional
+complex\ number
+kompleksinis\ skaicius
+kompleksno\ stevilo
+nombre\ complexe
+komplexe\ Zahl
+numero\ complexo
+real\ part
+realioji\ dalis
+realni\ del
+partie\ reelle
+Realteil
+parte\ real
+imaginary\ unit
+menamasis\ vienetas
+imaginarna\ enota
+unite\ imaginaire
+imaginaere\ Einheit
+unidade\ imaginaria
+absolute\ value
+modulis
+absolutna\ vrednost
+valeur\ absolue
+Betrag
+valor\ absoluto
+square\ root
+kvadratine\ saknis
+kvadratni\ koren
+racine\ carree
+Quadratwurzel
+raiz\ quadrada
+cubic\ equation
+kubine\ lygtis
+kubicna\ enacba
+equation\ cubique
+kubische\ Gleichung
+equacao\ cubica
+quadratic\ formula
+kvadratine\ formule
+kvadratna\ formula
+formule\ quadratique
+quadratische\ Formel
+formula\ quadratica
+discriminant\ positive
+diskriminantas\ teigiamas
+diskriminanta\ pozitivna
+discriminant\ positif
+Diskriminante\ positiv
+discriminante\ positivo
+solution\ set
+sprendiniu\ aibe
+mnozica\ resitev
+ensemble\ solution
+Loesungsmenge
+conjunto\ solucao
+empty\ set
+tuscia\ aibe
+prazna\ mnozica
+ensemble\ vide
+leere\ Menge
+conjunto\ vazio
+intersection\ of\ A\ and\ B
+sankirta\ A\ ir\ B
+presek\ A\ in\ B
+intersection\ de\ A\ et\ B
+Schnittmenge\ von\ A\ und\ B
+intersecao\ de\ A\ e\ B
+union\ of\ sets
+aibiciu\ junginys
+unija\ mnozic
+union\ des\ ensembles
+Vereinigung\ der\ Mengen
+uniao\ de\ conjuntos
+subset\ of\ X
+poaibis\ X
+podmnozica\ X
+sous-ensemble\ de\ X
+Teilmenge\ von\ X
+subconjunto\ de\ X
+element\ belongs\ to
+elementas\ priklauso
+element\ pripada
+element\ appartient
+Element\ gehoert\ zu
+elemento\ pertence
+perpendicular\ lines
+statmenos\ tieses
+pravokotni\ premici
+droites\ perpendiculaires
+senkrechte\ Geraden
+retas\ perpendiculares
+parallel\ vectors
+lygiagretys\ vektoriai
+vzporedni\ vektorji
+vecteurs\ paralleles
+parallele\ Vektoren
+vetores\ paralelos
+angle\ between
+kampas\ tarp
+kot\ med
+angle\ entre
+Winkel\ zwischen
+angulo\ entre
+distance\ formula
+atstumo\ formule
+formula\ razdalje
+formule\ distance
+Abstandsformel
+formula\ distancia
+midpoint\ coordinates
+vidurio\ tasko\ koordinates
+koordinate\ sredisce
+coordonnees\ milieu
+Mittelpunktkoordinaten
+coordenadas\ ponto\ medio
+slope\ undefined
+krypties\ koeficientas\ neapibreztas
+naklon\ nedefiniran
+pente\ indefinie
+Steigung\ undefiniert
+inclinacao\ indefinida
+tangent\ line
+lieciaomoji\ tiese
+tangenta
+droite\ tangente
+Tangente
+reta\ tangente
+normal\ vector
+normalinis\ vektorius
+normalni\ vektor
+vecteur\ normal
+Normalenvektor
+vetor\ normal
+cross\ product
+vektorine\ sandauga
+vektorski\ produkt
+produit\ vectoriel
+Kreuzprodukt
+produto\ vetorial
+dot\ product\ equals
+skalarine\ sandauga\ lygi
+skalarni\ produkt\ enak
+produit\ scalaire\ egal
+Skalarprodukt\ gleich
+produto\ escalar\ igual
+matrix\ multiplication
+matricu\ daugyba
+mnozenje\ matrik
+multiplication\ matricielle
+Matrizenmultiplikation
+multiplicacao\ matriz
+identity\ matrix
+vienetine\ matrica
+enotska\ matrika
+matrice\ identite
+Einheitsmatrix
+matriz\ identidade
+determinant\ zero
+determinantas\ nulis
+determinanta\ nic
+determinant\ nul
+Determinante\ null
+determinante\ zero
+eigenvalue\ problem
+tikriniu\ reiksmiu\ uzdavinys
+problem\ lastnih\ vrednosti
+probleme\ valeur\ propre
+Eigenwertproblem
+problema\ autovalor
+linear\ independence
+tiesine\ nepriklausomybe
+linearna\ neodvisnost
+independance\ lineaire
+lineare\ Unabhaengigkeit
+independencia\ linear
+basis\ vectors
+bazes\ vektoriai
+bazni\ vektorji
+vecteurs\ base
+Basisvektoren
+vetores\ base
+dimension\ three
+triju\ matavimo
+dimenzija\ tri
+dimension\ trois
+Dimension\ drei
+dimensao\ tres
+homogeneous\ equation
+homogenine\ lygtis
+homogena\ enacba
+equation\ homogene
+homogene\ Gleichung
+equacao\ homogenea
+particular\ solution
+atskirasis\ sprendinys
+partikularna\ resitev
+solution\ particuliere
+partikulaere\ Loesung
+solucao\ particular
+general\ solution
+bendrasis\ sprendinys
+splosna\ resitev
+solution\ generale
+allgemeine\ Loesung
+solucao\ geral
+initial\ condition
+pradine\ salyga
+zacetni\ pogoj
+condition\ initiale
+Anfangsbedingung
+condicao\ inicial
+boundary\ value
+krastine\ reiksme
+rojna\ vrednost
+valeur\ limite
+Randwert
+valor\ fronteira
+convergent\ series
+konverguojanti\ eilute
+konvergentna\ vrsta
+serie\ convergente
+konvergente\ Reihe
+serie\ convergente
+diverges\ to\ infinity
+diverguoja\ i\ begalybe
+divergira\ v\ neskoncnost
+diverge\ vers\ infini
+divergiert\ gegen\ unendlich
+diverge\ para\ infinito
+alternating\ series
+kintamojo\ zenklo\ eilute
+alternirna\ vrsta
+serie\ alternee
+alternierende\ Reihe
+serie\ alternada
+power\ series
+laipsniu\ eilute
+potencna\ vrsta
+serie\ entiere
+Potenzreihe
+serie\ potencias
+radius\ convergence
+konvergavimo\ spindulys
+radij\ konvergence
+rayon\ convergence
+Konvergenzradius
+raio\ convergencia
+Taylor\ expansion
+Teiloro\ skaidinys
+Taylorjev\ razvoj
+developpement\ Taylor
+Taylor-Entwicklung
+expansao\ Taylor
+binomial\ coefficient
+binominis\ koeficientas
+binomski\ koeficient
+coefficient\ binomial
+Binomialkoeffizient
+coeficiente\ binomial
+permutation\ formula
+keitinio\ formule
+formula\ permutacij
+formule\ permutation
+Permutationsformel
+formula\ permutacao
+combination\ without\ repetition
+derinys\ be\ pasikartojimo
+kombinacija\ brez\ ponavljanja
+combinaison\ sans\ repetition
+Kombination\ ohne\ Wiederholung
+combinacao\ sem\ repeticao
+probability\ one\ half
+tikimybe\ puse
+verjetnost\ ena\ polovica
+probabilite\ un\ demi
+Wahrscheinlichkeit\ ein\ halb
+probabilidade\ metade
+expected\ value
+laukiama\ reiksme
+pricakovana\ vrednost
+esperance\ mathematique
+Erwartungswert
+valor\ esperado
+standard\ deviation
+standartinis\ nuokrypis
+standardni\ odklon
+ecart\ type
+Standardabweichung
+desvio\ padrao
+normal\ distribution
+normalusis\ skirstinys
+normalna\ porazdelitev
+distribution\ normale
+Normalverteilung
+distribuicao\ normal
+sample\ mean
+imties\ vidurkis
+povprecje\ vzorca
+moyenne\ echantillon
+Stichprobenmittelwert
+media\ amostral
+confidence\ interval
+pasikliautinasis\ intervalas
+interval\ zaupanja
+intervalle\ confiance
+Konfidenzintervall
+intervalo\ confianca
+null\ hypothesis
+nuline\ hipoteze
+nicelna\ hipoteza
+hypothese\ nulle
+Nullhypothese
+hipotese\ nula
+correlation\ coefficient
+koreliacijos\ koeficientas
+korelacijski\ koeficient
+coefficient\ correlation
+Korrelationskoeffizient
+coeficiente\ correlacao
+regression\ line
+regresijos\ tiese
+regresijska\ premica
+droite\ regression
+Regressionsgerade
+reta\ regressao
+least\ squares\ method
+maziausiu\ kvadratu\ metodas
+metoda\ najmanjsih\ kvadratov
+methode\ moindres\ carres
+Methode\ kleinste\ Quadrate
+metodo\ minimos\ quadrados
 
 ## units
 ## -------
@@ -1268,7 +2231,6 @@ In\ driehoek\ ABC\ met\ C=\ 90\degree\ \left|AC\right|^{2}=\left|AB\right|^{2}+\
 45\degree
 
 
-
 ## \lognl
 ## -------
 g\left(x\right)=81+\lognl[ 3]{ x}
@@ -1299,15 +2261,205 @@ u=\lognl[2]{x}
 \frac{\lognl[17]{\frac{8}{9}}}{\lognl[17]{5}}
 \lognl[\frac{8}{9}]{5}
 \lognl[ 2]{ 48}
-\angle P=\angle S_{1}
 t=\lognl[0,8281]{\frac{0,5}{0,6}}
-180-102\ =\angle\ I\ is\ 78\degree
 \lognl[ 5]{ 16}+\lognl[ 5]{ a}
 \lognl[ 5]{ 16a}
 t=\lognl[ 4]{ p+3}
+g\left(x\right)=64+\lognl[2]{x}
+g\left(t\right)=b+\lognl[4]{\frac{t}{64}}
+g\left(p\right)=\lognl[5]{\frac{p}{125}}
+g\left(y\right)=27\cdot\lognl[3]{y}
+g\left(k\right)=\frac{\lognl[4]{k}}{16}
+g\left(x\right)=\lognl[2]{\frac{32}{x}}
+K\left(x\right)=7+\lognl[2]{x}
+\lognl[3]{81}
+\lognl[3]{x^{3}}=\lognl[3]{x^{3}}+2
+\left(\lognl[3]{x}\right)^{2}=\lognl[3]{x^{2}}+\lognl[3]{3^{4}}
+a=\lognl[\frac{1}{2}]{16}
+a=\frac{1}{-3}\cdot\lognl[3]{27x}
+a=-\lognl[2]{8}
+\lognl[9]{3}=2
+\lognl[3]{9}=2
+n=\lognl[1,05]{3}
+\lognl[4]{16}
+\lognl[3]{27}
+\lognl[5]{5^{3}}
+\lognl[7]{\frac{Q}{343}}=s
+\lognl[8]{xyz}
+v=\lognl[3]{y}
+q=\lognl[4]{y}
+3\cdot\lognl[3]{x}+2-\left(\lognl[3]{x}\right)^{2}=0
+v=\lognl[5]{x}
+\frac{\lognl[13]{\frac{7}{8}}}{\lognl[13]{4}}
+\lognl[\frac{7}{8}]{4}
+\lognl[3]{162}
+t=\lognl[0,7531]{\frac{0,4}{0,5}}
+\lognl[4]{32}+\lognl[4]{b}
+\lognl[4]{32b}
+s=\lognl[5]{q+2}
+f\left(x\right)=49+\lognl[7]{x}
+h\left(x\right)=c+\lognl[2]{\frac{x}{128}}
+p\left(x\right)=\lognl[6]{\frac{x}{36}}
+f\left(t\right)=16\cdot\lognl[4]{t}
+p\left(t\right)=\frac{\lognl[5]{t}}{25}
+r\left(t\right)=\lognl[7]{\frac{t}{49}}
+h\left(a\right)=12+\lognl[3]{a}
+\lognl[4]{256}
+\lognl[5]{x^{4}}=\lognl[5]{x^{4}}+1
+\left(\lognl[4]{x}\right)^{2}=\lognl[4]{x^{2}}+\lognl[4]{4^{2}}
+b=\lognl[\frac{1}{3}]{27}
+b=\frac{1}{-4}\cdot\lognl[2]{32x}
+b=-\lognl[3]{81}
+\lognl[16]{4}=2
+\lognl[4]{16}=2
+m=\lognl[1,08]{4}
+\lognl[5]{125}
+\lognl[6]{36}
+\lognl[7]{7^{4}}
+\lognl[8]{\frac{R}{512}}=u
+\lognl[9]{abc}
+w=\lognl[2]{z}
+r=\lognl[5]{z}
+4\cdot\lognl[4]{x}+1-\left(\lognl[4]{x}\right)^{2}=0
+w=\lognl[6]{x}
+\frac{\lognl[11]{\frac{5}{6}}}{\lognl[11]{3}}
+\lognl[\frac{5}{6}]{3}
+\lognl[4]{192}
+t=\lognl[0,6847]{\frac{0,3}{0,4}}
+\lognl[6]{64}+\lognl[6]{c}
+\lognl[6]{64c}
+r=\lognl[7]{s+4}
+y=100+\lognl[10]{x}
+y=d+\lognl[5]{\frac{x}{625}}
+g(t)=\lognl[8]{\frac{64}{t}}
+B(r)=25\cdot\lognl[5]{r}
+P(t)=\frac{\lognl[6]{t}}{36}
+P\left(q\right)=\lognl[10]{\frac{q}{100}}
+f\left(x\right)=15+\lognl[4]{x}
+\lognl[5]{3125}
+\lognl[7]{x^{5}}=\lognl[7]{x^{5}}+3
+\left(\lognl[5]{x}\right)^{2}=\lognl[5]{x^{2}}+\lognl[5]{5^{3}}
+c=\lognl[\frac{1}{5}]{125}
+c=\frac{1}{-2}\cdot\lognl[4]{64x}
+c=-\lognl[5]{625}
+\lognl[25]{5}=2
+\lognl[5]{25}=2
+k=\lognl[1,07]{5}
+\lognl[6]{216}
+\lognl[7]{49}
+\lognl[8]{8^{5}}
+\lognl[10]{\frac{S}{1000}}=v
+\lognl[11]{def}
+x=\lognl[4]{a}
+s=\lognl[6]{a}
+5\cdot\lognl[5]{x}+4-\left(\lognl[5]{x}\right)^{2}=0
+x=\lognl[7]{x}
+\frac{\lognl[19]{\frac{3}{4}}}{\lognl[19]{2}}
+\lognl[\frac{3}{4}]{2}
+\lognl[5]{375}
+t=\lognl[0,9214]{\frac{0,6}{0,7}}
+\lognl[7]{128}+\lognl[7]{d}
+\lognl[7]{128d}
+p=\lognl[8]{t+5}
+j\left(t\right)=121+\lognl[11]{t}
+p\left(a\right)=e+\lognl[6]{\frac{a}{216}}
+f\left(x\right)=\lognl[9]{\frac{x}{81}}
+f\left(x\right)=36\cdot\lognl[6]{x}
+Q\left(x\right)=\frac{\lognl[7]{x}}{49}
+y=\lognl[11]{\frac{x}{121}}
+A=18+\lognl[5]{x}
+\lognl[6]{7776}
+\lognl[8]{x^{6}}=\lognl[8]{x^{6}}+2
+\left(\lognl[6]{x}\right)^{2}=\lognl[6]{x^{2}}+\lognl[6]{6^{4}}
+d=\lognl[\frac{1}{6}]{216}
+d=\frac{1}{-5}\cdot\lognl[3]{243x}
+d=-\lognl[6]{1296}
+\lognl[36]{6}=2
+\lognl[6]{36}=2
+j=\lognl[1,09]{6}
+\lognl[7]{343}
+\lognl[8]{64}
+\lognl[9]{9^{6}}
+\lognl[11]{\frac{T}{1331}}=w
+\lognl[12]{ghi}
+y=\lognl[5]{b}
+t=\lognl[7]{b}
+6\cdot\lognl[6]{x}+5-\left(\lognl[6]{x}\right)^{2}=0
+y=\lognl[8]{x}
+\frac{\lognl[23]{\frac{2}{3}}}{\lognl[23]{7}}
+\lognl[\frac{2}{3}]{7}
+\lognl[6]{432}
+t=\lognl[0,8765]{\frac{0,7}{0,8}}
+\lognl[8]{256}+\lognl[8]{e}
+\lognl[8]{256e}
+q=\lognl[9]{u+6}
+k\left(x\right)=144+\lognl[12]{x}
+P\left(x\right)=f+\lognl[7]{\frac{x}{343}}
+g\left(x\right)=\lognl[10]{\frac{x}{100}}
+f\left(x\right)=49\cdot\lognl[7]{x}
+y=\frac{\lognl[8]{x}}{64}
+y=\lognl[12]{\frac{x}{144}}
+f(t)=21+\lognl[6]{t}
+\lognl[7]{16807}
+\lognl[9]{x^{7}}=\lognl[9]{x^{7}}+4
+\left(\lognl[7]{x}\right)^{2}=\lognl[7]{x^{2}}+\lognl[7]{7^{5}}
+e=\lognl[\frac{1}{7}]{343}
+e=-\lognl[7]{2401}
+\lognl[49]{7}=2
+\lognl[7]{49}=2
+i=\lognl[1,04]{7}
+\lognl[8]{512}
+\lognl[9]{81}
+\lognl[10]{10^{7}}
+\lognl[12]{\frac{U}{1728}}=x
+\lognl[13]{jkl}
+z=\lognl[6]{c}
+u=\lognl[8]{c}
+7\cdot\lognl[7]{x}+6-\left(\lognl[7]{x}\right)^{2}=0
+z=\lognl[9]{x}
+\frac{\lognl[29]{\frac{4}{5}}}{\lognl[29]{8}}
+\lognl[\frac{4}{5}]{8}
+\lognl[7]{686}
+t=\lognl[0,9487]{\frac{0,8}{0,9}}
+\lognl[9]{512}+\lognl[9]{f}
+\lognl[9]{512f}
+m=\lognl[10]{v+7}
+l\left(x\right)=169+\lognl[13]{x}
+l\left(x\right)=g+\lognl[8]{\frac{x}{512}}
+l\left(x\right)=\lognl[11]{\frac{x}{121}}
+l\left(x\right)=64\cdot\lognl[8]{x}
+l\left(x\right)=\frac{\lognl[9]{x}}{81}
+l\left(x\right)=\lognl[13]{\frac{x}{169}}
+l\left(x\right)=24+\lognl[7]{x}
+\lognl[8]{32768}
+\lognl[10]{x^{8}}=\lognl[10]{x^{8}}+5
+\left(\lognl[8]{x}\right)^{2}=\lognl[8]{x^{2}}+\lognl[8]{8^{6}}
+f=\lognl[\frac{1}{8}]{512}
+f=\frac{1}{-7}\cdot\lognl[3]{729x}
+f=-\lognl[8]{4096}
+\lognl[64]{8}=2
+\lognl[8]{64}=2
+h=\lognl[1,03]{8}
+\lognl[9]{729}
+\lognl[10]{100}
+\lognl[11]{11^{8}}
+\lognl[13]{\frac{V}{2197}}=y
+\lognl[14]{mno}
+a=\lognl[7]{d}
+v=\lognl[9]{d}
+8\cdot\lognl[8]{x}+7-\left(\lognl[8]{x}\right)^{2}=0
+a=\lognl[10]{x}
+\frac{\lognl[31]{\frac{6}{7}}}{\lognl[31]{9}}
+\lognl[\frac{6}{7}]{9}
+\lognl[8]{1024}
+t=\lognl[0,8947]{\frac{0,9}{1,0}}
+\lognl[10]{1024}+\lognl[10]{g}
+\lognl[10]{1024g}
 
 ## \angle
 ## -------
+\angle P=\angle S_{1}
+180-102\ =\angle\ I\ is\ 78\degree
 \cos\ \angle A=\frac{4}{5}
 \angle A=37^o
 180^o-35^o-90^o=\angle k\ 55^o
@@ -1346,6 +2498,206 @@ t=\lognl[ 4]{ p+3}
 180-102\ =\angle\ I\ is\ 78\degree
 \angle i=180-116=64
 \angle i=32
+\angle Q=\angle T_{1}
+180-108\ =\angle\ J\ is\ 72\degree
+\cos\ \angle B=\frac{3}{5}
+\angle B=53^o
+180^o-42^o-90^o=\angle m\ 48^o
+180^o-42^o-90^o=\angle m\ =48^o
+\angle d2=65\degree
+\angle d3=65\degree
+\angle D=\angle F=80\degree
+\angle m=180-42-90=48\degree
+\angle D_{1}=22\degree
+\angle D_{1}=23\degree
+\angle G\ +\angle H=87\ +87\ =174
+\angle E+\angle I\ =360-174=186
+\angle G\ +\angle H=87\ +87\ =174\degree
+\angle E+\angle I\ =360-174=186\degree
+\angle G\ +\angle H=87\ +87\ =174\degree
+\angle E+\angle I\ =360-174=186\degree
+\angle G\ +\angle H=87\ +87\ =174\degree
+\angle E+\angle I\ =360-174=186\degree
+\angle t=\angle R=58
+\sqrt{\angle}
+\sin\ \angle b=\frac{21}{32}=41\degree
+\sin\ \angle b=\frac{21}{32}\approx41\degree
+\sin\ \angle b=\frac{21}{32}\approx40\degree
+\sin\ \angle b=\frac{21}{32}\approx40,9\degree
+\sin\angle b=\frac{21}{32}=41\degree
+\sin^{-1}\angle b=\frac{21}{32}=41\degree
+\angle N=97\ graden
+\angle D=360-118-75-68=99\degree
+\angle V=180\div76
+\angle V=180\div3
+\angle T_{2}=180-38-44=98\degree
+\angle T_{1}=180-98=82\degree
+\angle Q=\angle T_{1}
+\angle Q=82\degree
+\angle S_{2}=180-82-82=16\degree
+180-108\ =\angle\ K\ is\ 72\degree
+\angle j=180-120=60
+\angle j=30
+\angle R=\angle U_{1}
+180-115\ =\angle\ L\ is\ 65\degree
+\cos\ \angle C=\frac{7}{9}
+\angle C=39^o
+180^o-48^o-90^o=\angle n\ 42^o
+180^o-48^o-90^o=\angle n\ =42^o
+\angle e2=70\degree
+\angle e3=70\degree
+\angle E=\angle G=85\degree
+\angle n=180-48-90=42\degree
+\angle E_{1}=25\degree
+\angle E_{1}=26\degree
+\angle H\ +\angle I=91\ +91\ =182
+\angle F+\angle J\ =360-182=178
+\angle H\ +\angle I=91\ +91\ =182\degree
+\angle F+\angle J\ =360-182=178\degree
+\angle H\ +\angle I=91\ +91\ =182\degree
+\angle F+\angle J\ =360-182=178\degree
+\angle H\ +\angle I=91\ +91\ =182\degree
+\angle F+\angle J\ =360-182=178\degree
+\angle u=\angle S=62
+\sqrt{\angle}
+\sin\ \angle c=\frac{23}{36}=40\degree
+\sin\ \angle c=\frac{23}{36}\approx40\degree
+\sin\ \angle c=\frac{23}{36}\approx39\degree
+\sin\ \angle c=\frac{23}{36}\approx39,6\degree
+\sin\angle c=\frac{23}{36}=40\degree
+\sin^{-1}\angle c=\frac{23}{36}=40\degree
+\angle O=101\ graden
+\angle E=360-122-78-71=89\degree
+\angle W=180\div78
+\angle W=180\div3
+\angle U_{2}=180-40-46=94\degree
+\angle U_{1}=180-94=86\degree
+\angle R=\angle U_{1}
+\angle R=86\degree
+\angle T_{2}=180-86-86=8\degree
+180-115\ =\angle\ M\ is\ 65\degree
+\angle k=180-124=56
+\angle k=28
+\angle S=\angle V_{1}
+180-122\ =\angle\ N\ is\ 58\degree
+\cos\ \angle D=\frac{5}{8}
+\angle D=51^o
+180^o-54^o-90^o=\angle p\ 36^o
+180^o-54^o-90^o=\angle p\ =36^o
+\angle f2=75\degree
+\angle f3=75\degree
+\angle F=\angle H=90\degree
+\angle p=180-54-90=36\degree
+\angle F_{1}=28\degree
+\angle F_{1}=29\degree
+\angle I\ +\angle J=95\ +95\ =190
+\angle G+\angle K\ =360-190=170
+\angle I\ +\angle J=95\ +95\ =190\degree
+\angle G+\angle K\ =360-190=170\degree
+\angle I\ +\angle J=95\ +95\ =190\degree
+\angle G+\angle K\ =360-190=170\degree
+\angle I\ +\angle J=95\ +95\ =190\degree
+\angle G+\angle K\ =360-190=170\degree
+\angle v=\angle T=66
+\sqrt{\angle}
+\sin\ \angle d=\frac{25}{40}=39\degree
+\sin\ \angle d=\frac{25}{40}\approx39\degree
+\sin\ \angle d=\frac{25}{40}\approx38\degree
+\sin\ \angle d=\frac{25}{40}\approx38,7\degree
+\sin\angle d=\frac{25}{40}=39\degree
+\sin^{-1}\angle d=\frac{25}{40}=39\degree
+\angle P=105\ graden
+\angle F=360-126-81-74=79\degree
+\angle X=180\div80
+\angle X=180\div3
+\angle V_{2}=180-42-48=90\degree
+\angle V_{1}=180-90=90\degree
+\angle S=\angle V_{1}
+\angle S=90\degree
+\angle U_{2}=180-90-90=0\degree
+180-122\ =\angle\ O\ is\ 58\degree
+\angle l=180-128=52
+\angle l=26
+\angle T=\angle W_{1}
+180-130\ =\angle\ P\ is\ 50\degree
+\cos\ \angle E=\frac{9}{11}
+\angle E=35^o
+180^o-60^o-90^o=\angle q\ 30^o
+180^o-60^o-90^o=\angle q\ =30^o
+\angle g2=80\degree
+\angle g3=80\degree
+\angle G=\angle I=95\degree
+\angle q=180-60-90=30\degree
+\angle G_{1}=31\degree
+\angle G_{1}=32\degree
+\angle J\ +\angle K=99\ +99\ =198
+\angle H+\angle L\ =360-198=162
+\angle J\ +\angle K=99\ +99\ =198\degree
+\angle H+\angle L\ =360-198=162\degree
+\angle J\ +\angle K=99\ +99\ =198\degree
+\angle H+\angle L\ =360-198=162\degree
+\angle J\ +\angle K=99\ +99\ =198\degree
+\angle H+\angle L\ =360-198=162\degree
+\angle w=\angle U=70
+\sqrt{\angle}
+\sin\ \angle e=\frac{27}{44}=38\degree
+\sin\ \angle e=\frac{27}{44}\approx38\degree
+\sin\ \angle e=\frac{27}{44}\approx37\degree
+\sin\ \angle e=\frac{27}{44}\approx37,8\degree
+\sin\angle e=\frac{27}{44}=38\degree
+\sin^{-1}\angle e=\frac{27}{44}=38\degree
+\angle Q=109\ graden
+\angle G=360-130-84-77=69\degree
+\angle Y=180\div82
+\angle Y=180\div3
+\angle W_{2}=180-44-50=86\degree
+\angle W_{1}=180-86=94\degree
+\angle T=\angle W_{1}
+\angle T=94\degree
+\angle V_{2}=180-94-94=-8\degree
+180-130\ =\angle\ Q\ is\ 50\degree
+\angle m=180-132=48
+\angle m=24
+\angle U=\angle X_{1}
+180-138\ =\angle\ R\ is\ 42\degree
+\cos\ \angle F=\frac{11}{13}
+\angle F=32^o
+180^o-66^o-90^o=\angle r\ 24^o
+180^o-66^o-90^o=\angle r\ =24^o
+\angle h2=85\degree
+\angle h3=85\degree
+\angle H=\angle J=100\degree
+\angle r=180-66-90=24\degree
+\angle H_{1}=34\degree
+\angle H_{1}=35\degree
+\angle K\ +\angle L=103\ +103\ =206
+\angle I+\angle M\ =360-206=154
+\angle K\ +\angle L=103\ +103\ =206\degree
+\angle I+\angle M\ =360-206=154\degree
+\angle K\ +\angle L=103\ +103\ =206\degree
+\angle I+\angle M\ =360-206=154\degree
+\angle K\ +\angle L=103\ +103\ =206\degree
+\angle I+\angle M\ =360-206=154\degree
+\angle x=\angle V=74
+\sqrt{\angle}
+\sin\ \angle f=\frac{29}{48}=37\degree
+\sin\ \angle f=\frac{29}{48}\approx37\degree
+\sin\ \angle f=\frac{29}{48}\approx36\degree
+\sin\ \angle f=\frac{29}{48}\approx37,2\degree
+\sin\angle f=\frac{29}{48}=37\degree
+\sin^{-1}\angle f=\frac{29}{48}=37\degree
+\angle R=113\ graden
+\angle H=360-134-87-80=59\degree
+\angle Z=180\div84
+\angle Z=180\div3
+\angle X_{2}=180-46-52=82\degree
+\angle X_{1}=180-82=98\degree
+\angle U=\angle X_{1}
+\angle U=98\degree
+\angle W_{2}=180-98-98=-16\degree
+180-138\ =\angle\ S\ is\ 42\degree
+\angle n=180-136=44
+\angle n=22
 
 ## percent
 ## --------
