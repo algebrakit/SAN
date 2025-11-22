@@ -39,7 +39,7 @@ train_image_path: '../../data/chrome-ak/train_image.pkl'
 train_label_path: '../../data/chrome-ak/train_label.pkl'
 eval_image_path: '../../data/chrome-ak/test_image.pkl'
 eval_label_path: '../../data/chrome-ak/test_label.pkl'
-word_path: '../../data/chrome-ak/word.txt'
+word_path: '../../data/chrome-mathwriting-ak/word.txt'
 
 # Encoder selection
 encoder:
@@ -75,6 +75,10 @@ attention:
   coverage_weight: 4.0
   features_weight: 0.5
   position_encoding_weight: 1.0  
+  # Learnable weight to balance alpha_sum_parent (parent constructs) vs alpha (latest symbol)
+  alpha_sum_parent_weight: 1.0
+  # Learnable exponential decay factor for parent attention (0.0=full decay, 1.0=no decay)
+  alpha_decay: 0.9
 
 # hybrid tree
 hybrid_tree:
@@ -83,8 +87,8 @@ hybrid_tree:
 # Training weights save path
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
-finetune: False
-checkpoint: "checkpoints/best.pth"
+finetune: True
+checkpoint: "checkpoints/chrome-mathwriting-ak/best.pth"
 
 # TensorBoard path
 log_dir: 'logs'

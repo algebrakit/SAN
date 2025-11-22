@@ -187,6 +187,8 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                     writer.add_scalar('train/ExpRate', exp_right / accumulated_samples, global_step)
                     writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], global_step)
                     writer.add_scalar('train/accumulated_samples', accumulated_samples, global_step)  # Track actual samples per step
+                    writer.add_scalar('train/alpha_sum_parent_weight', model.decoder.alpha_sum_parent_weight.item(), global_step)
+                    writer.add_scalar('train/alpha_decay', model.decoder.alpha_decay.item(), global_step)
                     writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
                     writer.add_scalar('epoch/train_WordRate', total_words_right / length, epoch+1)
                     writer.add_scalar('epoch/train_structRate', total_structs_right / length / 7, epoch + 1)
@@ -196,6 +198,12 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                                      f'RATE: Word: {total_words_right / length:.4f}  '
                                      f'struct: {total_structs_right / length / 7:.4f} Exp: {total_exp_right / cal_num:.4f} '
                                      f'samples: {accumulated_samples}')
+
+                # Log attention parameters occasionally during training
+                if epoch_step_count % 500 == 0:
+                    alpha_weight = model.decoder.alpha_sum_parent_weight.item()
+                    alpha_decay = model.decoder.alpha_decay.item()
+                    print(f'\n  📊 Step {epoch_step_count}: alpha_sum_parent_weight = {alpha_weight:.4f}, alpha_decay = {alpha_decay:.4f}')
 
                 # Reset accumulators
                 loss_dt, word_loss_dt, struct_loss_dt, parent_loss_dt, kl_loss_dt, eos_penalty_dt = 0, 0, 0, 0, 0, 0
@@ -211,6 +219,11 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
             print(f"   Difference: {dataset_size - total_samples_processed} samples")
         else:
             print(f"\n✓ Epoch {epoch+1} complete: {total_samples_processed}/{dataset_size} samples processed ({epoch_step_count} optimizer steps)")
+
+        # Log attention parameters at end of epoch
+        alpha_weight = model.decoder.alpha_sum_parent_weight.item()
+        alpha_decay = model.decoder.alpha_decay.item()
+        print(f"  📊 Epoch {epoch+1} final: alpha_sum_parent_weight = {alpha_weight:.4f}, alpha_decay = {alpha_decay:.4f}")
 
         return loss_meter.mean, total_words_right / length, total_structs_right / length / 7, total_exp_right / cal_num
 

@@ -59,16 +59,16 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
             else:
                 item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup)
         elif gtd_list[nodeid][0] == '\\log':
-            l_sup, sup = None, None
+            l_sup, sub = None, None
             for i in range(len(child_list)):
                 if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
-                if child_list[i][2].lower() in ['sup']:
-                    sup = convert(child_list[i][1], gtd_list)
+                if child_list[i][2].lower() in ['sub']:
+                    sub = convert(child_list[i][1], gtd_list)
             if l_sup is None:
-                item = Symbol(value='\\log', sup=sup)
+                item = Symbol(value='\\log', sub=sub)
             else:
-                item = LogConstruct(construct_type='\\lognl', l_sup=l_sup, sup=sup)
+                item = LogConstruct(construct_type='\\lognl', l_sup=l_sup)
 
         elif gtd_list[nodeid][0] == '\\stack':
             inside = None

@@ -21,9 +21,10 @@ class SAN_decoder(nn.Module):
         self.word_num = params['word_num']
         self.struct_num = params['struct_num'] # 7: below, above, inside, right, sub, sup, L-sup
         # the relation in the other they are encoded in the hybrid tree
-        self.struct_dict = self.params['words'].encode(['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right'])
-        self.STRUCT_ID = self.params['words'].encode(['struct'])[0]
-        self.RIGHT_ID = self.params['words'].encode(['right'])[0]
+        self.structs_str = ['above', 'below', 'sub', 'sup', 'L-sup', 'inside', 'right']
+        self.struct_dict = self.params['words'].encode(self.structs_str)
+        self.STRUCT_ID = torch.LongTensor(self.params['words'].encode(['struct']))
+        self.RIGHT_ID = torch.LongTensor(self.params['words'].encode(['right']))
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet']['conv1_stride']
 
         self.threshold = params['hybrid_tree']['threshold']
@@ -44,6 +45,14 @@ class SAN_decoder(nn.Module):
         # attention
         self.word_attention = Attention(params)
 
+        # Learnable weight for balancing alpha_sum_parent vs alpha (latest symbol)
+        alpha_sum_parent_weight_init = params.get('attention', {}).get('alpha_sum_parent_weight', 1.0)
+        self.alpha_sum_parent_weight = nn.Parameter(torch.tensor(alpha_sum_parent_weight_init))
+
+        # Learnable decay factor for parent attention (exponential decay over time)
+        alpha_decay_init = params.get('attention', {}).get('alpha_decay', 1.0)
+        self.alpha_decay = nn.Parameter(torch.tensor(alpha_decay_init))
+
         # state to word/struct
         self.word_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
         self.word_embedding_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
@@ -51,6 +60,14 @@ class SAN_decoder(nn.Module):
         self.word_convert = nn.Linear(self.hidden_size // 2, self.word_num)
 
         self.struct_convert = nn.Linear(self.hidden_size // 2, self.struct_num)
+
+        self.word_log_priors = None
+        if params['decoder'].get('priors'):
+            priors = params['decoder']['priors']
+            self.word_log_priors = torch.zeros(1, self.word_num).to(device=self.device)
+            for item in priors:
+                _index = self.params['words'].encode([item[0]])[0]
+                self.word_log_priors[0, _index] = item[1]
 
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
@@ -88,7 +105,7 @@ class SAN_decoder(nn.Module):
                 # Compute attention with dual aggregates (return debug values for visualization)
                 word_context_vec, word_alpha, alpha_query, alpha_coverage = self.word_attention(
                     cnn_features, word_hidden_first,
-                    alpha_sum_completed, alpha_sum_active + alpha_prev, images_mask, return_debug=True)
+                    alpha_sum_completed, alpha_sum_active * self.alpha_sum_parent_weight + alpha_prev, images_mask, return_debug=True)
 
                 hidden = self.word_out_gru(word_context_vec, word_hidden_first)
 
@@ -102,8 +119,13 @@ class SAN_decoder(nn.Module):
                     word_out_state = current_state + word_weighted_embedding + word_context_weighted
 
                 word_prob = self.word_convert(word_out_state)
+                word_log_prob = torch.log_softmax(word_prob, dim=1)  # normalize to log P(word|image)
+                if self.word_log_priors is not None:
+                    word_log_prob = word_log_prob + self.word_log_priors  # add log P(word|context)
                 p_word = word
-                _, word = word_prob.max(1)
+
+                p_word_str = self.params['words'].words_index_dict[p_word.item()]
+                _, word = word_log_prob.max(1)
                 word_str = self.params['words'].words_index_dict[word.item()]
 
                 if word_str == 'struct':
@@ -112,14 +134,17 @@ class SAN_decoder(nn.Module):
                     structs = torch.sigmoid(struct_prob)
 
                     alpha_struct = word_alpha + alpha_prev
-                    alpha_sum_active = alpha_sum_active + alpha_struct
+                    alpha_sum_active = alpha_sum_active * self.alpha_decay + alpha_struct
                     alpha_prev = alpha_prev_init
 
                     # Push active structures to stack (in reverse order)
                     # Each item stores: (relation, hidden_state, parent_word, parent_id)
-                    for num in range(structs.shape[1]-1, -1, -1):
-                        if structs[0][num] > self.threshold:
-                            struct_list.append((self.struct_dict[num], hidden, p_word, pid, alpha_sum_active, alpha_struct))
+                    relations = get_allowed_relations(p_word_str)
+                    for rel_str in reversed(relations):
+                        rel_num = self.structs_str.index(rel_str)
+                        if structs[0][rel_num] > self.threshold:
+                            struct_word = torch.LongTensor([self.struct_dict[rel_num]])
+                            struct_list.append((struct_word, hidden, p_word, pid, alpha_sum_active, alpha_struct))
                     if len(struct_list) == 0:
                         # todo: what to do here?
                         break
@@ -128,11 +153,11 @@ class SAN_decoder(nn.Module):
                     word, parent_hidden, p_word, pid, alpha_sum_active, alpha_struct = struct_list.pop()
                     if word == self.RIGHT_ID:
                         # completed the struct (e.g. \frac or a sup)
-                        alpha_sum_active = alpha_sum_active - alpha_struct
+                        alpha_sum_active = (alpha_sum_active - alpha_struct) / self.alpha_decay
                         alpha_prev = alpha_struct
 
-                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
-                    word_str = self.params['words'].words_index_dict[word]
+                    word_embedding = self.embedding(word).to(device=self.device)
+                    word_str = self.params['words'].words_index_dict[word.item()]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
 
                     allowed_relations = get_allowed_relations(p_word_str)
@@ -152,11 +177,11 @@ class SAN_decoder(nn.Module):
                     word, parent_hidden, p_word, pid, alpha_sum_active, alpha_struct = struct_list.pop()
                     if word == self.RIGHT_ID:
                         # completed the struct (e.g. \frac or a sup)
-                        alpha_sum_active = alpha_sum_active - alpha_struct
+                        alpha_sum_active = (alpha_sum_active - alpha_struct) / self.alpha_decay
                         alpha_prev = alpha_struct
 
-                    word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
-                    word_str = self.params['words'].words_index_dict[word]
+                    word_embedding = self.embedding(word).to(device=self.device)
+                    word_str = self.params['words'].words_index_dict[word.item()]
                     p_word_str = self.params['words'].words_index_dict[p_word.item()]
                     p_re = word_str # above, below, sub, sup, etc
                 else:
@@ -168,7 +193,7 @@ class SAN_decoder(nn.Module):
                     # in default left-to-right, the current symbol is the parent of the next
                     p_re = 'right'
                     pid = cid 
-                    word_embedding = self.embedding(word)
+                    word_embedding = self.embedding(word).to(device=self.device)
                     parent_hidden = hidden.clone()
                     alpha_sum_completed = alpha_sum_completed + alpha_prev
                     alpha_prev = word_alpha

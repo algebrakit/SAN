@@ -45,6 +45,14 @@ class SAN_decoder(nn.Module):
         # attention
         self.word_attention = Attention(params)
 
+        # Learnable weight for balancing alpha_sum_parent vs alpha (latest symbol)
+        alpha_sum_parent_weight_init = params.get('attention', {}).get('alpha_sum_parent_weight', 1.0)
+        self.alpha_sum_parent_weight = nn.Parameter(torch.tensor(alpha_sum_parent_weight_init))
+
+        # Learnable decay factor for parent attention (exponential decay over time)
+        alpha_decay_init = params.get('attention', {}).get('alpha_decay', 1.0)
+        self.alpha_decay = nn.Parameter(torch.tensor(alpha_decay_init))
+
         # state to word/struct
         # Linear mappings W_p, W_g, W_t in the article, used before aggregation
         self.word_state_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
@@ -133,7 +141,7 @@ class SAN_decoder(nn.Module):
                 alpha = alpha_current * (1 - alpha_relation_mask)                
                 word_context_vec, word_alpha = self.word_attention(
                     cnn_features, word_hidden_first,
-                    alpha_sum_completed, alpha_sum_parent + alpha, images_mask)
+                    alpha_sum_completed, alpha_sum_parent*self.alpha_sum_parent_weight + alpha, images_mask)
                 
                 # GRU-beta
                 # hidden is c^{\alpha}_{\beta} in the article
@@ -150,16 +158,26 @@ class SAN_decoder(nn.Module):
                 alpha_right_relation_mask = (current_parent_type == self.RIGHT_ID).float().view(batch_size, 1, 1, 1)
                 alpha_not_eos_mask = (current_type != self.EOS_ID).float().view(batch_size, 1, 1, 1)
 
-                # Update sum of active parents as follows:
-                # - If current match is 'struct':
-                #      e.g. previous = '\frac', current = 'struct'.
-                #      then add weights of this 'struct' and the previous '\fact'
-                # - ElseIf parent is 'right'
-                #      we are moving out of a construct, so
-                #      subtract current alpha ('struct' + '\frac')
-                alpha_sum_parent = alpha_sum_parent\
-                        + alpha_struct_mask * (word_alpha + alpha_current)\
-                        - (1-alpha_struct_mask) * alpha_right_relation_mask * alpha_current
+                # Update sum of active parents with symmetric decay logic:
+                # Three mutually exclusive cases:
+                # 1. Entering construct (current is 'struct'): Apply decay, add new attention
+                # 2. Exiting construct (parent is 'right'): Subtract attention, divide by decay (restore)
+                # 3. Regular symbol: No change to parent attention
+
+                # Case 1: Entering construct (current is 'struct')
+                alpha_sum_parent_struct = alpha_struct_mask * (
+                    alpha_sum_parent * self.alpha_decay + (word_alpha + alpha_current)
+                )
+
+                # Case 2: Exiting construct (parent is 'right') - symmetric restoration
+                alpha_sum_parent_right = (1 - alpha_struct_mask) * alpha_right_relation_mask * (
+                    (alpha_sum_parent - alpha_current) / self.alpha_decay
+                )
+
+                # Case 3: Regular symbol (no struct, no right) - no change
+                alpha_sum_parent_regular = (1 - alpha_struct_mask) * (1 - alpha_right_relation_mask) * alpha_sum_parent
+
+                alpha_sum_parent = alpha_sum_parent_struct + alpha_sum_parent_right + alpha_sum_parent_regular
 
                 # Update weight of completed symbols as follows
                 # - If current match is 'struct' or parent is a relation other than 'right'

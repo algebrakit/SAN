@@ -5,25 +5,25 @@ experiment: "SAN"
 seed: 20200814
 
 # Training parameters
-epoches: 200
-batch_size: 25 # needed to support the largest images
-eval_batch_size: 50  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
+epoches: 50
+batch_size: 15 # needed to support the largest images
+eval_batch_size: 40  # Eval can use larger batches (no gradients/accumulation). Default: 2× batch_size
 max_batch_size: 1000  # used for most images, which are much smaller than the largest
 workers: 2  
 
 # Bucketing strategy - choose ONE:
 # Option 1: Percentile-based (recommended for skewed distributions - maximizes diversity for small images)
-bucket_percentiles: [0, 30,60, 90, 98, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
+bucket_percentiles: [0, 30, 60, 80, 90, 98, 99.7, 99.9, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
 # bucket_percentiles: [0, 80, 98, 99.5, 99.9, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
 # bucket_percentiles: [0, 70, 98, 99.7, 100]  # Creates 5 buckets: 70% smallest images → huge diversity, 2% largest → smaller buckets
-# bucket_trunc_largest: None
+bucket_trunc_largest: 7
 # Option 2: Fixed-size (fallback - comment out bucket_percentiles to use this)
 # bucket_size_multiplier: 10000  # nr of data items per bucket is batch_size x bucket_size_multiplier
 
 use_dynamic_batching: True  # Adjust batch_size per bucket: short sequences get larger batches for better GPU utilization
 min_samples_per_step: 32 # default: equal to max_batch_size
 optimizer: Adadelta
-lr: 0.1
+lr: 0.3
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
@@ -84,7 +84,11 @@ attention:
   coverage_completed_weight: 3.0
   coverage_active_weight: 2.0
   features_weight: 0.5
-  position_encoding_weight: 1.0  
+  position_encoding_weight: 1.0
+  # Learnable weight to balance alpha_sum_parent (parent constructs) vs alpha (latest symbol)
+  alpha_sum_parent_weight: 1.0
+  # Learnable exponential decay factor for parent attention (0.0=full decay, 1.0=no decay)
+  alpha_decay: 0.5
 
 # hybrid tree
 hybrid_tree:

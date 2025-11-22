@@ -33,7 +33,7 @@ eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
 # word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/chrome-ak/word.txt'
+word_path: '/Users/martijnslob/github/SAN/data/chrome-mathwriting-ak/word.txt'
 
 # Encoder selection
 encoder:
@@ -57,11 +57,23 @@ decoder:
   cell: 'GRU'
   input_size: 256
   hidden_size: 256
+  # priors:
+  #    - ['\alpha', -0.1]
+  #    - ['<eos>', 2]
 
 # Attention parameters
 attention:
   attention_dim: 512
   use_position_encoding: True  # Set to True to enable positional encoding (requires retraining)
+  # Learnable weights to balance attention terms (initialized values)
+  query_weight: 2.0
+  coverage_weight: 4.0
+  features_weight: 0.5
+  position_encoding_weight: 1.0  
+  # Learnable weight to balance alpha_sum_parent (parent constructs) vs alpha (latest symbol)
+  alpha_sum_parent_weight: 1.0
+  # Learnable exponential decay factor for parent attention (0.0=full decay, 1.0=no decay)
+  alpha_decay: 0.9
 
 # hybrid tree
 hybrid_tree:
@@ -72,7 +84,7 @@ optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: True
 # checkpoint: "resources/model.pth"
-checkpoint: "../../model/training/checkpoints/chrome-ak/best.pth"
+checkpoint: "../../model/training/checkpoints/chrome-mathwriting-ak/best-decay.pth"
 
 # TensorBoard path
 log_dir: 'logs'

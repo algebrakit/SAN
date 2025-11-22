@@ -32,7 +32,7 @@ train_label_path: 'data/chrome2013/train/train_label.pkl'
 eval_image_path: 'data/chrome2013/test/test_image.pkl'
 eval_label_path: 'data/chrome2013/test/test_label.pkl'
 
-word_path: 'data/mathwriting-chrome2013/word.txt'
+word_path: '../data/chrome-mathwriting-ak/word.txt'
 
 # Encoder selection
 encoder:
@@ -57,11 +57,21 @@ decoder:
   input_size: 256
   hidden_size: 256
   inverse: False
+  eos_penalty: True
 
 # Attention parameters
 attention:
   attention_dim: 512
   use_position_encoding: True  # Set to True to enable positional encoding (requires retraining)
+  # Learnable weights to balance attention terms (initialized values)
+  query_weight: 2.0
+  coverage_weight: 4.0
+  features_weight: 0.5
+  position_encoding_weight: 1.0  
+  # Learnable weight to balance alpha_sum_parent (parent constructs) vs alpha (latest symbol)
+  alpha_sum_parent_weight: 1.0
+  # Learnable exponential decay factor for parent attention (0.0=full decay, 1.0=no decay)
+  alpha_decay: 0.5
 
 # hybrid tree
 hybrid_tree:
@@ -76,7 +86,8 @@ eos_missing_weight: 3.0  # Penalty for not predicting EOS when needed (hallucina
 optimizer_save: False
 checkpoint_dir: 'training/checkpoints'
 finetune: True
-checkpoint: "training/checkpoints/best.pth"
+#checkpoint: "training/checkpoints/best.pth"
+checkpoint: "training/checkpoints/chrome-mathwriting-ak/best-decay.pth"
 
 # TensorBoard path
 log_dir: 'logs'
