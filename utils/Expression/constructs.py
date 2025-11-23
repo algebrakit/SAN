@@ -8,6 +8,9 @@ from .base import LatexItem
 if TYPE_CHECKING:
     from .expression import Expression
 
+# NOTE: Respect the following order:
+# below, above, sub, sup, L-sup, inside, right
+# pay especially attention to sub, sup
 
 class Symbol(LatexItem):
     """Represents a single symbol (letter, number, operator, etc.) with optional sub/superscripts."""
@@ -106,12 +109,12 @@ class AccentConstruct(Construct):
         child_latex = self.child.toLatex()
         result = f"{self.construct_type} {{ {child_latex} }}"
 
-        if self.sup:
-            sup_latex = self.sup.toLatex() if self.sup else ""
-            result += f" ^ {{ {sup_latex} }}"
         if self.sub:
             sub_latex = self.sub.toLatex() if self.sub else ""
             result += f" _ {{ {sub_latex} }}"
+        if self.sup:
+            sup_latex = self.sup.toLatex() if self.sup else ""
+            result += f" ^ {{ {sup_latex} }}"
 
         return result
         
@@ -150,7 +153,7 @@ class RowConstruct(Construct):
         inside_latex = self.inside.toLatex() if self.inside else ""
         result = f"{self.construct_type} {{ {inside_latex} }}"
         if self.below:
-            result += self.below.toLatex()
+            result += " " + self.below.toLatex()
         return result
 
     def toLatex_matrixForm(self) -> str:
@@ -346,8 +349,6 @@ class LogConstruct(Construct):
         self.sub = sub
 
         # Set parent references
-        if self.l_sup:
-            self.l_sup.parent = self
         if self.sub:
             self.sub.parent = self
         if self.sup:

@@ -38,9 +38,12 @@ class Expression:
         from .gtd_parser import parse_gtd
         return parse_gtd(gtd_list)
 
-    def toLatex(self) -> str:
+    def toLatex(self, convertMatrices: bool = True) -> str:
         """Convert this expression to LaTeX by concatenating all items."""
-        _items = _handleStackConstructs(self.items)
+        if convertMatrices:
+            _items = _handleStackConstructs(self.items)
+        else:
+            _items = self.items    
         return ' '.join(item.toLatex() for item in _items)
 
     def to_hybrid(self) -> List[List[Union[int, str, None]]]:
