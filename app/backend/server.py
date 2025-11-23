@@ -26,6 +26,7 @@ CORS(app)  # Enable CORS for all routes
 # Global inference model (loaded once at startup)
 inference_model = None
 STROKE_LENGTH = 50  # pixels
+MIN_IMAGE_SIZE = 32 # min size of pixels (2*16 so there are at least 2 encoder outputs in each dimension)
 
 def initialize_model():
     """Initialize the inference model at server startup."""
@@ -83,11 +84,17 @@ def convert_strokes_to_latex():
         
         # Rescale strokes
         strokes_norm, size = rescale_strokes(strokes, stroke_length)
-        
+
+        # images must be at least 32x32 (2x2 encoder values) to prevent infinite looping in the decoder
+        size_x = int(size[0])+4
+        size_y = int(size[1])+4
+        if size_x < MIN_IMAGE_SIZE: size_x = MIN_IMAGE_SIZE
+        if size_y < MIN_IMAGE_SIZE: size_y = MIN_IMAGE_SIZE
+
         # Convert to image
         img = strokes_to_image(
             strokes_norm, 
-            image_size=(int(size[0])+4, int(size[1])+4), 
+            image_size=(size_x, size_y), 
             line_thickness=2, 
             padding=2
         )
