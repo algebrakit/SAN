@@ -633,111 +633,169 @@ ${expression}$
                 glyph_idx += 1  # Skip the brace glyph
                 continue  # Skip common bbox append
             # Special handling for sqrt radical
-            elif token == '\\sqrt' and glyph_idx in sqrt_boxes:
-                # Use the sqrt overline box to determine proper extent
-                box_x, box_y, box_width, box_height = sqrt_boxes[glyph_idx]
+            elif token == '\\sqrt':
+                # Check if this sqrt has an index: next token is '['
+                has_index = token_idx < len(tokens) and tokens[token_idx] == '['
 
-                # Sqrt should extend from the radical to the end of actual content
-                # and from the top of the overline down to cover all content below
-                sqrt_x_min = x
+                # Track the rightmost x-position of index glyphs (where sqrt bbox should start)
+                index_x_max = None
 
-                # Find vertical extent by scanning all glyphs under the overline
-                # In DVI coords: y increases downward, so max_y is the bottom
-                min_y = y
-                max_y = y
-                radicand_glyph_count = 0  # Count glyphs in radicand to skip them later
+                # If there's an index, we need to process index glyphs first
+                # Index glyphs appear at elevated y-position before the radical glyph
+                if has_index:
+                    # Skip opening '[' token
+                    if token_idx < len(tokens) and tokens[token_idx] == '[':
+                        token_idx += 1
 
-                # The overline box width tells us the horizontal extent of the radicand
-                # box_x is where the overline starts, box_width is its length
-                radicand_x_max = box_x + box_width
+                    # Process index glyphs until we find the radical
+                    while glyph_idx < len(glyphs) and glyph_idx not in sqrt_boxes:
+                        x, y, char, width, height, depth = glyphs[glyph_idx]
 
-                prev_glyph_right = box_x  # Track previous glyph's right edge
+                        # Track the rightmost edge of index glyphs
+                        # The sqrt bbox should start after the index to avoid overlap
+                        if index_x_max is None:
+                            index_x_max = x + width
+                        else:
+                            index_x_max = max(index_x_max, x + width)
 
-                for next_glyph_x, next_glyph_y, _, next_width, next_height, next_depth in glyphs[glyph_idx + 1:]:
-                    # Stop if we've gone past the overline box or hit another sqrt
-                    if next_glyph_x >= radicand_x_max or next_glyph_y > 5.0:
-                        break
+                        if token_idx < len(tokens):
+                            index_token = tokens[token_idx]
+                            token_idx += 1
 
-                    # Detect gaps that indicate non-continuous content
-                    # - Backwards jump (gap < -1.0) indicates fraction denominator or other content
-                    # - Large forward gap (> 5.0) indicates next expression part
-                    # Stop processing entirely - vertical extent should only cover continuous content
-                    gap = next_glyph_x - prev_glyph_right
-                    if gap < -1.0 or gap > 5.0:
-                        break
+                            # Create bbox for index glyph
+                            total_height = height + depth
+                            bbox = {
+                                "token": index_token,
+                                "xMin": float(x),
+                                "yMin": float(-y - total_height),
+                                "xMax": float(x + width),
+                                "yMax": float(-y)
+                            }
+                            bboxes.append(bbox)
 
-                    # Count continuous radicand glyphs and update extents
-                    radicand_glyph_count += 1
-                    prev_glyph_right = next_glyph_x + next_width
+                        glyph_idx += 1
 
-                    # Update vertical extent for continuous radicand glyphs only
-                    min_y = min(min_y, next_glyph_y)
-                    glyph_total_height = next_height + next_depth
-                    max_y = max(max_y, next_glyph_y + glyph_total_height)
+                    # Skip closing ']' token
+                    if token_idx < len(tokens) and tokens[token_idx] == ']':
+                        token_idx += 1
 
-                # Create bbox that covers from top of radicand to bottom of content
-                # Use overline box width for horizontal extent (not actual glyph positions)
-                # This ensures the sqrt bbox covers the full radicand including fractions
-                # In standard coords (negated DVI): yMin=bottom, yMax=top
-                bbox = {
-                    "token": token,
-                    "xMin": float(sqrt_x_min),
-                    "yMin": float(-max_y - 2.0),  # Bottom of content (most negative)
-                    "xMax": float(radicand_x_max),  # Use overline box width
-                    "yMax": float(-min_y + 2.0)  # Top of radicand (least negative)
-                }
-                bboxes.append(bbox)
-                glyph_idx += 1  # Skip the radical glyph
+                # Now process the radical if we're at one
+                if glyph_idx in sqrt_boxes:
+                    x, y, char, width, height, depth = glyphs[glyph_idx]
+                    # Use the sqrt overline box to determine proper extent
+                    box_x, box_y, box_width, box_height = sqrt_boxes[glyph_idx]
 
-                # Create separate bboxes for radicand content
-                # The radicand glyphs need their own bboxes so they get synthesized
-                for _ in range(radicand_glyph_count):
+                    # Find vertical extent by scanning all glyphs under the overline
+                    # In DVI coords: y increases downward, so max_y is the bottom
+                    min_y = y
+                    max_y = y
+                    radicand_glyph_count = 0  # Count glyphs in radicand to skip them later
+
+                    # The overline box width tells us the horizontal extent of the radicand
+                    # box_x is where the overline starts, box_width is its length
+                    radicand_x_max = box_x + box_width
+
+                    prev_glyph_right = box_x  # Track previous glyph's right edge
+
+                    for next_glyph_x, next_glyph_y, _, next_width, next_height, next_depth in glyphs[glyph_idx + 1:]:
+                        # Stop if we've gone past the overline box or hit another sqrt
+                        if next_glyph_x >= radicand_x_max or next_glyph_y > 5.0:
+                            break
+
+                        # Detect gaps that indicate non-continuous content
+                        # - Backwards jump (gap < -1.0) indicates fraction denominator or other content
+                        # - Large forward gap (> 5.0) indicates next expression part
+                        # Stop processing entirely - vertical extent should only cover continuous content
+                        gap = next_glyph_x - prev_glyph_right
+                        if gap < -1.0 or gap > 5.0:
+                            break
+
+                        # Count continuous radicand glyphs and update extents
+                        radicand_glyph_count += 1
+                        prev_glyph_right = next_glyph_x + next_width
+
+                        # Update vertical extent for continuous radicand glyphs only
+                        min_y = min(min_y, next_glyph_y)
+                        glyph_total_height = next_height + next_depth
+                        max_y = max(max_y, next_glyph_y + glyph_total_height)
+
+                    # Create bbox that covers from top of radicand to bottom of content
+                    # Use overline box width for horizontal extent (not actual glyph positions)
+                    # This ensures the sqrt bbox covers the full radicand including fractions
+                    # In standard coords (negated DVI): yMin=bottom, yMax=top
+                    # Note: If index exists, start after the index to avoid overlap
+                    # Otherwise start at radical glyph position
+                    bbox = {
+                        "token": token,
+                        "xMin": float(index_x_max if index_x_max is not None else x),
+                        "yMin": float(-max_y - 2.0),  # Bottom of content (most negative)
+                        "xMax": float(radicand_x_max),  # Use overline box width
+                        "yMax": float(-min_y + 2.0)  # Top of radicand (least negative)
+                    }
+                    bboxes.append(bbox)
+                    glyph_idx += 1  # Skip the radical glyph
+
+                    # Create separate bboxes for radicand content
+                    # The radicand glyphs need their own bboxes so they get synthesized
+                    for _ in range(radicand_glyph_count):
+                        if glyph_idx >= len(glyphs):
+                            break
+
+                        # Get radicand glyph info
+                        x, y, char, width, height, depth = glyphs[glyph_idx]
+                        total_height = height + depth
+
+                        # Get corresponding token (should be the radicand content)
+                        radicand_token = tokens[token_idx] if token_idx < len(tokens) else char
+
+                        # Create bbox for this radicand glyph
+                        radicand_bbox = {
+                            "token": radicand_token,
+                            "xMin": float(x),
+                            "yMin": float(-y - total_height),
+                            "xMax": float(x + width),
+                            "yMax": float(-y)
+                        }
+                        bboxes.append(radicand_bbox)
+
+                        glyph_idx += 1
+                        token_idx += 1
+
+                    # Skip any spacing tokens like '\ ' that don't correspond to glyphs
+                    while token_idx < len(tokens) and tokens[token_idx] in ['\\ ', '\\,', '\\;', '\\:', '\\!', ' ']:
+                        token_idx += 1
+
+                    continue  # Skip the common bbox append at line 510
+            # Special handling for \lognl custom macro
+            # \lognl[n] expands to: superscript 'n' + 'l' + 'o' + 'g'
+            elif token == '\\lognl':
+                # \lognl produces N+3 glyphs: N superscript characters, then 'l', 'o', 'g'
+                # We need to dynamically count how many superscript glyphs there are
+
+                # Count superscript tokens by looking ahead for '[' ... ']' sequence
+                superscript_token_count = 0
+                if token_idx < len(tokens) and tokens[token_idx] == '[':
+                    # Scan ahead to count tokens between brackets
+                    scan_idx = token_idx + 1
+                    while scan_idx < len(tokens) and tokens[scan_idx] != ']':
+                        superscript_token_count += 1
+                        scan_idx += 1
+
+                # Process N superscript glyphs (all at elevated y-position)
+                for i in range(superscript_token_count):
                     if glyph_idx >= len(glyphs):
                         break
-
-                    # Get radicand glyph info
-                    x, y, char, width, height, depth = glyphs[glyph_idx]
-                    total_height = height + depth
-
-                    # Get corresponding token (should be the radicand content)
-                    radicand_token = tokens[token_idx] if token_idx < len(tokens) else char
-
-                    # Create bbox for this radicand glyph
-                    radicand_bbox = {
-                        "token": radicand_token,
-                        "xMin": float(x),
-                        "yMin": float(-y - total_height),
-                        "xMax": float(x + width),
-                        "yMax": float(-y)
+                    superscript_x, superscript_y, superscript_char, superscript_width, superscript_height, superscript_depth = glyphs[glyph_idx]
+                    superscript_total_height = superscript_height + superscript_depth
+                    bbox = {
+                        "token": superscript_char,  # Use the actual character
+                        "xMin": float(superscript_x),
+                        "yMin": float(-superscript_y - superscript_total_height),
+                        "xMax": float(superscript_x + superscript_width),
+                        "yMax": float(-superscript_y)
                     }
-                    bboxes.append(radicand_bbox)
-
+                    bboxes.append(bbox)
                     glyph_idx += 1
-                    token_idx += 1
-
-                # Skip any spacing tokens like '\ ' that don't correspond to glyphs
-                while token_idx < len(tokens) and tokens[token_idx] in ['\\ ', '\\,', '\\;', '\\:', '\\!', ' ']:
-                    token_idx += 1
-
-                continue  # Skip the common bbox append at line 510
-            # Special handling for \lognl custom macro
-            # \lognl{n} expands to: superscript 'n' + 'l' + 'o' + 'g'
-            elif token == '\\lognl':
-                # \lognl produces 4 glyphs: superscript digit, then 'l', 'o', 'g'
-                # We need to create separate bboxes for each glyph
-
-                # First glyph: superscript (current glyph)
-                superscript_x, superscript_y, superscript_char, superscript_width, superscript_height, superscript_depth = glyphs[glyph_idx]
-                superscript_total_height = superscript_height + superscript_depth
-                bbox = {
-                    "token": superscript_char,  # Use the actual digit character
-                    "xMin": float(superscript_x),
-                    "yMin": float(-superscript_y - superscript_total_height),
-                    "xMax": float(superscript_x + superscript_width),
-                    "yMax": float(-superscript_y)
-                }
-                bboxes.append(bbox)
-                glyph_idx += 1
 
                 # Next 3 glyphs: 'l', 'o', 'g'
                 # Collect all three glyphs first to normalize their heights
@@ -766,14 +824,17 @@ ${expression}$
                     bboxes.append(bbox)
                     glyph_idx += 1
 
-                # Skip the next 3 tokens: '[', digit, ']'  (e.g., [3] in \lognl[3]{x})
+                # Skip the bracket tokens: '[', ..., ']'  (e.g., [10] in \lognl[10]{x})
                 # \lognl takes an optional argument in square brackets
                 if token_idx < len(tokens) and tokens[token_idx] == '[':
                     token_idx += 1  # Skip '['
-                    if token_idx < len(tokens):
-                        token_idx += 1  # Skip the digit
+                    # Skip all superscript tokens
+                    for i in range(superscript_token_count):
+                        if token_idx < len(tokens):
+                            token_idx += 1
+                    # Skip ']'
                     if token_idx < len(tokens) and tokens[token_idx] == ']':
-                        token_idx += 1  # Skip ']'
+                        token_idx += 1
                 # Continue to next token without appending another bbox
                 continue
             else:
@@ -785,6 +846,11 @@ ${expression}$
                 # These are positioned at vertical center of content, not baseline
                 # Characteristics: large depth, elevated y-position, small height
                 is_extended_delimiter = (depth > 10.0 and y > 5.0 and height < 1.0)
+
+                # Detect inline large operators (sum, prod, int, bigcup, etc.)
+                # These have similar characteristics but need different positioning
+                # Characteristics: large depth (> 9.0), elevated y (5.0 < y < 10.0), minimal height (< 1.0)
+                is_large_operator = (depth > 9.0 and 5.0 < y < 10.0 and height < 1.0)
 
                 if is_extended_delimiter:
                     # Extended delimiters need special positioning
@@ -798,6 +864,102 @@ ${expression}$
                         "xMax": float(x + width),
                         "yMax": float(0.0)                        # Top aligned with baseline
                     }
+                elif is_large_operator:
+                    # Large operators in inline mode need baseline alignment
+                    # Position so the operator top aligns with baseline, extending downward
+                    # This ensures the operator aligns with following content on the same baseline
+                    bbox = {
+                        "token": token,
+                        "xMin": float(x),
+                        "yMin": float(-total_height),  # Bottom edge extends below baseline
+                        "xMax": float(x + width),
+                        "yMax": float(0.0)             # Top aligned with baseline
+                    }
+
+                    # Handle subscript/superscript for large operators
+                    # In DVI: operator, superscript glyphs, subscript glyphs
+                    # In tokens: operator, subscript tokens, superscript tokens
+                    # Need to reorder glyph consumption to match token order
+
+                    # Append the operator bbox first
+                    bboxes.append(bbox)
+                    glyph_idx += 1
+
+                    # Look ahead to detect superscript and subscript glyphs
+                    superscript_glyph_count = 0
+                    subscript_glyph_count = 0
+
+                    # Scan glyphs after the operator to count superscript (y > 2.0) and subscript (y < -1.0)
+                    # Only consider glyphs that are horizontally near the operator (within width + 15 units)
+                    operator_x_max = x + width + 15.0  # Generous range for sub/superscripts
+
+                    for i, (gx, gy, _, gw, gh, gd) in enumerate(glyphs[glyph_idx:], start=glyph_idx):
+                        # Stop if we've moved too far horizontally (beyond operator's immediate vicinity)
+                        if gx > operator_x_max:
+                            break
+
+                        # Superscript glyphs have elevated positive y-position (above baseline in DVI)
+                        if gy > 2.0 and gy < 8.0:  # Superscript range
+                            superscript_glyph_count += 1
+                        # Subscript glyphs have negative y-position (below baseline in DVI)
+                        elif gy < -1.0:
+                            subscript_glyph_count += 1
+                        else:
+                            # No more sub/superscript glyphs
+                            break
+
+                    # Now process in token order: subscripts first, then superscripts
+                    # Process subscript glyphs (which appear AFTER superscript glyphs in DVI)
+                    subscript_start_glyph = glyph_idx + superscript_glyph_count
+                    for i in range(subscript_glyph_count):
+                        if subscript_start_glyph + i >= len(glyphs):
+                            break
+                        if token_idx >= len(tokens):
+                            break
+
+                        gx, gy, gchar, gw, gh, gd = glyphs[subscript_start_glyph + i]
+                        sub_token = tokens[token_idx]
+                        token_idx += 1
+
+                        # Create bbox for subscript glyph
+                        sub_total_height = gh + gd
+                        sub_bbox = {
+                            "token": sub_token,
+                            "xMin": float(gx),
+                            "yMin": float(-gy - sub_total_height),
+                            "xMax": float(gx + gw),
+                            "yMax": float(-gy)
+                        }
+                        bboxes.append(sub_bbox)
+
+                    # Process superscript glyphs (which appear BEFORE subscript glyphs in DVI)
+                    for i in range(superscript_glyph_count):
+                        if glyph_idx + i >= len(glyphs):
+                            break
+                        if token_idx >= len(tokens):
+                            break
+
+                        gx, gy, gchar, gw, gh, gd = glyphs[glyph_idx + i]
+                        sup_token = tokens[token_idx]
+                        token_idx += 1
+
+                        # Create bbox for superscript glyph
+                        sup_total_height = gh + gd
+                        sup_bbox = {
+                            "token": sup_token,
+                            "xMin": float(gx),
+                            "yMin": float(-gy - sup_total_height),
+                            "xMax": float(gx + gw),
+                            "yMax": float(-gy)
+                        }
+                        bboxes.append(sup_bbox)
+
+                    # Advance glyph_idx past all sub/superscript glyphs
+                    glyph_idx += superscript_glyph_count + subscript_glyph_count
+
+                    # Skip the common bbox append since we already appended
+                    continue
+
                 else:
                     # Standard bbox calculation for normal glyphs
                     # Note: DVI y-coordinates go down, we negate for standard math convention
