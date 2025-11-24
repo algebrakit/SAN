@@ -8,6 +8,7 @@ import sys
 sys.path.append('..')
 
 from utils.Expression.gtd_parser import parse_gtd
+from utils.Expression.base import LatexOptions
 from model.utils.utils import load_config, load_checkpoint
 from model.inference.Backbone import Backbone
 from model.training.dataset import Words
@@ -71,7 +72,8 @@ with torch.no_grad():
         if expr is None:
             latex_string = 'illegal'
         else:
-            latex_string = expr.toLatex()
+            options = LatexOptions(convertLog=False, convertMatrices=False)
+            latex_string = expr.toLatex(options)
 
         # latex_list = convert(1, prediction)
         # latex_string = ' '.join(latex_list)
@@ -80,8 +82,8 @@ with torch.no_grad():
         else:
             bad_case[name] = {
                 'label': label,
-                'predi': latex_string,
-                'list': prediction
+                'predi': latex_string
+                # 'list': prediction
             }
 
         count += 1

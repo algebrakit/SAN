@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
-from .base import LatexItem
+from .base import LatexItem, LatexOptions
 
 if TYPE_CHECKING:
     from .expression import Expression
@@ -31,15 +31,18 @@ class Symbol(LatexItem):
         if self.sup:
             self.sup.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert symbol to LaTeX with optional subscript and superscript."""
+        if options is None:
+            options = LatexOptions()
+
         result = self.value
 
         if self.sub:
-            result += f" _ {{ {self.sub.toLatex()} }}"
+            result += f" _ {{ {self.sub.toLatex(options)} }}"
 
         if self.sup:
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 
@@ -71,7 +74,7 @@ class Construct(LatexItem):
             self.sup.parent = self
 
     @abstractmethod
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert construct to LaTeX representation."""
         pass
 
@@ -105,15 +108,18 @@ class AccentConstruct(Construct):
         if self.sup:
             self.sup.parent = self
 
-    def toLatex(self) -> str:
-        child_latex = self.child.toLatex()
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
+        if options is None:
+            options = LatexOptions()
+
+        child_latex = self.child.toLatex(options)
         result = f"{self.construct_type} {{ {child_latex} }}"
 
         if self.sub:
-            sub_latex = self.sub.toLatex() if self.sub else ""
+            sub_latex = self.sub.toLatex(options) if self.sub else ""
             result += f" _ {{ {sub_latex} }}"
         if self.sup:
-            sup_latex = self.sup.toLatex() if self.sup else ""
+            sup_latex = self.sup.toLatex(options) if self.sup else ""
             result += f" ^ {{ {sup_latex} }}"
 
         return result
@@ -148,21 +154,27 @@ class RowConstruct(Construct):
         self.below = below
         inside.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert row to LaTeX: \\row{..&..}"""
-        inside_latex = self.inside.toLatex() if self.inside else ""
+        if options is None:
+            options = LatexOptions()
+
+        inside_latex = self.inside.toLatex(options) if self.inside else ""
         result = f"{self.construct_type} {{ {inside_latex} }}"
         if self.below:
-            result += " " + self.below.toLatex()
+            result += " " + self.below.toLatex(options)
         return result
 
-    def toLatex_matrixForm(self) -> str:
+    def toLatex_matrixForm(self, options: Optional[LatexOptions] = None) -> str:
         """Convert row to LaTeX without \\rows but using '\\': ..&..  \\ ..&.. """
-        inside_latex = self.inside.toLatex() if self.inside else ""
+        if options is None:
+            options = LatexOptions()
+
+        inside_latex = self.inside.toLatex(options) if self.inside else ""
         result = inside_latex
         if self.below:
             next_row = self.below.get_children()[0]
-            result += r" \\ " + next_row.toLatex_matrixForm()
+            result += r" \\ " + next_row.toLatex_matrixForm(options)
         return result
 
     def get_regions(self) -> List[Tuple[str, 'Expression']]:
@@ -219,18 +231,20 @@ class StackConstruct(Construct):
     def set_matrix_type(self, mtype:str):
         self.mtype = mtype
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert stack to LaTeX: \\stack{..&.. \\ ..&.. }^{superscript}"""
+        if options is None:
+            options = LatexOptions()
 
         if self.mtype is None:
-            child_latex = self.inside.toLatex() if self.inside else ""
+            child_latex = self.inside.toLatex(options) if self.inside else ""
             result = f"{self.construct_type} {{ {child_latex} }}"
         else:
-            child_latex = self.inside.get_children()[0].toLatex_matrixForm()
+            child_latex = self.inside.get_children()[0].toLatex_matrixForm(options)
             result = f"\\begin{{{self.mtype}}} {child_latex} \\end{{{self.mtype}}}"
-            
+
         if self.sup:
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 
@@ -261,14 +275,17 @@ class FractionConstruct(Construct):
         if self.below:
             self.below.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert fraction to LaTeX: \\frac{numerator}{denominator}^{superscript}"""
-        above_latex = self.above.toLatex() if self.above else ""
-        below_latex = self.below.toLatex() if self.below else ""
+        if options is None:
+            options = LatexOptions()
+
+        above_latex = self.above.toLatex(options) if self.above else ""
+        below_latex = self.below.toLatex(options) if self.below else ""
         result = f"{self.construct_type} {{ {above_latex} }} {{ {below_latex} }}"
 
         if self.sup:
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 
@@ -307,17 +324,20 @@ class SqrtConstruct(Construct):
         if self.l_sup:
             self.l_sup.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert square root to LaTeX: \\sqrt[degree]{radicand}^{superscript}"""
-        inside_latex = self.inside.toLatex() if self.inside else ""
+        if options is None:
+            options = LatexOptions()
+
+        inside_latex = self.inside.toLatex(options) if self.inside else ""
 
         if self.l_sup:
-            result = f"{self.construct_type} [ {self.l_sup.toLatex()} ] {{ {inside_latex} }}"
+            result = f"{self.construct_type} [ {self.l_sup.toLatex(options)} ] {{ {inside_latex} }}"
         else:
             result = f"{self.construct_type} {{ {inside_latex} }}"
 
         if self.sup:
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 
@@ -354,19 +374,24 @@ class LogConstruct(Construct):
         if self.sup:
             self.sup.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert square root to LaTeX: \\log[base]^{superscript}"""
+        if options is None:
+            options = LatexOptions()
 
         if self.l_sup:
-            result = f"\\lognl [ {self.l_sup.toLatex()} ]"
+            if options.convertLog:
+                result = f"{{}}^{{ {self.l_sup.toLatex(options)} }}\\!\\log"
+            else:
+                result = f"\\lognl [ {self.l_sup.toLatex(options)} ]"
             # sub not allowed
         else:
             result = f"\\log"
             if self.sub:
-                result+= f" _ {{ {self.sub.toLatex()} }}"
+                result += f" _ {{ {self.sub.toLatex(options)} }}"
 
         if self.sup:
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 
@@ -404,19 +429,22 @@ class AboveBelowConstruct(Construct):
         if self.above:
             self.above.parent = self
 
-    def toLatex(self) -> str:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
         """Convert construct to LaTeX: \\construct_{below}^{above}"""
+        if options is None:
+            options = LatexOptions()
+
         result = self.construct_type
 
         if self.below:
-            result += f" _ {{ {self.below.toLatex()} }}"
+            result += f" _ {{ {self.below.toLatex(options)} }}"
 
         if self.above:
-            result += f" ^ {{ {self.above.toLatex()} }}"
+            result += f" ^ {{ {self.above.toLatex(options)} }}"
 
         if self.sup:
             # Additional superscript after the construct
-            result += f" ^ {{ {self.sup.toLatex()} }}"
+            result += f" ^ {{ {self.sup.toLatex(options)} }}"
 
         return result
 

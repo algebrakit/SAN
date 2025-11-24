@@ -60,12 +60,8 @@ COPY --chown=appuser:appuser app/backend/*.py app/backend/*.yaml ./
 COPY --chown=appuser:appuser utils/ ./utils/
 
 # Copy the entire project structure for imports
-COPY --chown=appuser:appuser san_model/ ./san_model/
+COPY --chown=appuser:appuser model/ ./model/
 COPY --chown=appuser:appuser data_tools/ ./data_tools/
-COPY --chown=appuser:appuser inference/ ./inference/
-RUN mkdir -p training
-COPY --chown=appuser:appuser training/__init__.py ./training/
-COPY --chown=appuser:appuser training/dataset.py ./training/
 
 # Copy only essential data files
 RUN mkdir -p resources

@@ -1,7 +1,8 @@
 from utils.Expression.expression import Expression
 
 def main():
-    latex = r'3 \lognl [ 2 ] ( x )'
+    # latex = r'x _ { 2 } ^ { 3 }'
+    latex = r'\overline { S } _ { l } ^ { k }'
     expr = Expression.fromLatex(latex)
     print(latex)
     print(expr.toLatex())

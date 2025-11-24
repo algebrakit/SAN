@@ -205,9 +205,12 @@ x
 y
 z
 |
+\%
+\space
 reserved1
 reserved2
 reserved3
+reserved4
 above
 below
 sub

@@ -1,7 +1,7 @@
 """Expression container class."""
 
 from typing import List, Optional, Union
-from .base import LatexItem
+from .base import LatexItem, LatexOptions
 from .constructs import Symbol, StackConstruct
 
 
@@ -38,13 +38,20 @@ class Expression:
         from .gtd_parser import parse_gtd
         return parse_gtd(gtd_list)
 
-    def toLatex(self, convertMatrices: bool = True) -> str:
-        """Convert this expression to LaTeX by concatenating all items."""
-        if convertMatrices:
+    def toLatex(self, options: Optional[LatexOptions] = None) -> str:
+        """Convert this expression to LaTeX by concatenating all items.
+
+        Args:
+            options: Options controlling the output format. If None, uses default options.
+        """
+        if options is None:
+            options = LatexOptions()
+
+        if options.convertMatrices:
             _items = _handleStackConstructs(self.items)
         else:
-            _items = self.items    
-        return ' '.join(item.toLatex() for item in _items)
+            _items = self.items
+        return ' '.join(item.toLatex(options) for item in _items)
 
     def to_hybrid(self) -> List[List[Union[int, str, None]]]:
         """Convert this expression to hybrid syntax representation.

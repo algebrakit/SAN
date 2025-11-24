@@ -6,6 +6,7 @@ from utils.Expression.gtd_parser import parse_gtd
 from model.utils.utils import load_config, load_checkpoint
 from model.inference.Backbone import Backbone
 from model.training.dataset import Words
+from utils.Expression.base import LatexOptions
 
 class Inference:
     def __init__(self, confPath='config.yaml'):
@@ -49,7 +50,8 @@ class Inference:
             if expr is None:
                 return None
             else:
-                latex_string = expr.toLatex()
+                options = LatexOptions(convertLog=True, convertMatrices=True)
+                latex_string = expr.toLatex(options)
             # latex_list = self.convert(1, prediction)
             # latex_string = ' '.join(latex_list)
             print('prediction=', prediction, 'latex_string=', latex_string)

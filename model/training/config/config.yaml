@@ -23,7 +23,7 @@ bucket_trunc_largest: 7
 use_dynamic_batching: True  # Adjust batch_size per bucket: short sequences get larger batches for better GPU utilization
 min_samples_per_step: 32 # default: equal to max_batch_size
 optimizer: Adadelta
-lr: 0.3
+lr: 0.1
 lr_decay: cosine
 step_ratio: 10
 eps: 1e-6
@@ -98,7 +98,7 @@ hybrid_tree:
 optimizer_save: True
 checkpoint_dir: 'checkpoints'
 finetune: True
-checkpoint: "checkpoints/best.pth"
+checkpoint: "checkpoints/best-decay.pth"
 
 # TensorBoard path
 log_dir: 'logs'
