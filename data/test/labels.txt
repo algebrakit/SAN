@@ -1,9 +1,0 @@
-cases.bmp   \{ \stack { \row { 2 ^ { x + y } = - \frac { 1 } { 8 } } \row { 3 x = y } }
-cases_with_log.bmp  \{ \stack { \row { x ( x - 2 ) = \lognl [ 2 ] y } \row { 3 y + x ^ { 2 } = 5 } }
-diff-1.bmp  f ' ( x ) = \frac { d v ( k ( x ) ) } { d x } = v ' ( k ( x ) \frac { d k ( x ) } { d x }
-attention-1.bmp y = \sqrt [ 4 ] { 2 x ^ { 3 } + 1 }
-hallucinate-1.bmp   \overline { A } = ( \stack { \row { a & 2 x } \row { 3 & 1 - x } } ) + ( \stack { \row { 2 & b } \row { 3 & 1 - x } } )
-incomplete-1.bmp    f ' ( x ) = \frac { d } { d x } v ( k ( x ) ) = v ' ( k ( x ) ) \frac { d k } { d x } ( x )
-incorrect-symbols-1.bmp   z = 2 + 4 + 6 + 8 + 1 0 + 1 2 + 1 4
-mixed-up-1.bmp    \ln ( x + 7 ) + \ln ( x + 3 ) = \ln ( ( x + 7 ) ( x + 3 ) )
-lognl.bmp \lognl [ 3 ] 2 7 = 3
