@@ -6,11 +6,29 @@ Converts LaTeX expressions into space-separated tokens.
 
 import re
 import sys
-from typing import List
+import argparse
+import logging
+import os
+from typing import List, Optional, Set
 
+# Add project root to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
+from data_tools.dataset_prep.config import ALWAYS_VALID_TOKENS
 
-def tokenize_latex(latex_str: str) -> List[str] | None:
+def setup_logging(log_file: Optional[str] = None, verbose: bool = False):
+    """Configure logging."""
+    handlers = [logging.StreamHandler(sys.stderr)]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file))
+
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=handlers
+    )
+
+def tokenize_latex(latex_str: str) -> Optional[List[str]]:
     """
     Tokenize a LaTeX expression into individual commands and symbols.
     Filters out font style commands.
@@ -19,10 +37,8 @@ def tokenize_latex(latex_str: str) -> List[str] | None:
         latex_str: The LaTeX expression string
 
     Returns:
-        List of tokens
+        List of tokens or None if invalid
     """
-    # Font style commands to filter out (remove command but keep content)
-
     tokens = []
     i = 0
 
@@ -49,7 +65,7 @@ def tokenize_latex(latex_str: str) -> List[str] | None:
 
             elif i < len(latex_str) - 1:
                 two_char = latex_str[i:i+2]
-                if two_char in ['\\\\', '\\{', '\\}', '\\$', '\\&', '\\%', '\\#', '\\_', '\\^', '\\~', '\\|']:
+                if two_char in ['\\\\', '\\{', '\\}', '\\$', '\\&', '\\%', '\\#', '\\_', '\\^', '\\~', '\\|', '\\ ']:
                     tokens.append(two_char)
                     i += 2
                 else:
@@ -73,89 +89,82 @@ def special_cases(latex_str: str) -> str:
 
     return latex_str
 
-def filter_to_words(tokens: List[str], valid_words: set) -> bool:
-    """
-    Filter tokens to only include those in the valid words set.
-
-    Args:
-        tokens: List of tokens
-        valid_words: Set of valid words
-    """
-    skip = False
-    for token in tokens:
-        if token not in valid_words:
-            skip = True
-            break
-    return skip
-
-def process_file(input_file: str, output_file: str, valid_words: set = None):
+def process_file(input_file: str, output_file: str):
     """
     Process the input file and write tokenized output.
 
     Args:
         input_file: Path to input labels file
         output_file: Path to output file
+        valid_words: Optional set of valid words to filter against
     """
-    with open(input_file, 'r', encoding='utf-8') as infile:
-        with open(output_file, 'w', encoding='utf-8') as outfile:
-            for line_num, line in enumerate(infile, 1):
-                line = line.strip()
-                if not line:
-                    continue
+    processed_count = 0
+    skipped_count = 0
+    
+    logging.info(f"Processing {input_file} -> {output_file}")
 
-                # Split filename and LaTeX expression
-                parts = line.split('\t', 1)
-                if len(parts) != 2:
-                    # Try space separation as fallback
-                    parts = line.split(' ', 1)
-
-                if len(parts) != 2:
-                    print(f"Warning: Line {line_num} has unexpected format: {line}", file=sys.stderr)
-                    continue
-
-                filename, latex_expr = parts
-
-                # Tokenize the LaTeX expression
-                tokens = tokenize_latex(latex_expr)
-                if tokens is None:
-                    continue
-                if valid_words is not None:
-                    skip = filter_to_words(tokens, valid_words)
-                    if skip:
-                        print(f"Skipping file {input_file} due to unknown tokens", file=sys.stderr)
+    try:
+        with open(input_file, 'r', encoding='utf-8') as infile:
+            with open(output_file, 'w', encoding='utf-8') as outfile:
+                for line_num, line in enumerate(infile, 1):
+                    line = line.strip()
+                    if not line:
                         continue
 
-                # Write the result
-                tokenized_latex = ' '.join(tokens)
-                tokenized_latex = special_cases(tokenized_latex).strip()
-                # replace any multiple spaces with a single space
-                tokenized_latex = re.sub(r'\s+', ' ', tokenized_latex)
-                outfile.write(f"{filename}\t{tokenized_latex}\n")
+                    # Split filename and LaTeX expression
+                    parts = line.split('\t', 1)
+                    if len(parts) != 2:
+                        # Try space separation as fallback
+                        parts = line.split(' ', 1)
+
+                    if len(parts) != 2:
+                        logging.warning(f"Line {line_num} has unexpected format: {line}")
+                        continue
+
+                    filename, latex_expr = parts
+
+                    # Tokenize the LaTeX expression
+                    tokens = tokenize_latex(latex_expr)
+                    if tokens is None:
+                        skipped_count += 1
+                        logging.debug(f"Skipped line {line_num}: invalid tokens")
+                        continue
+                        
+                    # Write the result
+                    tokenized_latex = ' '.join(tokens)
+                    tokenized_latex = special_cases(tokenized_latex).strip()
+                    # replace any multiple spaces with a single space
+                    tokenized_latex = re.sub(r'\s+', ' ', tokenized_latex)
+                    outfile.write(f"{filename}\t{tokenized_latex}\n")
+                    processed_count += 1
+
+        logging.info(f"Processed {processed_count} lines")
+        logging.info(f"Skipped {skipped_count} lines")
+
+    except Exception as e:
+        logging.error(f"Failed to process file: {e}")
+        raise
 
 
 def main():
-    if len(sys.argv) < 3 or len(sys.argv) > 4:
-        print("Usage: python prep_latex.py <input_file> <output_file> <word_file>(optional)")
-        print("Example: python prep_latex.py labels.txt labels_tokenized.txt")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Tokenize LaTeX labels file.")
+    parser.add_argument("input_file", help="Path to input labels file")
+    parser.add_argument("output_file", help="Path to output file")
+    parser.add_argument("--word-file", help="Path to valid words file (optional)")
+    parser.add_argument("--log-file", help="Path to log file")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    if len(sys.argv) > 3:
-        word_file = sys.argv[3]
-        with open(word_file, 'r', encoding='utf-8') as wf:
-            valid_words = set(line.strip() for line in wf if line.strip())
-            valid_words.update(['{', '}', '[', ']', '^', '_'])  # Always allow these
-    else:
-        valid_words = None
+    args = parser.parse_args()
+
+    setup_logging(args.log_file, args.verbose)
+
     try:
-        process_file(input_file, output_file, valid_words)
-        print(f"Successfully processed {input_file} -> {output_file}")
+        process_file(args.input_file, args.output_file)
     except FileNotFoundError:
-        print(f"Error: Input file '{input_file}' not found")
+        logging.error(f"Input file '{args.input_file}' not found")
         sys.exit(1)
     except Exception as e:
-        print(f"Error processing file: {e}")
+        logging.error(f"Error processing file: {e}")
         sys.exit(1)
 
 

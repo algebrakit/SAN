@@ -7,10 +7,32 @@ Removes lines with matrices and strips font style commands from expressions.
 import os
 import re
 import sys
+import argparse
+import logging
+from typing import Optional
+
+# Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
-from utils.Expression import Expression
+from data_tools.dataset_prep.LatexNormalizer.latex_normalizer import normalize_latex, LaTeXError
+from data_tools.dataset_prep.config import (
+    FORBIDDEN_COMMANDS,
+    FONT_COMMANDS,
+    VARIANT_REPLACEMENTS,
+    DETECT_COMMANDS
+)
+
+def setup_logging(log_file: Optional[str] = None, verbose: bool = False):
+    """Configure logging."""
+    handlers = [logging.StreamHandler(sys.stderr)]
+    if log_file:
+        handlers.append(logging.FileHandler(log_file))
+
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=handlers
+    )
 
 def should_skip_line(latex_str: str) -> bool:
     """
@@ -22,16 +44,7 @@ def should_skip_line(latex_str: str) -> bool:
     Returns:
         True if the line should be skipped
     """
-    forbidden_command_list = [
-        '\\limits', '\\aleph','\\oplus', '\\models', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod', 
-        '\\bigoplus', '\\propto', '\\Im', '\\Re', '\\wp', '\\xi', '\\zeta', '\\Xi', '\\iota', '\\mp', '\\dagger', '\\star', '\\bullet', 
-        '\\oint', '\\ominus', '\\mathfrak','\\odot','\\hbar','\\triangleleft','\\triangleq','\\triangleleft',
-        '\\supseteq','\\subsetneq','\\sqsubseteq','\\rightleftharpoons', '\\Vdash','\\lg','\\pmod','\\tbinom',
-        # '\\\\', '\\choose', # to handle later
-        # forbidden accents
-        '\\breve', '\\acute', '\\grave', '\\mathring'   
-        ]
-    return any(cmd in latex_str for cmd in forbidden_command_list)
+    return any(cmd in latex_str for cmd in FORBIDDEN_COMMANDS)
 
 
 def remove_font_commands(latex_str: str) -> str:
@@ -44,13 +57,8 @@ def remove_font_commands(latex_str: str) -> str:
     Returns:
         LaTeX string with font commands removed
     """
-    # Font style commands to remove
-    font_commands = [r'\\boldsymbol', r'\\mathbf', r'\\mathrm', r'\\mathbb', r'\\operatorname', r'\\boldsymbol',
-                     r'\\mathtt',r'\\mathsf', r'\\bold',
-                     r'\\textstyle', r'\\scriptstyle', r'\\scriptscriptstyle', r'\\mbox']
-
     result = latex_str
-    for cmd in font_commands:
+    for cmd in FONT_COMMANDS:
         # Pattern to match command with braces: \cmd{content}
         pattern = cmd + r'\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}'
 
@@ -77,91 +85,8 @@ def replace_variant_symbols(latex_str: str) -> str:
     Returns:
         LaTeX string with variant symbols replaced
     """
-    replacements = {
-        r'\\varsigma': r'\\sigma',
-        r'\\vartheta': r'\\theta',
-        r'\\varepsilon': r'\\epsilon',
-        r'\\varphi': r'\\phi',
-        r'\\varpi': r'\\pi',
-        r'\\varrho': r'\\rho',
-        r'\\kappa': r'k',
-        r'\\Upsilon': r'Y',
-        r'\\upsilon': r'v',
-        r'\\Pi': r'\\prod',
-        r'\\Sigma': r'\\sum',
-        r'\\neq': r'\\ne',
-        r'\\varnothing': r'\\emptyset',
-        r'\\backslash': r'\\emptyset',
-        r'\\lnot': r'\\neg',
-        r'\\mapsto': r'\\rightarrow',
-        r'\\cong': r'\\simeq',
-        r'\\bigcirc': r'\\circ',
-        r'\\smallsetminus': r'\\setminus',
-        r'\\ell': r'l',
-        r'\\nu': r'v',
-        r'\\eta': r'n',
-        r'\\chi': r'x',
-        r'\\iint': r'\\int\\int',
-        r'\\ll': r'< < ',
-        r'\\gg': r'> > ',
-        r'\\bar': r'\\overline',
-        r'\\vec': r'\\overrightarrow',
-        r'\\widehat': r'\\hat',
-        r'\\widetilde': r'\\tilde',
-        r'\\rVert': r'\\Vert',
-        r'\\lVert': r'\\Vert',
-        r'\\parallel': r'\\Vert',
-        r'\\mid': r'| ',
-        r'\\vert': r'| ',
-        r'\\prime': "'",
-        r'\\big': r'',
-        r'\\bigl': r'',
-        r'\\bigr': r'',
-        r'\\Big': r'',
-        r'\\Bigl': r'',
-        r'\\Bigr': r'',
-        r'\\bigg': r'',
-        r'\\biggl': r'',
-        r'\\biggr': r'',
-        r'\\Bigg': r'',
-        r'\\vee': r'\\lor',
-        r'\\wedge': r'\\land',
-        r'\\tfrac': r'\\frac',
-        r'\\dfrac': r'\\frac',
-        r'\\cfrac': r'\\frac',
-        r'\\dbinom': r'\\binom',
-        r'\\tbinom': r'\\binom',
-        r'\\bmod': r'\\mod',
-        r'\\hookrightarrow': r'\\rightarrow',
-        r'\\longrightarrow': r'\\rightarrow',
-        r'\\to': r'\\rightarrow',
-        r'\\gets': r'\\leftarrow',
-        r'\\iff': r'\\Leftrightarrow',
-        r'\\lbrack': r'[',
-        r'\\rbrack': r']',
-        r'\\lbrace': r'\{',
-        r'\\rbrace': r'\}',
-        r'\\dots': r'. . . ',
-        r'\\cdots': r'. . . ',
-        r'\\ldots': r'. . . ',
-        r'\\dotsb': r'. . . ',
-        r'\\dotsc': r'. . . ',
-        r'\\colon': r': ',
-        r'\\,': r'\\ ',
-        r'\\;': r'\\ ',
-        r'\\:': r'\\ ',
-        r'\\>': r'\\ ',
-        r'\\!': r'',
-        r'(?<!\\)\\ ': r'\\ ',
-        r'<': r'\\lt',
-        r'>': r'\\gt',
-        r'~': r' ',
-        r'\\degree': r'^ { o }',
-
-    }
-
     # first get all keys in order from longest to shortest to avoid partial replacements
-    sorted_keys = sorted(replacements.keys(), key=len, reverse=True)
+    sorted_keys = sorted(VARIANT_REPLACEMENTS.keys(), key=len, reverse=True)
 
     result = latex_str
     for key in sorted_keys:
@@ -171,7 +96,7 @@ def replace_variant_symbols(latex_str: str) -> str:
             pattern = key + r'(?![a-zA-Z])'
         else:
             pattern = key
-        value = replacements[key] + ' '
+        value = VARIANT_REPLACEMENTS[key] + ' '
         if(value[0].isalpha()): value = ' ' + value
         # add space to prevent concatenation with next token .e.g \scriptstyle\mathbf{E} --> \scriptstyleE
         result = re.sub(pattern, value, result)
@@ -187,11 +112,7 @@ def detect_commands(latex_str: str) -> str:
         latex_str: The LaTeX expression string
 
     """
-    cmd_list = ['log', 'sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh',
-                'tanh', 'coth', 'ln', 'exp', 'sum', 'prod', 'lim', 'max', 'min', 'inf', 'sup', 'det', 'dim', 'gcd', 'lcm',
-                'mod', 'arg', 'div','alpha','beta','gamma','delta','epsilon','theta','pi','rho','sigma','tau','phi','omega',
-                'Gamma','Delta','Theta','Lambda','Sigma','Phi','Omega','over']
-    for cmd in cmd_list:
+    for cmd in DETECT_COMMANDS:
         pattern = r'(?<![\\a-zA-Z])' + cmd + r'(?![a-zA-Z])'
         latex_str = re.sub(pattern, r'\\' + cmd + ' ', latex_str)
 
@@ -228,9 +149,6 @@ def handle_matrices(latex_expr: str) -> str:
     res = re.sub(pattern, r'\\stack{', res)
     res = res.replace("\\end{array}", "}")
 
-    # # handle binom
-    # res = re.sub(r'\\binom\{([^}]+)\}\{([^}]+)\}', r'(\\stack{\1 \\\\ \2})', res)
-
     return res
 
 def process_file(input_file: str, output_file: str):
@@ -244,80 +162,94 @@ def process_file(input_file: str, output_file: str):
     """
     skipped_count = 0
     processed_count = 0
+    normalization_errors = 0
+    forbidden_errors = 0
 
-    with open(input_file, 'r', encoding='utf-8') as infile:
-        with open(output_file, 'w', encoding='utf-8') as outfile:
-            for line_num, line in enumerate(infile, 1):
-                line = line.strip()
-                if not line:
-                    continue
-
-                # Split filename and LaTeX expression
-                parts = line.split('\t', 1)
-                if len(parts) != 2:
-                    # Try space separation as fallback
-                    parts = line.split(' ', 1)
-
-                if len(parts) != 2:
-                    print(f"Warning: Line {line_num} has unexpected format: {line}", file=sys.stderr)
-                    continue
-
-                filename, latex_expr = parts
-
-                # Step 1: Replace variant symbols and normalize spacing commands to '\ '
-                latex_expr = replace_variant_symbols(latex_expr)
-
-                # Step 2: Handle matrices
-                latex_expr = handle_matrices(latex_expr)
-
-                # Step 3: Remove font style commands (this may introduce spaces)
-                filtered_latex = remove_font_commands(latex_expr)
-
-                # Step 4: Normalize LaTeX expression with error handling
-                try:
-                    filtered_latex = normalize_latex(filtered_latex)
-                except LaTeXError as e:
-                    skipped_count += 1
-                    print(f"Skipped line {line_num}: normalization error - {e}", file=sys.stderr)
-                    continue
-                except Exception as e:
-                    skipped_count += 1
-                    print(f"Skipped line {line_num}: unexpected normalization error - {e}", file=sys.stderr)
-                    continue
-
-                # Skip lines with forbidden symbols
-                if should_skip_line(filtered_latex):
-                    skipped_count += 1
-                    print(f"Skipped line {line_num}: contains forbidden symbol", file=sys.stderr)
-                    continue
-
-                # Step 6: Detect commands
-                filtered_latex = detect_commands(filtered_latex)
-                filtered_latex = filtered_latex.strip()
-                # Write the result
-                outfile.write(f"{filename}\t{filtered_latex}\n")
-                processed_count += 1
-
-    print(f"Processed {processed_count} lines, skipped {skipped_count} lines with matrices", file=sys.stderr)
-
-
-def main():
-    if len(sys.argv) != 3:
-        print("Usage: python filter_labels.py <input_file> <output_file>")
-        print("Example: python filter_labels.py labels.txt labels_filtered.txt")
-        sys.exit(1)
-
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    logging.info(f"Processing {input_file} -> {output_file}")
 
     try:
-        process_file(input_file, output_file)
-        print(f"Successfully filtered {input_file} -> {output_file}")
+        with open(input_file, 'r', encoding='utf-8') as infile:
+            with open(output_file, 'w', encoding='utf-8') as outfile:
+                for line_num, line in enumerate(infile, 1):
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    # Split filename and LaTeX expression
+                    parts = line.split('\t', 1)
+                    if len(parts) != 2:
+                        # Try space separation as fallback
+                        parts = line.split(' ', 1)
+
+                    if len(parts) != 2:
+                        logging.warning(f"Line {line_num} has unexpected format: {line}")
+                        continue
+
+                    filename, latex_expr = parts
+
+                    # Step 1: Replace variant symbols and normalize spacing commands to '\ '
+                    latex_expr = replace_variant_symbols(latex_expr)
+
+                    # Step 2: Handle matrices
+                    latex_expr = handle_matrices(latex_expr)
+
+                    # Step 3: Remove font style commands (this may introduce spaces)
+                    filtered_latex = remove_font_commands(latex_expr)
+
+                    # Step 4: Normalize LaTeX expression with error handling
+                    try:
+                        filtered_latex = normalize_latex(filtered_latex)
+                    except LaTeXError as e:
+                        skipped_count += 1
+                        normalization_errors += 1
+                        logging.debug(f"Skipped line {line_num}: normalization error - {e}")
+                        continue
+                    except Exception as e:
+                        skipped_count += 1
+                        normalization_errors += 1
+                        logging.error(f"Skipped line {line_num}: unexpected normalization error - {e}")
+                        continue
+
+                    # Skip lines with forbidden symbols
+                    if should_skip_line(filtered_latex):
+                        skipped_count += 1
+                        forbidden_errors += 1
+                        logging.debug(f"Skipped line {line_num}: contains forbidden symbol")
+                        continue
+
+                    # Step 6: Detect commands
+                    filtered_latex = detect_commands(filtered_latex)
+                    filtered_latex = filtered_latex.strip()
+                    
+                    # Write the result
+                    outfile.write(f"{filename}\t{filtered_latex}\n")
+                    processed_count += 1
+
+        logging.info(f"Processed {processed_count} lines")
+        logging.info(f"Skipped {skipped_count} lines ({normalization_errors} normalization errors, {forbidden_errors} forbidden symbols)")
+
+    except Exception as e:
+        logging.error(f"Failed to process file: {e}")
+        raise
+
+def main():
+    parser = argparse.ArgumentParser(description="Filter LaTeX labels file.")
+    parser.add_argument("input_file", help="Path to input labels file")
+    parser.add_argument("output_file", help="Path to output file")
+    parser.add_argument("--log-file", help="Path to log file")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+    
+    args = parser.parse_args()
+
+    setup_logging(args.log_file, args.verbose)
+
+    try:
+        process_file(args.input_file, args.output_file)
     except FileNotFoundError:
-        print(f"Error: Input file '{input_file}' not found")
+        logging.error(f"Input file '{args.input_file}' not found")
         sys.exit(1)
     except Exception as e:
-        print(f"Error processing file: {e}")
+        logging.error(f"Error processing file: {e}")
         sys.exit(1)
 
 

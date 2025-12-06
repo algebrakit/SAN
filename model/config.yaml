@@ -25,6 +25,7 @@ relu: True
 gradient: 100
 gradient_clip: True
 use_label_mask: False
+use_amp: True
 
 # Training data
 train_image_path: 'data/chrome2013/train/train_image.pkl'
@@ -87,7 +88,7 @@ optimizer_save: False
 checkpoint_dir: 'training/checkpoints'
 finetune: True
 #checkpoint: "training/checkpoints/best.pth"
-checkpoint: "training/checkpoints/chrome-mathwriting-ak/best-decay.pth"
+checkpoint: "training/checkpoints/chrome-mathwriting-ak/best-new.pth"
 
 # TensorBoard path
 log_dir: 'logs'

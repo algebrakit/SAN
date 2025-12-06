@@ -69,7 +69,7 @@ class DenseNet(nn.Module):
         bottleneck = params['densenet']['bottleneck']
         use_dropout = params['densenet']['use_dropout']
 
-        nDenseBlocks = 16
+        nDenseBlocks = params['densenet'].get('nDenseBlocks', 16)
         nChannels = 2 * growthRate
         self.conv1 = nn.Conv2d(params['encoder']['input_channels'], nChannels, kernel_size=7, padding=3, stride=2, bias=False)
         self.dense1 = self._make_dense(nChannels, growthRate, nDenseBlocks, bottleneck, use_dropout)
