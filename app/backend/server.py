@@ -99,7 +99,7 @@ def convert_strokes_to_latex():
             padding=2
         )
         
-        save_as_bmp(img, 'debug.bmp')  # For debugging
+        # save_as_bmp(img, 'debug.bmp')  # For debugging
 
         # Convert to LaTeX
         latex = inference_model.convert2latex(img)

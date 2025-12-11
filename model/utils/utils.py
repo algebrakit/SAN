@@ -52,19 +52,20 @@ def updata_lr(optimizer, current_epoch, current_step, steps, epoches, initial_lr
         param_group['lr'] = new_lr
 
 
-def save_checkpoint(model, optimizer, word_score, struct_score, ExpRate_score, epoch, optimizer_save=False, path='checkpoints', multi_gpu=False, local_rank=0):
+def save_checkpoint(model, optimizer, word_score, struct_score, ExpRate_score, epoch,
+                    optimizer_save=False, path='checkpoints', multi_gpu=False, local_rank=0,
+                    min_step=0, scaler=None):
 
     filename = f'{os.path.join(path, model.name)}/{model.name}_WordRate-{word_score:.4f}_structRate-{struct_score:.4f}_ExpRate-{ExpRate_score:.4f}_{epoch}.pth'
 
-    if optimizer_save:
-        state = {
-            'model': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
-        }
-    else:
-        state = {
-            'model': model.state_dict()
-        }
+    state = {
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict() if optimizer_save else None,
+        'epoch': epoch,
+        'best_score': ExpRate_score,
+        'min_step': min_step,
+        'scaler': scaler.state_dict() if scaler is not None else None,
+    }
 
     torch.save(state, filename)
     print(f'Save checkpoint: {filename}\n')
@@ -75,16 +76,23 @@ def save_checkpoint(model, optimizer, word_score, struct_score, ExpRate_score, e
     return filename
 
 
-def load_checkpoint(model, optimizer, path):
+def load_checkpoint(model, optimizer, path, scaler=None):
 
     state = torch.load(path, map_location='cpu')
 
-    # if 'optimizer' in state:
-    #     optimizer.load_state_dict(state['optimizer'])
-    # else:
-    #     print(f'No optimizer in the pretrained model')
-
     model.load_state_dict(state['model'], strict=False)
+
+    if optimizer is not None and 'optimizer' in state and state['optimizer'] is not None:
+        optimizer.load_state_dict(state['optimizer'])
+
+    if scaler is not None and 'scaler' in state and state['scaler'] is not None:
+        scaler.load_state_dict(state['scaler'])
+
+    return {
+        'epoch': state.get('epoch', 0),
+        'best_score': state.get('best_score', -1),
+        'min_step': state.get('min_step', 0),
+    }
 
 
 class Meter:

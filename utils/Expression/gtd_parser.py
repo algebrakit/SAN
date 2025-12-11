@@ -45,30 +45,35 @@ def convert(nodeid, gtd_list) -> Optional[Expression]:
             item = FractionConstruct(construct_type='\\frac', above=above, below=below)
 
         elif gtd_list[nodeid][0] == '\\sqrt':
-            inside, l_sup = None, None
+            inside, l_sup, sup = None, None, None
             for i in range(len(child_list)):
                 if child_list[i][2].lower() == 'inside':
                     inside = convert(child_list[i][1], gtd_list)
             for i in range(len(child_list)):
                 if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
+            for i in range(len(child_list)):
+                if child_list[i][2].lower() == 'sup':
+                    sup = convert(child_list[i][1], gtd_list)
             if inside is None:
                 inside = Expression.fromLatex(' ')
             if l_sup is None:
-                item = SqrtConstruct(construct_type='\\sqrt', inside=inside)
+                item = SqrtConstruct(construct_type='\\sqrt', inside=inside, sup=sup)
             else:
-                item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup)
+                item = SqrtConstruct(construct_type='\\sqrt', inside=inside, l_sup=l_sup, sup=sup)
         elif gtd_list[nodeid][0] == '\\log':
-            l_sup, sub = None, None
+            l_sup, sub, sup = None, None, None
             for i in range(len(child_list)):
                 if child_list[i][2].lower() in ['l-sup']:
                     l_sup = convert(child_list[i][1], gtd_list)
                 if child_list[i][2].lower() in ['sub']:
                     sub = convert(child_list[i][1], gtd_list)
+                if child_list[i][2].lower() in ['sup']:
+                    sup = convert(child_list[i][1], gtd_list)
             if l_sup is None:
-                item = Symbol(value='\\log', sub=sub)
+                item = Symbol(value='\\log', sub=sub, sup=sup)
             else:
-                item = LogConstruct(construct_type='\\lognl', l_sup=l_sup)
+                item = LogConstruct(construct_type='\\lognl', l_sup=l_sup, sup=sup)
 
         elif gtd_list[nodeid][0] == '\\stack':
             inside = None

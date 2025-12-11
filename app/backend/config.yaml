@@ -32,8 +32,8 @@ train_label_path: 'data/train_label.pkl'
 eval_image_path: 'data/test_image.pkl'
 eval_label_path: 'data/test_label.pkl'
 
-# word_path: 'resources/word.txt'
-word_path: '/Users/martijnslob/github/SAN/data/chrome-mathwriting-ak/word.txt'
+word_path: 'resources/word.txt'
+# word_path: '/Users/martijnslob/github/SAN/data/chrome-mathwriting-ak/word.txt'
 
 # Encoder selection
 encoder:
@@ -45,9 +45,10 @@ resnet:
   conv1_stride: 1
 
 densenet:
-  ratio: 16
-  growthRate: 24
-  reduction: 0.5
+  ratio: 16        # reduction of image dimensions (keep 16 unless you change the DenseNet architecture)
+  growthRate: 24   # was: 24
+  nDenseBlocks: 16 # nr of layers per denseblock (was: 16)
+  reduction: 0.5   # reduction of channels in transition layers between dense blocks
   bottleneck: True
   use_dropout: True
 
@@ -83,8 +84,9 @@ hybrid_tree:
 optimizer_save: False
 checkpoint_dir: 'checkpoints'
 finetune: True
-# checkpoint: "resources/model.pth"
-checkpoint: "../../model/training/checkpoints/chrome-mathwriting-ak/best-decay.pth"
+checkpoint: "resources/model.pth"
+# checkpoint: "../../model/training/checkpoints/chrome-mathwriting-ak/best-decay.pth"
+# checkpoint: "../../model/training/checkpoints/chrome-mathwriting-ak/best-new.pth"
 
 # TensorBoard path
 log_dir: 'logs'

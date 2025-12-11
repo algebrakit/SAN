@@ -1,3 +1,4 @@
+attention-2.bmp e ^ { \mu t - \frac { \sigma ^ { 2 } t } { 2 } + \sigma W _ { t } }
 cases.bmp   \{ \stack { \row { 2 ^ { x + y } = - \frac { 1 } { 8 } } \row { 3 x = y } }
 cases_with_log.bmp  \{ \stack { \row { x ( x - 2 ) = \lognl [ 2 ] y } \row { 3 y + x ^ { 2 } = 5 } }
 diff-1.bmp  f ' ( x ) = \frac { d v ( k ( x ) ) } { d x } = v ' ( k ( x ) \frac { d k ( x ) } { d x }

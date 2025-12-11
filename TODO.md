@@ -38,13 +38,17 @@ Add inputs with words to the dataset. This allows the model to understand the co
   - non-standard Greek symbols
   - advanced math symbols
 
-## Loop protection
-- Detect infinited loop 
-- increase prior of <eos> until loop ends
+## DONE: Loop protection
+- covered by enforcing image size to be at least 2x16px
 
 ## Add symbols
 We lack data for some symbols:
 - money: €, $, £
+- \ddot, \dddot
+
+## Support incomplete expressions
+- 2=
+- y=4+
 
 ## Data collection tool 
 For data collection from real people, it is convenient to have a data collection tool

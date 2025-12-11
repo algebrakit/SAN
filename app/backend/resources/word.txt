@@ -53,6 +53,9 @@ X
 Y
 Z
 [
+\#
+\%
+\&
 \And
 \Delta
 \Gamma
@@ -157,6 +160,7 @@ Z
 \simeq
 \sin
 \sinh
+\space
 \sqrt
 \stack
 \subset
@@ -205,8 +209,6 @@ x
 y
 z
 |
-\%
-\space
 reserved1
 reserved2
 reserved3

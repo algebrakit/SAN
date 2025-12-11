@@ -33,7 +33,7 @@ train_label_path: 'data/chrome2013/train/train_label.pkl'
 eval_image_path: 'data/chrome2013/test/test_image.pkl'
 eval_label_path: 'data/chrome2013/test/test_label.pkl'
 
-word_path: '../data/chrome-mathwriting-ak/word.txt'
+word_path: '../data-processed/dataset_1/word.txt'
 
 # Encoder selection
 encoder:
@@ -45,9 +45,10 @@ resnet:
   conv1_stride: 1
 
 densenet:
-  ratio: 16
-  growthRate: 24
-  reduction: 0.5
+  ratio: 16        # reduction of image dimensions (keep 16 unless you change the DenseNet architecture)
+  growthRate: 24   # was: 24
+  nDenseBlocks: 16 # nr of layers per denseblock (was: 16)
+  reduction: 0.5   # reduction of channels in transition layers between dense blocks
   bottleneck: True
   use_dropout: True
 
@@ -87,8 +88,8 @@ eos_missing_weight: 3.0  # Penalty for not predicting EOS when needed (hallucina
 optimizer_save: False
 checkpoint_dir: 'training/checkpoints'
 finetune: True
-#checkpoint: "training/checkpoints/best.pth"
-checkpoint: "training/checkpoints/chrome-mathwriting-ak/best-new.pth"
+# checkpoint: "training/checkpoints/best.pth"
+checkpoint: "training/checkpoints/dataset_1/SAN_L16_K24_2025-12-12-05-06_Encoder-DenseNet_Decoder-SAN_decoder_max_size-320-1600_WordRate-0.9209_structRate-0.9726_ExpRate-0.5786_34.pth"
 
 # TensorBoard path
 log_dir: 'logs'

@@ -80,20 +80,30 @@ if __name__ == '__main__':
     scaler = torch.amp.GradScaler('cuda', enabled=params.get('use_amp', False))
     params['scaler'] = scaler
 
-    if params['finetune']:
+    start_epoch = 0
+    min_score = -1
+    min_step = 0
 
+    if params['finetune']:
         print('loading pretrain model weight')
         print(f'pretrain model: {params["checkpoint"]}')
-        load_checkpoint(model, optimizer, params['checkpoint'])
+        training_state = load_checkpoint(model, optimizer, params['checkpoint'], scaler)
+        start_epoch = training_state['epoch']
+        min_score = training_state['best_score']
+        min_step = training_state['min_step']
+        print(f'Resuming from epoch {start_epoch}, best_score={min_score:.4f}, min_step={min_step}')
 
     if not args.check:
         if not os.path.exists(os.path.join(params['checkpoint_dir'], model.name)):
             os.makedirs(os.path.join(params['checkpoint_dir'], model.name), exist_ok=True)
         os.system(f'cp {args.config} {os.path.join(params["checkpoint_dir"], model.name, model.name)}.yaml')
 
-    min_score = -1
-    min_step = 0
-    for epoch in range(params['epoches']):
+    # Override base learning rate if specified in config (used by cosine LR schedule)
+    if params.get('lr_override') is not None:
+        params['lr'] = params['lr_override']
+        print(f'NOTE: Overriding base learning rate to: {params["lr"]}')
+    
+    for epoch in range(start_epoch, params['epoches']):
 
         train_loss, train_word_score, train_node_score, train_expRate = train(params, model, optimizer, epoch, train_loader, writer=writer)
         if epoch > -1:
@@ -105,7 +115,8 @@ if __name__ == '__main__':
             if eval_expRate >= min_score and not args.check:
                 min_score = eval_expRate
                 save_checkpoint(model, optimizer, eval_word_score, eval_node_score, eval_expRate, epoch+1,
-                                optimizer_save=params['optimizer_save'], path=params['checkpoint_dir'])
+                                optimizer_save=params['optimizer_save'], path=params['checkpoint_dir'],
+                                min_step=min_step, scaler=scaler)
                 min_step = 0
 
             elif min_score != 0 and 'lr_decay' in params and params['lr_decay'] == 'step':

@@ -80,13 +80,13 @@ class Attention(nn.Module):
         # Process completed coverage (penalize)
         # alpha_sum_completed = alpha_sum_completed / (alpha_sum_completed.sum(dim=(1,2,3), keepdim=True) + 1e-10) # normalise needed as the sum() equals the number of completed symbols
         alpha_completed_trans = self.attention_completed_conv(alpha_sum_completed)
-        coverage_completed = alpha_completed_trans.permute(0,2,3,1)
+        coverage_completed = alpha_completed_trans.permute(0,2,3,1) # move channels to the last dimension
         weighted_coverage_completed = self.coverage_completed_weight * coverage_completed
 
         # Process active coverage (boost)
         # alpha_sum_active = alpha_sum_active / (alpha_sum_active.sum(dim=(1,2,3), keepdim=True) + 1e-10) # normalise needed as the sum() equals the number of active parents
         alpha_active_trans = self.attention_active_conv(alpha_sum_active)
-        coverage_active = alpha_active_trans.permute(0,2,3,1)
+        coverage_active = alpha_active_trans.permute(0,2,3,1) # move channels to the last dimension
         weighted_coverage_active = self.coverage_active_weight * coverage_active
 
         # Combine terms: 
@@ -103,11 +103,14 @@ class Attention(nn.Module):
 
         energy = self.alpha_convert(alpha_score)
         energy = energy - energy.max()
-        energy_exp = torch.exp(energy.squeeze(-1))
+        energy_exp = torch.exp(energy.squeeze(-1)) # eliminates channel dimension (which has length 1)
         if image_mask is not None:
             energy_exp = energy_exp * image_mask.squeeze(1)
         alpha = energy_exp / (energy_exp.sum(-1).sum(-1)[:,None,None] + 1e-10)
-        alpha = alpha[:,None,:,:]
+        alpha = alpha[:,None,:,:] # insert the channel at the second dimension again
+
+        # compress the image into one feature vector, by taking the inner product over (H,W) and alpha 
+        # per channel.
         context_vector = (alpha * cnn_features).sum(-1).sum(-1)
 
         # Return attention map and current aggregates (for updating history)
