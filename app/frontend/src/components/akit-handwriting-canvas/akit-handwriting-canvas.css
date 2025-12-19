@@ -1,28 +1,28 @@
-.math-drawer-container {
+.akit-handwriting-canvas-container {
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
+  flex-direction: column;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-.sidebar {
+.toolbar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  left: auto;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 8px;
-  background: linear-gradient(to right, #e8edf2, #f0f3f7);
-  border: 1px solid #b0b8c3;
-  border-right: 2px solid #9aa3af;
-  border-radius: 8px 0 0 8px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08), inset -1px 0 2px rgba(255, 255, 255, 0.5);
-}
-
-.sidebar .spacer {
-  flex: 1;
-  min-height: 20px;
+  flex-direction: row;
+  gap: 4px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .icon-button {
@@ -87,8 +87,7 @@
 .canvas-container {
   position: relative;
   border: 2px solid #7a8491;
-  border-left: 1px solid #9aa3af;
-  border-radius: 0 8px 8px 0;
+  border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   background: white;
   overflow-x: auto;
@@ -119,7 +118,7 @@
 canvas {
   display: block;
   cursor: crosshair;
-  border-radius: 0 6px 6px 0;
+  border-radius: 6px;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -138,6 +137,57 @@ canvas.eraser-cursor {
 
 canvas.eraser-cursor:active {
   cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="rgba(239, 68, 68, 0.2)" stroke="rgba(239, 68, 68, 0.8)" stroke-width="2"/><circle cx="16" cy="16" r="2" fill="rgba(239, 68, 68, 1)"/></svg>') 16 16, crosshair;
+}
+
+.confirm-button {
+  position: absolute;
+  /* Default fallback position - will be overridden by inline styles */
+  bottom: 12px;
+  right: 12px;
+  width: 48px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #449444;
+  border: 1px solid #94a3b8;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.25);
+  transition: top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  opacity:0.5;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #475569;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(100, 116, 139, 0.35);
+}
+
+.confirm-button:active:not(:disabled) {
+  transform: scale(0.97);
+  box-shadow: 0 1px 4px rgba(100, 116, 139, 0.25);
+}
+
+.confirm-button:disabled {
+  background-color: #cbd5e1;
+  border-color: #e2e8f0;
+  cursor: wait;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.confirm-button .spinner {
+  width: 20px;
+  height: 20px;
+  color: white;
+}
+
+.confirm-button .checkmark {
+  width: 20px;
+  height: 20px;
+  color: white;
+  stroke-width: 2.5;
 }
 
 .inline-result {
@@ -276,33 +326,14 @@ canvas.eraser-cursor:active {
 
 /* Responsive design */
 @media (max-width: 700px) {
-  .math-drawer-container {
-    flex-direction: column;
-    max-width: 100%;
-  }
-
-  .sidebar {
-    flex-direction: row;
-    padding: 8px 12px;
-    border-radius: 8px 8px 0 0;
-    justify-content: center;
-  }
-
-  .sidebar .spacer {
-    display: none;
-  }
-
-  .canvas-container {
-    border-radius: 0 0 8px 8px;
-  }
-
-  canvas {
-    border-radius: 0 0 6px 6px;
+  .toolbar {
+    padding: 4px 6px;
+    gap: 2px;
   }
 }
 
 @media (max-width: 500px) {
-  .math-drawer-container {
+  .akit-handwriting-canvas-container {
     padding: 10px;
   }
 

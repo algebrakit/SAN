@@ -1,6 +1,8 @@
 export interface Point {
   x: number;
   y: number;
+  timestamp?: number;  // For speed calculation
+  width?: number;      // Calculated stroke width at this point
 }
 
 export interface Stroke {
@@ -20,10 +22,17 @@ export class StrokeManager {
   private highlightedStrokeIds: number[] = [];
   private scaleFactor: number;
   private showGrid: boolean = true;
-  private gridSpacing: number = 20; // Grid spacing in pixels
+  private gridSpacing: number = 50; // Grid spacing in pixels
   private gridColor: string = '#d8dde3'; // Subtle gray to match design
   private eraserRadius: number = 15; // Eraser radius in pixels
   private strokesToErase: Set<number> = new Set(); // Track strokes to erase during current drag
+
+  // Stroke appearance
+  private strokeColor: string = '#333390'; // Dark blue for pen-like appearance
+  private baseStrokeWidth: number = 3.2;
+  private minStrokeWidth: number = 1.5;    // Minimum width when drawing fast
+  private maxStrokeWidth: number = 3.5;    // Maximum width when drawing slow
+  private smoothingFactor: number = 0.3;   // How much to smooth width changes (0-1)
 
   constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
@@ -36,8 +45,8 @@ export class StrokeManager {
     // Scale the context to match the high DPI canvas
     this.ctx.scale(this.scaleFactor, this.scaleFactor);
 
-    this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 2.5;
+    this.ctx.strokeStyle = this.strokeColor;
+    this.ctx.lineWidth = this.baseStrokeWidth;
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
     // Enable anti-aliasing
@@ -46,6 +55,23 @@ export class StrokeManager {
 
     // Draw initial grid
     this.drawGrid();
+  }
+
+  // Calculate stroke width based on drawing speed
+  private calculateWidth(speed: number, previousWidth: number): number {
+    // Speed thresholds (pixels per millisecond)
+    const minSpeed = 0.1;  // Below this = max width (drawing very slow)
+    const maxSpeed = 1.0;  // Above this = min width (drawing very fast)
+
+    // Clamp speed to range
+    const clampedSpeed = Math.max(minSpeed, Math.min(maxSpeed, speed));
+
+    // Map speed to width (inverse relationship: fast = thin, slow = thick)
+    const speedRatio = (clampedSpeed - minSpeed) / (maxSpeed - minSpeed);
+    const targetWidth = this.maxStrokeWidth - speedRatio * (this.maxStrokeWidth - this.minStrokeWidth);
+
+    // Smooth the width change to avoid jitter
+    return previousWidth + (targetWidth - previousWidth) * this.smoothingFactor;
   }
 
   private getPointerPosition(event: PointerEvent): Point {
@@ -61,22 +87,46 @@ export class StrokeManager {
     this.isDrawing = true;
     this.currentStroke = [];
 
-    const point = this.getPointerPosition(event);
+    const pos = this.getPointerPosition(event);
+    const point: Point = {
+      x: pos.x,
+      y: pos.y,
+      timestamp: performance.now(),
+      width: this.baseStrokeWidth  // Start with base width
+    };
     this.currentStroke.push(point);
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(point.x, point.y);
   }
 
   draw(event: PointerEvent): number[] {
     if (!this.isDrawing) return [];
 
     event.preventDefault();
-    const point = this.getPointerPosition(event);
+    const pos = this.getPointerPosition(event);
+    const now = performance.now();
+
+    // Get the previous point
+    const prevPoint = this.currentStroke[this.currentStroke.length - 1];
+
+    // Calculate speed (pixels per millisecond)
+    const dx = pos.x - prevPoint.x;
+    const dy = pos.y - prevPoint.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const timeDelta = now - (prevPoint.timestamp || now);
+    const speed = timeDelta > 0 ? distance / timeDelta : 0;
+
+    // Calculate width based on speed
+    const width = this.calculateWidth(speed, prevPoint.width || this.baseStrokeWidth);
+
+    const point: Point = {
+      x: pos.x,
+      y: pos.y,
+      timestamp: now,
+      width: width
+    };
     this.currentStroke.push(point);
 
-    this.ctx.lineTo(point.x, point.y);
-    this.ctx.stroke();
+    // Draw the segment with variable width
+    this.drawVariableWidthSegment(prevPoint, point);
 
     // Check for intersections in real-time and highlight strokes
     const scratchedIds = this.detectScratchedStrokes(this.currentStroke);
@@ -90,6 +140,53 @@ export class StrokeManager {
       return [];
     }
     return this.highlightedStrokeIds;
+  }
+
+  // Draw a segment with variable width (tapered between two points)
+  private drawVariableWidthSegment(p1: Point, p2: Point, color?: string): void {
+    const w1 = p1.width || this.baseStrokeWidth;
+    const w2 = p2.width || this.baseStrokeWidth;
+
+    this.ctx.save();
+    this.ctx.fillStyle = color || this.strokeColor;
+
+    // Calculate the perpendicular direction
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+
+    if (len < 0.1) {
+      // Points too close, just draw a circle
+      this.ctx.beginPath();
+      this.ctx.arc(p1.x, p1.y, w1 / 2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.restore();
+      return;
+    }
+
+    // Perpendicular unit vector
+    const px = -dy / len;
+    const py = dx / len;
+
+    // Draw a quadrilateral (trapezoid) connecting the two circles
+    this.ctx.beginPath();
+    this.ctx.moveTo(p1.x + px * w1 / 2, p1.y + py * w1 / 2);
+    this.ctx.lineTo(p2.x + px * w2 / 2, p2.y + py * w2 / 2);
+    this.ctx.lineTo(p2.x - px * w2 / 2, p2.y - py * w2 / 2);
+    this.ctx.lineTo(p1.x - px * w1 / 2, p1.y - py * w1 / 2);
+    this.ctx.closePath();
+    this.ctx.fill();
+
+    // Draw circles at each end for smooth caps
+    this.ctx.beginPath();
+    this.ctx.arc(p1.x, p1.y, w1 / 2, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.beginPath();
+    this.ctx.arc(p2.x, p2.y, w2 / 2, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.restore();
   }
 
   stopDrawing(event: PointerEvent): void {
@@ -216,37 +313,47 @@ export class StrokeManager {
     // Draw grid first (so it's behind strokes)
     this.drawGrid();
 
-    // Redraw all strokes with appropriate colors
+    // Redraw all strokes with variable width
     this.strokes.forEach(stroke => {
       if (stroke.points.length > 0) {
-        // Set color based on whether stroke is highlighted
+        // Set color based on whether stroke is highlighted (for eraser preview)
         const isHighlighted = this.highlightedStrokeIds.includes(stroke.id);
-        this.ctx.strokeStyle = isHighlighted ? '#ff0000' : '#000000';
+        const color = isHighlighted ? '#ff0000' : this.strokeColor;
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-
+        // Draw each segment with variable width
         for (let i = 1; i < stroke.points.length; i++) {
-          this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+          this.drawVariableWidthSegment(stroke.points[i - 1], stroke.points[i], color);
         }
 
-        this.ctx.stroke();
+        // Draw a circle at the first point if it's alone
+        if (stroke.points.length === 1) {
+          const p = stroke.points[0];
+          this.ctx.save();
+          this.ctx.fillStyle = color;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, (p.width || this.baseStrokeWidth) / 2, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+        }
       }
     });
 
-    // Reset stroke style to black
-    this.ctx.strokeStyle = '#000000';
-
     // Redraw current stroke if drawing
     if (this.isDrawing && this.currentStroke.length > 0) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(this.currentStroke[0].x, this.currentStroke[0].y);
-
       for (let i = 1; i < this.currentStroke.length; i++) {
-        this.ctx.lineTo(this.currentStroke[i].x, this.currentStroke[i].y);
+        this.drawVariableWidthSegment(this.currentStroke[i - 1], this.currentStroke[i]);
       }
 
-      this.ctx.stroke();
+      // Draw a circle at the first point if it's alone
+      if (this.currentStroke.length === 1) {
+        const p = this.currentStroke[0];
+        this.ctx.save();
+        this.ctx.fillStyle = this.strokeColor;
+        this.ctx.beginPath();
+        this.ctx.arc(p.x, p.y, (p.width || this.baseStrokeWidth) / 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+      }
     }
   }
 
@@ -307,6 +414,53 @@ export class StrokeManager {
 
   getStrokeCount(): number {
     return this.strokes.length;
+  }
+
+  hasStrokes(): boolean {
+    return this.strokes.length > 0;
+  }
+
+  getStrokesBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    if (this.strokes.length === 0) {
+      return null;
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const stroke of this.strokes) {
+      for (const point of stroke.points) {
+        minX = Math.min(minX, point.x);
+        minY = Math.min(minY, point.y);
+        maxX = Math.max(maxX, point.x);
+        maxY = Math.max(maxY, point.y);
+      }
+    }
+
+    return { minX, minY, maxX, maxY };
+  }
+
+  getYPercentile(percentile: number): number | null {
+    if (this.strokes.length === 0) {
+      return null;
+    }
+
+    // Collect all Y values from all strokes
+    const yValues: number[] = [];
+    for (const stroke of this.strokes) {
+      for (const point of stroke.points) {
+        yValues.push(point.y);
+      }
+    }
+
+    // Sort ascending
+    yValues.sort((a, b) => a - b);
+
+    // Calculate percentile index
+    const index = Math.floor((percentile / 100) * (yValues.length - 1));
+    return yValues[index];
   }
 
   setShowGrid(show: boolean): void {

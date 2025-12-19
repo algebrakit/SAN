@@ -7,32 +7,12 @@
     
     <script type="module" src="/build/math-expression-drawer.esm.js"></script>
     <script nomodule src="/build/math-expression-drawer.js"></script>
-    
-    <!-- MathJax for LaTeX rendering -->
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script>
-      window.MathJax = {
-        tex: {
-          inlineMath: [['$', '$'], ['\\(', '\\)']],
-          displayMath: [['$$', '$$'], ['\\[', '\\]']],
-          processEscapes: true,
-          processEnvironments: true
-        },
-        options: {
-          ignoreHtmlClass: 'tex2jax_ignore',
-          processHtmlClass: 'tex2jax_process'
-        },
-        startup: {
-          typeset: false
-        }
-      };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    
+        
     <style>
       body {
         margin: 0;
         padding: 0;
+        padding-bottom: 160px; /* Space for fixed math-drawer */
         background-color: #f5f5f5;
         min-height: 100vh;
         -webkit-user-select: none;
@@ -42,8 +22,9 @@
         -webkit-touch-callout: none;
         -webkit-tap-highlight-color: transparent;
         touch-action: manipulation;
+        box-sizing: border-box;
       }
-      
+
       .header {
         background-color: #2c3e50;
         color: white;
@@ -51,37 +32,36 @@
         text-align: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       }
-      
+
       .header h1 {
         margin: 0;
         font-size: 28px;
         font-weight: 300;
       }
-      
+
       .header p {
         margin: 10px 0 0 0;
         opacity: 0.9;
         font-size: 16px;
       }
-      
-      .footer {
-        background-color: #34495e;
-        color: white;
-        padding: 20px;
-        text-align: center;
-        margin-top: 40px;
-      }
-      
-      .footer p {
-        margin: 5px 0;
-        opacity: 0.8;
-      }
 
-      math-drawer {
-        display: block;
+      akit-handwriting-canvas {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
+        z-index: 100;
+      }
+
+      #editor {
+        background-color:white;
+        margin:10px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius:5px;
       }
     </style>
   </head>
@@ -90,85 +70,41 @@
       <h1>Math Expression Drawer</h1>
       <p>Draw mathematical expressions and convert them to LaTeX using AI</p>
     </div>
-    
-    <math-drawer></math-drawer>
-    
+    <!-- <akit-exercise session-id="5d5c9ebc-e212-401d-b811-83887bd993d0"></akit-exercise>" -->
+    <!-- <akit-latex latex="\sqrt{x}"></akit-latex> -->
+    <div id="editor">
+      <akit-mathquill-editor id="mathquill"></akit-mathquill-editor>
+    </div>
+    <akit-handwriting-canvas></akit-handwriting-canvas>
+
     <script>
-      // Initialize MathJax and handle dynamic content
-      document.addEventListener('DOMContentLoaded', function() {
-        // Function to render MathJax in a specific element
-        window.renderMathJax = function(element) {
-          if (window.MathJax && window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise([element || document.body]).catch(function (err) {
-              console.warn('MathJax typeset failed: ', err.message);
-            });
-          }
-        };
+      AlgebraKIT = {
+        config: {}
+      }
+    </script>
+    <script src="https://widgets.algebrakit.com/akit-widgets.min.js"></script>
+    <script>
+      async function func() {
+        let editor = document.getElementById('mathquill');
+        await AlgebraKIT.waitUntilReady(editor);
 
-        // Wait for MathJax to be ready, then perform initial typesetting
-        window.MathJax = window.MathJax || {};
-        window.MathJax.startup = window.MathJax.startup || {};
-        window.MathJax.startup.promise = window.MathJax.startup.promise || Promise.resolve();
-
-        window.MathJax.startup.promise.then(function() {
-          // Initial render
-          if (window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise();
-          }
+        let handwritingCanvas = document.querySelector('akit-handwriting-canvas');
+        handwritingCanvas.addEventListener('latexChanged', function(event) {
+          let latex = event.detail.latex
+            .replace(/ ([\{\}\[\]_^])/g,'$1')
+            .replace(/([\{\}\[\]_^]) /g,'$1');
+          console.log('MathDrawer changed:', latex);
+          editor.latex(latex);
         });
+        // editor.addEventListener('latexContentChanged', function(event) {
+        //   console.log('MathQuill changed:', event.detail.latex);
+        // });
+        // let mathDom = await AlgebraKIT.latex2Html("\\int_a^b f(x)dx = F(b) - F(a)");
+        // document.getElementById('math').innerHTML = mathDom;
 
-        // Observer to re-render MathJax when content changes
-        const observer = new MutationObserver(function(mutations) {
-          let shouldRerender = false;
-          mutations.forEach(function(mutation) {
-            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-              for (let node of mutation.addedNodes) {
-                if (node.nodeType === Node.ELEMENT_NODE &&
-                    (node.textContent.includes('$') || node.textContent.includes('\\('))) {
-                  shouldRerender = true;
-                  break;
-                }
-              }
-            }
-          });
+      }
 
-          if (shouldRerender && window.MathJax && window.MathJax.typesetPromise) {
-            window.MathJax.typesetPromise().catch(function (err) {
-              console.warn('MathJax re-render failed: ', err.message);
-            });
-          }
-        });
-
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true
-        });
-
-        // Prevent default touch behaviors that cause zooming and selection
-        document.addEventListener('touchstart', function(e) {
-          if (e.touches.length > 1) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-
-        document.addEventListener('touchmove', function(e) {
-          if (e.touches.length > 1) {
-            e.preventDefault();
-          }
-        }, { passive: false });
-
-        document.addEventListener('gesturestart', function(e) {
-          e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('gesturechange', function(e) {
-          e.preventDefault();
-        }, { passive: false });
-
-        document.addEventListener('gestureend', function(e) {
-          e.preventDefault();
-        }, { passive: false });
-      });
+      func();
     </script>
   </body>
 </html>

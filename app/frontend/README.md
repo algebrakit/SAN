@@ -44,7 +44,7 @@ npm run build
 
 ### Components
 
-- **`math-drawer`**: Main drawing component built with StencilJS
+- **`akit-handwriting-canvas`**: Main drawing component built with StencilJS
   - Canvas-based drawing interface
   - Stroke capture and storage
   - API integration for LaTeX conversion
@@ -98,9 +98,9 @@ POST /convert
 frontend/
 ├── src/
 │   ├── components/
-│   │   └── math-drawer/
-│   │       ├── math-drawer.tsx    # Main component
-│   │       └── math-drawer.css    # Styles
+│   │   └── akit-handwriting-canvas/
+│   │       ├── akit-handwriting-canvas.tsx    # Main component
+│   │       └── akit-handwriting-canvas.css    # Styles
 │   ├── index.html                 # Main HTML file
 │   ├── index.ts                   # Entry point
 │   └── components.d.ts            # Type definitions
@@ -119,19 +119,19 @@ frontend/
 ### Customization
 
 #### Canvas Size
-Modify canvas dimensions in `math-drawer.tsx`:
+Modify canvas dimensions in `akit-handwriting-canvas.tsx`:
 ```typescript
 <canvas width={800} height={400} ... />
 ```
 
 #### API Endpoint
-Change the backend URL in `math-drawer.tsx`:
+Change the backend URL in `akit-handwriting-canvas.tsx`:
 ```typescript
 private apiUrl: string = 'http://localhost:5001';
 ```
 
 #### Styling
-Customize appearance in `math-drawer.css` or add global styles to `index.html`.
+Customize appearance in `akit-handwriting-canvas.css` or add global styles to `index.html`.
 
 ## Browser Compatibility
 
@@ -169,6 +169,6 @@ Customize appearance in `math-drawer.css` or add global styles to `index.html`.
 
 Enable debug logging:
 ```typescript
-// In math-drawer.tsx
+// In akit-handwriting-canvas.tsx
 console.log('Stroke data:', strokeData);
 ```

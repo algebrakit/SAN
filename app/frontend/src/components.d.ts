@@ -6,36 +6,52 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
-    interface MathDrawer {
+    interface AkitHandwritingCanvas {
         "clearCanvas": () => Promise<void>;
         "convertToLatex": () => Promise<void>;
         "redo": () => Promise<void>;
         "undo": () => Promise<void>;
     }
 }
+export interface AkitHandwritingCanvasCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLAkitHandwritingCanvasElement;
+}
 declare global {
-    interface HTMLMathDrawerElement extends Components.MathDrawer, HTMLStencilElement {
+    interface HTMLAkitHandwritingCanvasElementEventMap {
+        "latexChanged": { latex: string };
     }
-    var HTMLMathDrawerElement: {
-        prototype: HTMLMathDrawerElement;
-        new (): HTMLMathDrawerElement;
+    interface HTMLAkitHandwritingCanvasElement extends Components.AkitHandwritingCanvas, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAkitHandwritingCanvasElementEventMap>(type: K, listener: (this: HTMLAkitHandwritingCanvasElement, ev: AkitHandwritingCanvasCustomEvent<HTMLAkitHandwritingCanvasElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAkitHandwritingCanvasElementEventMap>(type: K, listener: (this: HTMLAkitHandwritingCanvasElement, ev: AkitHandwritingCanvasCustomEvent<HTMLAkitHandwritingCanvasElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAkitHandwritingCanvasElement: {
+        prototype: HTMLAkitHandwritingCanvasElement;
+        new (): HTMLAkitHandwritingCanvasElement;
     };
     interface HTMLElementTagNameMap {
-        "math-drawer": HTMLMathDrawerElement;
+        "akit-handwriting-canvas": HTMLAkitHandwritingCanvasElement;
     }
 }
 declare namespace LocalJSX {
-    interface MathDrawer {
+    interface AkitHandwritingCanvas {
+        "onLatexChanged"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
     }
     interface IntrinsicElements {
-        "math-drawer": MathDrawer;
+        "akit-handwriting-canvas": AkitHandwritingCanvas;
     }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
-            "math-drawer": LocalJSX.MathDrawer & JSXBase.HTMLAttributes<HTMLMathDrawerElement>;
+            "akit-handwriting-canvas": LocalJSX.AkitHandwritingCanvas & JSXBase.HTMLAttributes<HTMLAkitHandwritingCanvasElement>;
         }
     }
 }

@@ -48,16 +48,16 @@ The component can be tested using Playwright MCP at `localhost:33333`
 
 ### Component Structure
 
-#### Main Component: `math-drawer`
-**Location**: `src/components/math-drawer/`
+#### Main Component: `akit-handwriting-canvas`
+**Location**: `src/components/akit-handwriting-canvas/`
 
 **Files**:
-- `math-drawer.tsx` - Main component logic, state management, event handlers
-- `math-drawer.css` - All styling for component UI
+- `akit-handwriting-canvas.tsx` - Main component logic, state management, event handlers
+- `akit-handwriting-canvas.css` - All styling for component UI
 - `stroke-manager.ts` - Stroke drawing, grid rendering, canvas operations
 - `readme.md` - Auto-generated API documentation
 
-**Key Constants** (in `math-drawer.tsx`):
+**Key Constants** (in `akit-handwriting-canvas.tsx`):
 ```typescript
 CANVAS_WIDTH = 2000    // Internal canvas resolution
 CANVAS_HEIGHT = 280    // Internal canvas height
@@ -148,9 +148,9 @@ POST /convert
 app/frontend/
 ├── src/
 │   ├── components/
-│   │   └── math-drawer/
-│   │       ├── math-drawer.tsx      # Main component (state, events, UI)
-│   │       ├── math-drawer.css      # All styles
+│   │   └── akit-handwriting-canvas/
+│   │       ├── akit-handwriting-canvas.tsx      # Main component (state, events, UI)
+│   │       ├── akit-handwriting-canvas.css      # All styles
 │   │       ├── stroke-manager.ts    # Canvas operations, grid, drawing
 │   │       └── readme.md            # Auto-gen API docs
 │   ├── index.html                   # Host page
@@ -298,10 +298,10 @@ console.log('Eraser mode:', this.isEraserMode);
 ## Development Workflow
 
 ### Adding New Features
-1. Update state in `math-drawer.tsx` with `@State()` decorator
+1. Update state in `akit-handwriting-canvas.tsx` with `@State()` decorator
 2. Add UI elements in `render()` method
 3. Implement event handlers
-4. Add styling in `math-drawer.css`
+4. Add styling in `akit-handwriting-canvas.css`
 5. Update canvas operations in `stroke-manager.ts` if needed
 6. Test with Playwright MCP
 7. Update backlog.md with completion status
@@ -314,7 +314,7 @@ console.log('Eraser mode:', this.isEraserMode);
 
 ### Styling Guidelines
 - Use CSS custom properties for theming (not currently implemented)
-- Keep all styles in `math-drawer.css`
+- Keep all styles in `akit-handwriting-canvas.css`
 - Follow BEM-like naming: `.inline-result.outdated`
 - Use flexbox for layout, avoid floats
 

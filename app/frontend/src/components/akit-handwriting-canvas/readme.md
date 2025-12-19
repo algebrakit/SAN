@@ -1,8 +1,15 @@
-# math-drawer
+# akit-handwriting-canvas
 
 
 
 <!-- Auto Generated Below -->
+
+
+## Events
+
+| Event          | Description | Type                              |
+| -------------- | ----------- | --------------------------------- |
+| `latexChanged` |             | `CustomEvent<{ latex: string; }>` |
 
 
 ## Methods

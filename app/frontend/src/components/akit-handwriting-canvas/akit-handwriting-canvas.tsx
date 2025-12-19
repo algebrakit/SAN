@@ -1,9 +1,16 @@
-import { Component, h, State, Element, Method } from '@stencil/core';
+import { Component, h, State, Element, Method, Event, EventEmitter } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
 
 const CANVAS_WIDTH = 2000;
 const CANVAS_HEIGHT = 280;
 const SCALE_FACTOR = 2; // 2x resolution for smoother rendering
+
+// Hysteresis constants for confirm button positioning
+// When repositioning, use large gaps to stay out of the way
+const BUTTON_GAP_X_LARGE = 80;  // Gap used when repositioning
+const BUTTON_GAP_X_MIN = 30;    // Minimum gap before forcing reposition
+const BUTTON_GAP_Y_LARGE = 40;  // Gap below baseline when repositioning
+const BUTTON_GAP_Y_MIN = 10;    // Minimum gap before forcing reposition
 
 // Global window interface extension for MathJax
 declare global {
@@ -19,11 +26,11 @@ declare global {
 }
 
 @Component({
-  tag: 'math-drawer',
-  styleUrl: 'math-drawer.css',
+  tag: 'akit-handwriting-canvas',
+  styleUrl: 'akit-handwriting-canvas.css',
   shadow: false,
 })
-export class MathDrawer {
+export class AkitHandwritingCanvas {
   @Element() el: HTMLElement;
   @State() strokeCount: number = 0;
   @State() latexResult: string = '';
@@ -32,6 +39,12 @@ export class MathDrawer {
   @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
   @State() panOffsetX: number = 0;
   @State() isEraserMode: boolean = false;
+
+  // Tracked button position for hysteresis (prevents jittery movements)
+  private buttonPosX: number | null = null;
+  private buttonPosY: number | null = null;
+
+  @Event() latexChanged: EventEmitter<{ latex: string }>;
 
   private canvas: HTMLCanvasElement;
   private canvasContainer: HTMLElement;
@@ -48,6 +61,10 @@ export class MathDrawer {
 
   // Eraser tracking
   private isErasing: boolean = false;
+
+  // Scroll tracking for button transition
+  private isScrolling: boolean = false;
+  private scrollEndTimeout: ReturnType<typeof setTimeout> | null = null;
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
@@ -129,6 +146,15 @@ export class MathDrawer {
     if (this.canvasContainer) {
       this.canvasContainer.addEventListener('scroll', () => {
         this.panOffsetX = this.canvasContainer.scrollLeft;
+
+        // Track scrolling state for button transition
+        this.isScrolling = true;
+        if (this.scrollEndTimeout) {
+          clearTimeout(this.scrollEndTimeout);
+        }
+        this.scrollEndTimeout = setTimeout(() => {
+          this.isScrolling = false;
+        }, 150); // Consider scrolling stopped after 150ms of no scroll events
       });
     }
   }
@@ -286,6 +312,7 @@ export class MathDrawer {
     this.strokeManager.clear();
     this.strokeCount = 0;
     this.latexResult = '';
+    this.latexChanged.emit({ latex: '' });
     this.error = '';
     this.previewState = 'none';
     this.lastConvertedStrokeCount = 0;
@@ -295,6 +322,9 @@ export class MathDrawer {
     if (this.canvasContainer) {
       this.canvasContainer.scrollLeft = 0;
     }
+    // Reset button position for hysteresis
+    this.buttonPosX = null;
+    this.buttonPosY = null;
   }
 
   @Method()
@@ -353,6 +383,7 @@ export class MathDrawer {
 
       const result = await response.json();
       this.latexResult = result.latex;
+      this.latexChanged.emit({ latex: result.latex });
       this.lastConvertedStrokeCount = this.strokeCount;
       this.previewState = 'current';
 
@@ -404,15 +435,6 @@ export class MathDrawer {
     );
   }
 
-  private renderRefreshIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="23 4 23 10 17 10"></polyline>
-        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-      </svg>
-    );
-  }
-
   private renderEraserIcon() {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -432,43 +454,42 @@ export class MathDrawer {
 
   render() {
     return (
-      <div class="math-drawer-container">
-        <div class="sidebar">
-          <button
-            class="icon-button"
-            onClick={() => this.undo()}
-            disabled={this.isProcessing || !this.strokeManager?.canUndo()}
-            title="Undo"
-          >
-            {this.renderUndoIcon()}
-          </button>
-          <button
-            class="icon-button"
-            onClick={() => this.redo()}
-            disabled={this.isProcessing || !this.strokeManager?.canRedo()}
-            title="Redo"
-          >
-            {this.renderRedoIcon()}
-          </button>
-          <button
-            class="icon-button"
-            onClick={() => this.clearCanvas()}
-            disabled={this.isProcessing}
-            title="Clear"
-          >
-            {this.renderTrashIcon()}
-          </button>
-          <button
-            class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
-            onClick={() => this.toggleEraserMode()}
-            disabled={this.isProcessing}
-            title="Eraser"
-          >
-            {this.renderEraserIcon()}
-          </button>
-        </div>
-
+      <div class="akit-handwriting-canvas-container">
         <div class="canvas-wrapper">
+          <div class="toolbar">
+            <button
+              class="icon-button"
+              onClick={() => this.undo()}
+              disabled={this.isProcessing || !this.strokeManager?.canUndo()}
+              title="Undo"
+            >
+              {this.renderUndoIcon()}
+            </button>
+            <button
+              class="icon-button"
+              onClick={() => this.redo()}
+              disabled={this.isProcessing || !this.strokeManager?.canRedo()}
+              title="Redo"
+            >
+              {this.renderRedoIcon()}
+            </button>
+            <button
+              class="icon-button"
+              onClick={() => this.clearCanvas()}
+              disabled={this.isProcessing}
+              title="Clear"
+            >
+              {this.renderTrashIcon()}
+            </button>
+            <button
+              class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
+              onClick={() => this.toggleEraserMode()}
+              disabled={this.isProcessing}
+              title="Eraser"
+            >
+              {this.renderEraserIcon()}
+            </button>
+          </div>
           <div class="canvas-container">
             <canvas
               class={this.isEraserMode ? 'eraser-cursor' : ''}
@@ -476,32 +497,72 @@ export class MathDrawer {
               onPointerMove={this.draw}
               onPointerUp={this.stopDrawing}
               onPointerOut={this.cancelDrawing}
+              onDblClick={() => this.convertToLatex()}
               style={{ touchAction: 'none' }}
             />
           </div>
-          {this.previewState !== 'none' && (
-            <div
-              class={`inline-result ${this.previewState}`}
-              onClick={() => this.previewState === 'outdated' && this.convertToLatex()}
-              title={this.previewState === 'outdated' ? 'Click to convert' : ''}
-            >
-              {this.latexResult ? (
-                <div class="latex-rendered" innerHTML={`$$${this.latexResult}$$`}></div>
-              ) : (
-                <div class="empty-preview-text">Click to convert</div>
-              )}
-              {this.previewState === 'outdated' && (
-                <div class="refresh-icon-overlay">
-                  {this.renderRefreshIcon()}
-                </div>
-              )}
-              {this.previewState === 'updating' && (
-                <div class="spinner-overlay">
-                  {this.renderSpinner()}
-                </div>
-              )}
-            </div>
-          )}
+
+          {this.strokeManager?.hasStrokes() && (() => {
+            const bbox = this.strokeManager.getStrokesBoundingBox();
+            const buttonStyle: { [key: string]: string } = {};
+
+            if (bbox) {
+              // Calculate the baseline Y position using 80th percentile
+              const baselineY = this.strokeManager.getYPercentile(80) ?? bbox.maxY;
+
+              // Hysteresis logic: only reposition if current position is too close
+              // This prevents small distracting movements after each stroke
+              let needsReposition = false;
+
+              if (this.buttonPosX === null || this.buttonPosY === null) {
+                // No position set yet, need to position
+                needsReposition = true;
+              } else {
+                // Check if strokes have gotten too close to current button position
+                const currentGapX = this.buttonPosX - bbox.maxX;
+                const currentGapY = this.buttonPosY - baselineY;
+
+                // Reposition if gap in X is too small OR gap in Y is too small (strokes above button)
+                if (currentGapX < BUTTON_GAP_X_MIN || currentGapY < BUTTON_GAP_Y_MIN) {
+                  needsReposition = true;
+                }
+              }
+
+              if (needsReposition) {
+                // Position button with large gaps
+                this.buttonPosX = bbox.maxX + BUTTON_GAP_X_LARGE;
+                this.buttonPosY = baselineY + BUTTON_GAP_Y_LARGE;
+              }
+
+              // Adjust for scroll offset so button moves with the expression
+              const visualX = this.buttonPosX - this.panOffsetX;
+              buttonStyle.left = `${visualX}px`;
+              buttonStyle.top = `${this.buttonPosY}px`;
+              buttonStyle.right = 'auto';
+              buttonStyle.bottom = 'auto';
+
+              // Only animate left position when not scrolling (smooth reposition during writing)
+              if (!this.isScrolling) {
+                buttonStyle.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease';
+              }
+            }
+
+            return (
+              <button
+                class="confirm-button"
+                style={buttonStyle}
+                onClick={() => this.convertToLatex()}
+                disabled={this.isProcessing}
+                title="Convert to LaTeX (or double-click canvas)"
+              >
+                {this.isProcessing ? this.renderSpinner() : (
+                  <svg class="checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                )}
+              </button>
+            );
+          })()}
 
           {this.error && (
             <div class="error-message">
