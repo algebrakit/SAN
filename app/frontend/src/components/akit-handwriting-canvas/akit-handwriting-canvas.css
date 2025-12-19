@@ -190,113 +190,6 @@ canvas.eraser-cursor:active {
   stroke-width: 2.5;
 }
 
-.inline-result {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: rgba(255, 255, 255, 0.95);
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 8px 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  max-width: calc(100% - 40px);
-  min-width: 100px;
-  pointer-events: none;
-  animation: fadeIn 0.3s ease-in;
-  transition: all 0.3s ease;
-}
-
-.inline-result.current {
-  background-color: rgba(240, 253, 244, 0.95);
-  border: 1px solid #86efac;
-  box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3);
-}
-
-.inline-result.outdated {
-  background-color: rgba(254, 243, 199, 0.95);
-  border: 1px solid #fbbf24;
-  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.inline-result.outdated:hover {
-  background-color: rgba(254, 243, 199, 1);
-  box-shadow: 0 3px 12px rgba(251, 191, 36, 0.4);
-  transform: translateY(-1px);
-}
-
-.inline-result.updating {
-  background-color: rgba(240, 253, 244, 0.95);
-  border: 1px solid #86efac;
-  box-shadow: 0 2px 8px rgba(134, 239, 172, 0.3);
-  pointer-events: none;
-  cursor: wait;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.inline-result .latex-rendered {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-  text-align: center;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow-x: auto;
-  overflow-y: hidden;
-  max-width: 100%;
-}
-
-.empty-preview-text {
-  color: #6b7280;
-  font-size: 13px;
-  padding: 4px 8px;
-  text-align: center;
-}
-
-.refresh-icon-overlay {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 20px;
-  height: 20px;
-  background-color: rgba(251, 191, 36, 0.9);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.refresh-icon-overlay svg {
-  width: 12px;
-  height: 12px;
-  color: white;
-}
-
-.spinner-overlay {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .spinner {
   width: 20px;
   height: 20px;
@@ -345,12 +238,6 @@ canvas.eraser-cursor:active {
   .icon-button svg {
     width: 18px;
     height: 18px;
-  }
-
-  .inline-result {
-    font-size: 14px;
-    padding: 6px 10px;
-    max-width: 150px;
   }
 }
 

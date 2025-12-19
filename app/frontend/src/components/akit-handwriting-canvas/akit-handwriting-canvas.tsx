@@ -1,29 +1,18 @@
 import { Component, h, State, Element, Method, Event, EventEmitter } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
-
-const CANVAS_WIDTH = 2000;
-const CANVAS_HEIGHT = 280;
-const SCALE_FACTOR = 2; // 2x resolution for smoother rendering
-
-// Hysteresis constants for confirm button positioning
-// When repositioning, use large gaps to stay out of the way
-const BUTTON_GAP_X_LARGE = 80;  // Gap used when repositioning
-const BUTTON_GAP_X_MIN = 30;    // Minimum gap before forcing reposition
-const BUTTON_GAP_Y_LARGE = 40;  // Gap below baseline when repositioning
-const BUTTON_GAP_Y_MIN = 10;    // Minimum gap before forcing reposition
-
-// Global window interface extension for MathJax
-declare global {
-  interface Window {
-    renderMathJax?: (element?: HTMLElement) => void;
-    MathJax?: {
-      typesetPromise: (elements?: HTMLElement[]) => Promise<void>;
-      startup?: {
-        promise?: Promise<void>;
-      };
-    };
-  }
-}
+import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, CheckmarkIcon } from './icons';
+import { convertStrokes } from './api-service';
+import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  SCALE_FACTOR,
+  BUTTON_GAP_X_LARGE,
+  BUTTON_GAP_X_MIN,
+  BUTTON_GAP_Y_LARGE,
+  BUTTON_GAP_Y_MIN,
+  PAN_COOLDOWN_MS,
+  SCROLL_END_DELAY_MS
+} from './config';
 
 @Component({
   tag: 'akit-handwriting-canvas',
@@ -50,14 +39,11 @@ export class AkitHandwritingCanvas {
   private canvasContainer: HTMLElement;
   private strokeManager: StrokeManager;
   private lastConvertedStrokeCount: number = 0;
-  // Use relative URL in production to avoid CORS
-  private apiUrl: string = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
 
   // Pan gesture tracking
   private isPanning: boolean = false;
   private lastTouchPoints: { x: number; y: number }[] = [];
   private panEndTimestamp: number = 0;
-  private readonly PAN_COOLDOWN_MS: number = 200; // 0.4 second cooldown after panning
 
   // Eraser tracking
   private isErasing: boolean = false;
@@ -154,7 +140,7 @@ export class AkitHandwritingCanvas {
         }
         this.scrollEndTimeout = setTimeout(() => {
           this.isScrolling = false;
-        }, 150); // Consider scrolling stopped after 150ms of no scroll events
+        }, SCROLL_END_DELAY_MS);
       });
     }
   }
@@ -232,7 +218,7 @@ export class AkitHandwritingCanvas {
 
     // Don't start drawing if we just finished panning (within cooldown period)
     const timeSincePanEnd = Date.now() - this.panEndTimestamp;
-    if (this.panEndTimestamp > 0 && timeSincePanEnd < this.PAN_COOLDOWN_MS) {
+    if (this.panEndTimestamp > 0 && timeSincePanEnd < PAN_COOLDOWN_MS) {
       event.preventDefault();
       return;
     }
@@ -362,43 +348,11 @@ export class AkitHandwritingCanvas {
     this.error = '';
 
     try {
-      // Convert strokes to the format expected by the API
-      const strokeData = strokes.map(stroke =>
-        stroke.points.map(point => [point.x, point.y])
-      );
-      console.log('Sending stroke data to URL:', `${this.apiUrl}/convert`);
-      const response = await fetch(`${this.apiUrl}/convert`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          strokes: strokeData
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const result = await convertStrokes(strokes);
       this.latexResult = result.latex;
       this.latexChanged.emit({ latex: result.latex });
       this.lastConvertedStrokeCount = this.strokeCount;
       this.previewState = 'current';
-
-      // Trigger MathJax rendering after LaTeX content is updated
-      setTimeout(() => {
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          const latexElement = this.el.querySelector('.latex-rendered') as HTMLElement;
-          if (latexElement) {
-            window.MathJax.typesetPromise([latexElement]).catch((err) => {
-              console.warn('MathJax rendering failed:', err);
-            });
-          }
-        }
-      }, 100);
-
     } catch (err) {
       this.error = `Error: ${err.message}`;
       console.error('Conversion error:', err);
@@ -406,50 +360,6 @@ export class AkitHandwritingCanvas {
     } finally {
       this.isProcessing = false;
     }
-  }
-
-  private renderUndoIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 7v6h6"></path>
-        <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path>
-      </svg>
-    );
-  }
-
-  private renderRedoIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 7v6h-6"></path>
-        <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"></path>
-      </svg>
-    );
-  }
-
-  private renderTrashIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-      </svg>
-    );
-  }
-
-  private renderEraserIcon() {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 20H7L3 16L12 7L17 12M11 11L13 13"></path>
-        <path d="M8.5 15.5L6 13"></path>
-      </svg>
-    );
-  }
-
-  private renderSpinner() {
-    return (
-      <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-      </svg>
-    );
   }
 
   render() {
@@ -463,7 +373,7 @@ export class AkitHandwritingCanvas {
               disabled={this.isProcessing || !this.strokeManager?.canUndo()}
               title="Undo"
             >
-              {this.renderUndoIcon()}
+              <UndoIcon />
             </button>
             <button
               class="icon-button"
@@ -471,7 +381,7 @@ export class AkitHandwritingCanvas {
               disabled={this.isProcessing || !this.strokeManager?.canRedo()}
               title="Redo"
             >
-              {this.renderRedoIcon()}
+              <RedoIcon />
             </button>
             <button
               class="icon-button"
@@ -479,7 +389,7 @@ export class AkitHandwritingCanvas {
               disabled={this.isProcessing}
               title="Clear"
             >
-              {this.renderTrashIcon()}
+              <TrashIcon />
             </button>
             <button
               class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
@@ -487,7 +397,7 @@ export class AkitHandwritingCanvas {
               disabled={this.isProcessing}
               title="Eraser"
             >
-              {this.renderEraserIcon()}
+              <EraserIcon />
             </button>
           </div>
           <div class="canvas-container">
@@ -555,11 +465,7 @@ export class AkitHandwritingCanvas {
                 disabled={this.isProcessing}
                 title="Convert to LaTeX (or double-click canvas)"
               >
-                {this.isProcessing ? this.renderSpinner() : (
-                  <svg class="checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                )}
+                {this.isProcessing ? <SpinnerIcon class="spinner" /> : <CheckmarkIcon class="checkmark" />}
               </button>
             );
           })()}
