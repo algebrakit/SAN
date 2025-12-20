@@ -235,6 +235,23 @@ export class StrokeManager {
     return getYPercentile(this.strokes, percentile);
   }
 
+  getStrokeCounter(): number {
+    return this.strokeCounter;
+  }
+
+  setStrokes(strokes: Stroke[], strokeCounter: number): void {
+    this.strokes = strokes.map(s => ({
+      points: [...s.points],
+      id: s.id
+    }));
+    this.strokeCounter = strokeCounter;
+    this.currentStroke = [];
+    this.undoStack = [];
+    this.redoStack = [];
+    this.highlightedStrokeIds = [];
+    this.redrawCanvas();
+  }
+
   setShowGrid(show: boolean): void {
     this.renderer.setShowGrid(show);
     this.redrawCanvas();

@@ -1,6 +1,7 @@
-import { Component, h, State, Element, Method, Event, EventEmitter } from '@stencil/core';
+import { Component, h, State, Element, Method, Event, EventEmitter, Prop } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
-import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, CheckmarkIcon } from './icons';
+import { HandwritingCanvasState } from './types';
+import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, CheckmarkIcon, SubmitIcon } from './icons';
 import { convertStrokes } from './api-service';
 import {
   CANVAS_WIDTH,
@@ -21,6 +22,7 @@ import {
 })
 export class AkitHandwritingCanvas {
   @Element() el: HTMLElement;
+  @Prop() showSubmitButton: boolean = false;
   @State() strokeCount: number = 0;
   @State() latexResult: string = '';
   @State() isProcessing: boolean = false;
@@ -34,6 +36,7 @@ export class AkitHandwritingCanvas {
   private buttonPosY: number | null = null;
 
   @Event() latexChanged: EventEmitter<{ latex: string }>;
+  @Event() submitted: EventEmitter<{ latex: string }>;
 
   private canvas: HTMLCanvasElement;
   private canvasContainer: HTMLElement;
@@ -293,6 +296,12 @@ export class AkitHandwritingCanvas {
     this.isEraserMode = !this.isEraserMode;
   }
 
+
+  async erase() {
+    this.clearCanvas();
+    this.latexChanged.emit({ latex: '' });
+  }
+
   @Method()
   async clearCanvas() {
     this.strokeManager.clear();
@@ -362,6 +371,46 @@ export class AkitHandwritingCanvas {
     }
   }
 
+  private handleSubmit() {
+    if (this.latexResult) {
+      this.submitted.emit({ latex: this.latexResult });
+    }
+  }
+
+  @Method()
+  async getState(): Promise<HandwritingCanvasState> {
+    return {
+      strokes: this.strokeManager.getStrokes().map(s => ({
+        points: [...s.points],
+        id: s.id
+      })),
+      strokeCounter: this.strokeManager.getStrokeCounter(),
+      scrollLeft: this.canvasContainer?.scrollLeft ?? 0
+    };
+  }
+
+  @Method()
+  async restoreState(state: HandwritingCanvasState): Promise<void> {
+    // Restore strokes
+    this.strokeManager.setStrokes(state.strokes, state.strokeCounter);
+    this.strokeCount = this.strokeManager.getStrokeCount();
+
+    // Restore scroll position
+    this.panOffsetX = state.scrollLeft;
+    if (this.canvasContainer) {
+      this.canvasContainer.scrollLeft = state.scrollLeft;
+    }
+
+    // Reset other state
+    this.latexResult = '';
+    this.error = '';
+    this.previewState = this.strokeCount > 0 ? 'outdated' : 'none';
+    this.lastConvertedStrokeCount = 0;
+    this.isEraserMode = false;
+    this.buttonPosX = null;
+    this.buttonPosY = null;
+  }
+
   render() {
     return (
       <div class="akit-handwriting-canvas-container">
@@ -385,7 +434,7 @@ export class AkitHandwritingCanvas {
             </button>
             <button
               class="icon-button"
-              onClick={() => this.clearCanvas()}
+              onClick={() => this.erase()}
               disabled={this.isProcessing}
               title="Clear"
             >
@@ -407,7 +456,6 @@ export class AkitHandwritingCanvas {
               onPointerMove={this.draw}
               onPointerUp={this.stopDrawing}
               onPointerOut={this.cancelDrawing}
-              onDblClick={() => this.convertToLatex()}
               style={{ touchAction: 'none' }}
             />
           </div>
@@ -457,15 +505,22 @@ export class AkitHandwritingCanvas {
               }
             }
 
+            const isSubmitMode = this.showSubmitButton && this.previewState === 'current';
+
             return (
               <button
-                class="confirm-button"
+                class={`confirm-button ${isSubmitMode ? 'submit-mode' : ''}`}
                 style={buttonStyle}
-                onClick={() => this.convertToLatex()}
+                onClick={() => isSubmitMode ? this.handleSubmit() : this.convertToLatex()}
                 disabled={this.isProcessing}
-                title="Convert to LaTeX (or double-click canvas)"
+                title={isSubmitMode ? "Submit answer" : "Convert to LaTeX"}
               >
-                {this.isProcessing ? <SpinnerIcon class="spinner" /> : <CheckmarkIcon class="checkmark" />}
+                {this.isProcessing
+                  ? <SpinnerIcon class="spinner" />
+                  : isSubmitMode
+                    ? <SubmitIcon class="submit-icon" />
+                    : <CheckmarkIcon class="checkmark" />
+                }
               </button>
             );
           })()}

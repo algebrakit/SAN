@@ -5,11 +5,19 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
+export { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
 export namespace Components {
     interface AkitHandwritingCanvas {
         "clearCanvas": () => Promise<void>;
         "convertToLatex": () => Promise<void>;
+        "getState": () => Promise<HandwritingCanvasState>;
         "redo": () => Promise<void>;
+        "restoreState": (state: HandwritingCanvasState) => Promise<void>;
+        /**
+          * @default false
+         */
+        "showSubmitButton": boolean;
         "undo": () => Promise<void>;
     }
 }
@@ -20,6 +28,7 @@ export interface AkitHandwritingCanvasCustomEvent<T> extends CustomEvent<T> {
 declare global {
     interface HTMLAkitHandwritingCanvasElementEventMap {
         "latexChanged": { latex: string };
+        "submitted": { latex: string };
     }
     interface HTMLAkitHandwritingCanvasElement extends Components.AkitHandwritingCanvas, HTMLStencilElement {
         addEventListener<K extends keyof HTMLAkitHandwritingCanvasElementEventMap>(type: K, listener: (this: HTMLAkitHandwritingCanvasElement, ev: AkitHandwritingCanvasCustomEvent<HTMLAkitHandwritingCanvasElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -42,6 +51,11 @@ declare global {
 declare namespace LocalJSX {
     interface AkitHandwritingCanvas {
         "onLatexChanged"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
+        "onSubmitted"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
+        /**
+          * @default false
+         */
+        "showSubmitButton"?: boolean;
     }
     interface IntrinsicElements {
         "akit-handwriting-canvas": AkitHandwritingCanvas;

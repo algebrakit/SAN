@@ -9,3 +9,9 @@ export interface Stroke {
   points: Point[];
   id: number;
 }
+
+export interface HandwritingCanvasState {
+  strokes: Stroke[];
+  strokeCounter: number;
+  scrollLeft: number;
+}

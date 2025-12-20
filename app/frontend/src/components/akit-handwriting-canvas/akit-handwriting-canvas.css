@@ -190,6 +190,23 @@ canvas.eraser-cursor:active {
   stroke-width: 2.5;
 }
 
+.confirm-button.submit-mode {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+  opacity: 1;
+}
+
+.confirm-button.submit-mode:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.confirm-button .submit-icon {
+  width: 20px;
+  height: 20px;
+  color: white;
+  stroke-width: 2;
+}
+
 .spinner {
   width: 20px;
   height: 20px;
