@@ -50,11 +50,20 @@ A canvas component for capturing handwritten mathematical expressions and conver
 <!-- Auto Generated Below -->
 
 
+## Properties
+
+| Property            | Attribute            | Description | Type                 | Default |
+| ------------------- | -------------------- | ----------- | -------------------- | ------- |
+| `showSubmitButton`  | `show-submit-button` |             | `boolean`            | `false` |
+| `symbolAdjustments` | `symbol-adjustments` |             | `SymbolAdjustment[]` | `[]`    |
+
+
 ## Events
 
 | Event          | Description | Type                              |
 | -------------- | ----------- | --------------------------------- |
 | `latexChanged` |             | `CustomEvent<{ latex: string; }>` |
+| `submitted`    |             | `CustomEvent<{ latex: string; }>` |
 
 
 ## Methods
@@ -79,9 +88,35 @@ Type: `Promise<void>`
 
 
 
+### `getState() => Promise<HandwritingCanvasState>`
+
+
+
+#### Returns
+
+Type: `Promise<HandwritingCanvasState>`
+
+
+
 ### `redo() => Promise<void>`
 
 
+
+#### Returns
+
+Type: `Promise<void>`
+
+
+
+### `restoreState(state: HandwritingCanvasState) => Promise<void>`
+
+
+
+#### Parameters
+
+| Name    | Type                     | Description |
+| ------- | ------------------------ | ----------- |
+| `state` | `HandwritingCanvasState` |             |
 
 #### Returns
 

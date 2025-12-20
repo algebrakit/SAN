@@ -5,9 +5,17 @@
  * It contains typing information for all components that exist in this project.
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
+import { SymbolAdjustment } from "./components/akit-config-handwriting/types";
 import { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
+export { SymbolAdjustment } from "./components/akit-config-handwriting/types";
 export { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
 export namespace Components {
+    interface AkitConfigHandwriting {
+        /**
+          * @default []
+         */
+        "adjustments": SymbolAdjustment[];
+    }
     interface AkitHandwritingCanvas {
         "clearCanvas": () => Promise<void>;
         "convertToLatex": () => Promise<void>;
@@ -18,14 +26,39 @@ export namespace Components {
           * @default false
          */
         "showSubmitButton": boolean;
+        /**
+          * @default []
+         */
+        "symbolAdjustments": SymbolAdjustment[];
         "undo": () => Promise<void>;
     }
+}
+export interface AkitConfigHandwritingCustomEvent<T> extends CustomEvent<T> {
+    detail: T;
+    target: HTMLAkitConfigHandwritingElement;
 }
 export interface AkitHandwritingCanvasCustomEvent<T> extends CustomEvent<T> {
     detail: T;
     target: HTMLAkitHandwritingCanvasElement;
 }
 declare global {
+    interface HTMLAkitConfigHandwritingElementEventMap {
+        "adjustmentsChanged": { adjustments: SymbolAdjustment[] };
+    }
+    interface HTMLAkitConfigHandwritingElement extends Components.AkitConfigHandwriting, HTMLStencilElement {
+        addEventListener<K extends keyof HTMLAkitConfigHandwritingElementEventMap>(type: K, listener: (this: HTMLAkitConfigHandwritingElement, ev: AkitConfigHandwritingCustomEvent<HTMLAkitConfigHandwritingElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+        addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLAkitConfigHandwritingElementEventMap>(type: K, listener: (this: HTMLAkitConfigHandwritingElement, ev: AkitConfigHandwritingCustomEvent<HTMLAkitConfigHandwritingElementEventMap[K]>) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof DocumentEventMap>(type: K, listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, options?: boolean | EventListenerOptions): void;
+        removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
+    }
+    var HTMLAkitConfigHandwritingElement: {
+        prototype: HTMLAkitConfigHandwritingElement;
+        new (): HTMLAkitConfigHandwritingElement;
+    };
     interface HTMLAkitHandwritingCanvasElementEventMap {
         "latexChanged": { latex: string };
         "submitted": { latex: string };
@@ -45,10 +78,18 @@ declare global {
         new (): HTMLAkitHandwritingCanvasElement;
     };
     interface HTMLElementTagNameMap {
+        "akit-config-handwriting": HTMLAkitConfigHandwritingElement;
         "akit-handwriting-canvas": HTMLAkitHandwritingCanvasElement;
     }
 }
 declare namespace LocalJSX {
+    interface AkitConfigHandwriting {
+        /**
+          * @default []
+         */
+        "adjustments"?: SymbolAdjustment[];
+        "onAdjustmentsChanged"?: (event: AkitConfigHandwritingCustomEvent<{ adjustments: SymbolAdjustment[] }>) => void;
+    }
     interface AkitHandwritingCanvas {
         "onLatexChanged"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
         "onSubmitted"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
@@ -56,8 +97,13 @@ declare namespace LocalJSX {
           * @default false
          */
         "showSubmitButton"?: boolean;
+        /**
+          * @default []
+         */
+        "symbolAdjustments"?: SymbolAdjustment[];
     }
     interface IntrinsicElements {
+        "akit-config-handwriting": AkitConfigHandwriting;
         "akit-handwriting-canvas": AkitHandwritingCanvas;
     }
 }
@@ -65,6 +111,7 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "akit-config-handwriting": LocalJSX.AkitConfigHandwriting & JSXBase.HTMLAttributes<HTMLAkitConfigHandwritingElement>;
             "akit-handwriting-canvas": LocalJSX.AkitHandwritingCanvas & JSXBase.HTMLAttributes<HTMLAkitHandwritingCanvasElement>;
         }
     }

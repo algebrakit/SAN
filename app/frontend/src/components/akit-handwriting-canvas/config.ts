@@ -61,4 +61,5 @@ export const SCROLL_END_DELAY_MS = 150;       // Time to wait before considering
 // =============================================================================
 
 // Use relative URL in production to avoid CORS
-export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
+export const API_BASE_URL = 'http://localhost:5001';
+// export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';

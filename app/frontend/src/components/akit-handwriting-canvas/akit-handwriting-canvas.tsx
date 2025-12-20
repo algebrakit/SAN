@@ -3,6 +3,7 @@ import { StrokeManager } from './stroke-manager';
 import { HandwritingCanvasState } from './types';
 import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, CheckmarkIcon, SubmitIcon } from './icons';
 import { convertStrokes } from './api-service';
+import { SymbolAdjustment } from '../akit-config-handwriting/types';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
@@ -23,6 +24,7 @@ import {
 export class AkitHandwritingCanvas {
   @Element() el: HTMLElement;
   @Prop() showSubmitButton: boolean = false;
+  @Prop() symbolAdjustments: SymbolAdjustment[] = [];
   @State() strokeCount: number = 0;
   @State() latexResult: string = '';
   @State() isProcessing: boolean = false;
@@ -357,7 +359,7 @@ export class AkitHandwritingCanvas {
     this.error = '';
 
     try {
-      const result = await convertStrokes(strokes);
+      const result = await convertStrokes(strokes, this.symbolAdjustments);
       this.latexResult = result.latex;
       this.latexChanged.emit({ latex: result.latex });
       this.lastConvertedStrokeCount = this.strokeCount;

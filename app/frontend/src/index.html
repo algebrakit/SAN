@@ -56,6 +56,10 @@
         z-index: 100;
       }
 
+      #config-panel {
+        margin: 10px;
+      }
+
       #editor {
         background-color:white;
         margin:10px;
@@ -72,10 +76,13 @@
     </div>
     <!-- <akit-exercise session-id="5d5c9ebc-e212-401d-b811-83887bd993d0"></akit-exercise>" -->
     <!-- <akit-latex latex="\sqrt{x}"></akit-latex> -->
+    <div id="config-panel">
+      <akit-config-handwriting id="config"></akit-config-handwriting>
+    </div>
     <div id="editor">
       <akit-mathquill-editor id="mathquill"></akit-mathquill-editor>
     </div>
-    <akit-handwriting-canvas></akit-handwriting-canvas>
+    <akit-handwriting-canvas id="canvas"></akit-handwriting-canvas>
 
     <script>
       AlgebraKIT = {
@@ -88,7 +95,15 @@
         let editor = document.getElementById('mathquill');
         await AlgebraKIT.waitUntilReady(editor);
 
-        let handwritingCanvas = document.querySelector('akit-handwriting-canvas');
+        let handwritingCanvas = document.getElementById('canvas');
+        let configPanel = document.getElementById('config');
+
+        // Connect config panel to canvas
+        configPanel.addEventListener('adjustmentsChanged', function(event) {
+          console.log('Symbol adjustments changed:', event.detail.adjustments);
+          handwritingCanvas.symbolAdjustments = event.detail.adjustments;
+        });
+
         handwritingCanvas.addEventListener('latexChanged', function(event) {
           let latex = event.detail.latex
             .replace(/ ([\{\}\[\]_^])/g,'$1')
