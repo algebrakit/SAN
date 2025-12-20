@@ -61,18 +61,10 @@ class SAN_decoder(nn.Module):
 
         self.struct_convert = nn.Linear(self.hidden_size // 2, self.struct_num)
 
-        self.word_log_priors = None
-        if params['decoder'].get('priors'):
-            priors = params['decoder']['priors']
-            self.word_log_priors = torch.zeros(1, self.word_num).to(device=self.device)
-            for item in priors:
-                _index = self.params['words'].encode([item[0]])[0]
-                self.word_log_priors[0, _index] = item[1]
-
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
 
-    def forward(self, cnn_features, images_mask, images):
+    def forward(self, cnn_features, images_mask, images, word_log_priors=None):
 
         height, width = cnn_features.shape[2:]
         images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
@@ -120,8 +112,8 @@ class SAN_decoder(nn.Module):
 
                 word_prob = self.word_convert(word_out_state)
                 word_log_prob = torch.log_softmax(word_prob, dim=1)  # normalize to log P(word|image)
-                if self.word_log_priors is not None:
-                    word_log_prob = word_log_prob + self.word_log_priors  # add log P(word|context)
+                if word_log_priors is not None:
+                    word_log_prob = word_log_prob + word_log_priors  # add per-request symbol adjustments
                 p_word = word
 
                 p_word_str = self.params['words'].words_index_dict[p_word.item()]

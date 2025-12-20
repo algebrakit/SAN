@@ -35,7 +35,50 @@ class Inference:
 
         self.model.eval()
 
-    def convert2latex(self, img):
+    def _build_priors_tensor(self, symbol_adjustments):
+        """Convert symbol adjustments to log priors tensor.
+
+        Args:
+            symbol_adjustments: List of dicts with 'symbol' and 'offset' keys.
+                               offset is one of: DISABLE, PENALIZE, BOOST, STRONG_BOOST
+
+        Returns:
+            torch.Tensor of shape (1, word_num) with log prior offsets, or None if no adjustments.
+
+        Raises:
+            ValueError: If a symbol is not in the vocabulary or offset type is invalid.
+        """
+        if not symbol_adjustments:
+            return None
+
+        offsets = self.params['decoder'].get('prior_offsets', {
+            'DISABLE': -100,
+            'PENALIZE': -3,
+            'BOOST': 2,
+            'STRONG_BOOST': 4
+        })
+
+        device = self.params['device']
+        priors = torch.zeros(1, self.params['word_num']).to(device=device)
+
+        for adj in symbol_adjustments:
+            symbol = adj['symbol']
+            offset_type = adj['offset']
+
+            # Validate offset type
+            if offset_type not in offsets:
+                raise ValueError(f"Invalid offset type: '{offset_type}'. Must be one of: {list(offsets.keys())}")
+
+            # Validate symbol exists in vocabulary
+            if symbol not in self.params['words'].words_index_dict.values():
+                raise ValueError(f"Unknown symbol: '{symbol}'")
+
+            idx = self.params['words'].encode([symbol])[0]
+            priors[0, idx] = offsets[offset_type]
+
+        return priors
+
+    def convert2latex(self, img, symbol_adjustments=None):
         with torch.no_grad():
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             image = torch.Tensor(img) / 255
@@ -45,7 +88,10 @@ class Inference:
             device = self.params['device']
             image, image_mask = image.to(device), image_mask.to(device)
 
-            prediction = self.model(image, image_mask)
+            # Build per-request priors tensor from symbol adjustments
+            word_log_priors = self._build_priors_tensor(symbol_adjustments)
+
+            prediction = self.model(image, image_mask, word_log_priors)
             expr = parse_gtd(prediction)
             if expr is None:
                 return None

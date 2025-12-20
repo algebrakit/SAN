@@ -58,9 +58,13 @@ decoder:
   cell: 'GRU'
   input_size: 256
   hidden_size: 256
-  # priors:
-  #    - ['\alpha', -0.1]
-  #    - ['<eos>', 2]
+  # Per-request symbol adjustment offsets (added to log probabilities)
+  prior_offsets:
+    DISABLE: -100      # Effectively masks the symbol
+    STRONG_PENALIZE: -5    # Makes symbol much less likely
+    PENALIZE: -3       # Makes symbol less likely
+    BOOST: 3          # Makes symbol more likely
+    STRONG_BOOST: 5    # Makes symbol much more likely
 
 # Attention parameters
 attention:

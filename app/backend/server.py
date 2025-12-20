@@ -49,7 +49,7 @@ def health_check():
 def convert_strokes_to_latex():
     """
     Convert strokes to LaTeX.
-    
+
     Expected JSON payload:
     {
         "strokes": [
@@ -57,9 +57,19 @@ def convert_strokes_to_latex():
             [[x3, y3], [x4, y4], ...],  # Second stroke
             ...
         ],
-        "stroke_length": 50  # Optional, defaults to 50
+        "stroke_length": 50,  # Optional, defaults to 50
+        "symbol_adjustments": [  # Optional, per-request symbol probability adjustments
+            {"symbol": "\\gamma", "offset": "BOOST"},
+            {"symbol": "P", "offset": "DISABLE"}
+        ]
     }
-    
+
+    Symbol adjustment offset options:
+    - DISABLE: Effectively masks the symbol (very large negative offset)
+    - PENALIZE: Makes symbol less likely
+    - BOOST: Makes symbol more likely
+    - STRONG_BOOST: Makes symbol much more likely
+
     Returns:
     {
         "latex": "converted_expression",
@@ -75,7 +85,8 @@ def convert_strokes_to_latex():
         
         strokes = data['strokes']
         stroke_length = data.get('stroke_length', STROKE_LENGTH)
-        
+        symbol_adjustments = data.get('symbol_adjustments', None)
+
         if not strokes:
             return jsonify({'error': 'Empty strokes array'}), 400
         
@@ -101,19 +112,23 @@ def convert_strokes_to_latex():
         
         # save_as_bmp(img, 'debug.bmp')  # For debugging
 
-        # Convert to LaTeX
-        latex = inference_model.convert2latex(img)
-        
+        # Convert to LaTeX (with optional symbol adjustments)
+        try:
+            latex = inference_model.convert2latex(img, symbol_adjustments)
+        except ValueError as e:
+            # Invalid symbol or offset type
+            return jsonify({'error': str(e)}), 400
+
         # Calculate processing time
         processing_time = time.time() - start_time
-        
+
         # Return result
         return jsonify({
             'latex': latex,
             'processing_time': processing_time,
             'image_size': [int(size[0])+4, int(size[1])+4]
         })
-        
+
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return jsonify({'error': str(e)}), 500
