@@ -1,3 +1,5 @@
+@use 'variables';
+
 .akit-handwriting-canvas-container {
   display: flex;
   flex-direction: column;
@@ -14,11 +16,11 @@
   left: auto;
   display: flex;
   flex-direction: row;
-  gap: 4px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  gap: var(--akit-handwriting-canvas-toolbar-gap);
+  padding: var(--akit-handwriting-canvas-toolbar-padding);
+  background: var(--akit-handwriting-canvas-color-toolbar-bg);
+  border: 1px solid var(--akit-handwriting-canvas-color-border-light);
+  border-radius: var(--akit-handwriting-canvas-border-radius);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
   backdrop-filter: blur(8px);
@@ -29,20 +31,20 @@
   padding: 10px;
   background-color: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--akit-handwriting-canvas-border-radius-sm);
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  width: 40px;
-  height: 40px;
+  width: var(--akit-handwriting-canvas-icon-button-size);
+  height: var(--akit-handwriting-canvas-icon-button-size);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2c3e50;
+  color: var(--akit-handwriting-canvas-color-icon);
 }
 
 .icon-button svg {
-  width: 20px;
-  height: 20px;
+  width: var(--akit-handwriting-canvas-icon-size);
+  height: var(--akit-handwriting-canvas-icon-size);
 }
 
 .icon-button:hover:not(:disabled) {
@@ -58,14 +60,14 @@
 }
 
 .icon-button:disabled {
-  color: #c5cdd6;
+  color: var(--akit-handwriting-canvas-color-icon-disabled);
   cursor: not-allowed;
   opacity: 0.4;
 }
 
 .icon-button.active {
   background-color: rgba(59, 130, 246, 0.15);
-  color: #3b82f6;
+  color: var(--akit-handwriting-canvas-color-icon-active);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
 }
 
@@ -86,28 +88,28 @@
 
 .canvas-container {
   position: relative;
-  border: 2px solid #7a8491;
-  border-radius: 8px;
+  border: 2px solid var(--akit-handwriting-canvas-color-border);
+  border-radius: var(--akit-handwriting-canvas-border-radius);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-  background: white;
+  background: var(--akit-handwriting-canvas-color-background);
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
   scrollbar-width: thin;
-  scrollbar-color: #9aa3af #f0f3f7;
+  scrollbar-color: var(--akit-handwriting-canvas-color-scrollbar-thumb) var(--akit-handwriting-canvas-color-scrollbar-track);
 }
 
-/* Visual indicator overlay when drawing near the right edge (auto-scroll will trigger) */
+// Visual indicator overlay when drawing near the right edge (auto-scroll will trigger)
 .auto-scroll-zone-overlay {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  /* width is set dynamically via inline style using AUTO_SCROLL_MIN_GAP */
-  background: linear-gradient(to right, transparent, rgba(90, 159, 212, 0.3));
+  // width is set dynamically via inline style using AUTO_SCROLL_MIN_GAP
+  background: linear-gradient(to right, transparent, var(--akit-handwriting-canvas-color-autoscroll-zone));
   pointer-events: none;
   z-index: 10;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--akit-handwriting-canvas-border-radius) var(--akit-handwriting-canvas-border-radius) 0;
 }
 
 .canvas-container::-webkit-scrollbar {
@@ -115,23 +117,23 @@
 }
 
 .canvas-container::-webkit-scrollbar-track {
-  background: #f0f3f7;
-  border-radius: 0 0 8px 0;
+  background: var(--akit-handwriting-canvas-color-scrollbar-track);
+  border-radius: 0 0 var(--akit-handwriting-canvas-border-radius) 0;
 }
 
 .canvas-container::-webkit-scrollbar-thumb {
-  background: #9aa3af;
+  background: var(--akit-handwriting-canvas-color-scrollbar-thumb);
   border-radius: 4px;
 }
 
 .canvas-container::-webkit-scrollbar-thumb:hover {
-  background: #7a8491;
+  background: var(--akit-handwriting-canvas-color-scrollbar-thumb-hover);
 }
 
 canvas {
   display: block;
   cursor: crosshair;
-  border-radius: 6px;
+  border-radius: var(--akit-handwriting-canvas-border-radius-sm);
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -154,75 +156,80 @@ canvas.eraser-cursor:active {
 
 .confirm-button {
   position: absolute;
-  /* Default fallback position - will be overridden by inline styles */
+  // Default fallback position - will be overridden by inline styles
   bottom: 12px;
   right: 12px;
-  width: 48px;
-  height: 36px;
-  border-radius: 8px;
-  background-color: #449444;
-  border: 1px solid #94a3b8;
+  width: var(--akit-handwriting-canvas-convert-button-size);
+  height: var(--akit-handwriting-canvas-convert-button-size);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--akit-handwriting-canvas-color-convert-button) 0%, var(--akit-handwriting-canvas-color-convert-button-dark) 100%);
+  border: none;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(100, 116, 139, 0.25);
-  transition: top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+  transition: top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   z-index: 10;
   display: flex;
   align-items: center;
-  justify-content: center; 
-  opacity:0.5;
+  justify-content: center;
 }
 
 .confirm-button:hover:not(:disabled) {
-  background-color: #475569;
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(100, 116, 139, 0.35);
+  background: linear-gradient(135deg, var(--akit-handwriting-canvas-color-convert-button-dark) 0%, var(--akit-handwriting-canvas-color-convert-button-darkest) 100%);
+  transform: scale(1.08);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.5);
 }
 
 .confirm-button:active:not(:disabled) {
-  transform: scale(0.97);
-  box-shadow: 0 1px 4px rgba(100, 116, 139, 0.25);
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
 }
 
 .confirm-button:disabled {
-  background-color: #cbd5e1;
-  border-color: #e2e8f0;
+  background: var(--akit-handwriting-canvas-color-disabled);
   cursor: wait;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .confirm-button .spinner {
-  width: 20px;
-  height: 20px;
+  width: var(--akit-handwriting-canvas-icon-size);
+  height: var(--akit-handwriting-canvas-icon-size);
   color: white;
 }
 
 .confirm-button .checkmark {
-  width: 20px;
-  height: 20px;
+  width: var(--akit-handwriting-canvas-icon-size);
+  height: var(--akit-handwriting-canvas-icon-size);
   color: white;
   stroke-width: 2.5;
 }
 
 .confirm-button.submit-mode {
-  background-color: #3b82f6;
-  border-color: #2563eb;
-  opacity: 1;
+  background: linear-gradient(135deg, var(--akit-handwriting-canvas-color-submit-button) 0%, var(--akit-handwriting-canvas-color-submit-button-dark) 100%);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
 }
 
 .confirm-button.submit-mode:hover:not(:disabled) {
-  background-color: #2563eb;
+  background: linear-gradient(135deg, var(--akit-handwriting-canvas-color-submit-button-dark) 0%, var(--akit-handwriting-canvas-color-submit-button-darkest) 100%);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
 }
 
 .confirm-button .submit-icon {
-  width: 20px;
-  height: 20px;
+  width: var(--akit-handwriting-canvas-icon-size);
+  height: var(--akit-handwriting-canvas-icon-size);
   color: white;
   stroke-width: 2;
 }
 
+.confirm-button .up-arrow {
+  width: calc(var(--akit-handwriting-canvas-icon-size) + 2px);
+  height: calc(var(--akit-handwriting-canvas-icon-size) + 2px);
+  color: white;
+  stroke-width: 2.5;
+}
+
 .spinner {
-  width: 20px;
-  height: 20px;
+  width: var(--akit-handwriting-canvas-icon-size);
+  height: var(--akit-handwriting-canvas-icon-size);
   color: #86efac;
   animation: spin 1s linear infinite;
 }
@@ -237,17 +244,17 @@ canvas.eraser-cursor:active {
 }
 
 .error-message {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: var(--akit-handwriting-canvas-color-error-bg);
+  color: var(--akit-handwriting-canvas-color-error-text);
   padding: 12px 16px;
-  border-radius: 6px;
-  border-left: 4px solid #f44336;
+  border-radius: var(--akit-handwriting-canvas-border-radius-sm);
+  border-left: 4px solid var(--akit-handwriting-canvas-color-error-border);
   margin-top: 10px;
   font-weight: 500;
   font-size: 14px;
 }
 
-/* Responsive design */
+// Responsive design
 @media (max-width: 700px) {
   .toolbar {
     padding: 4px 6px;
@@ -271,7 +278,7 @@ canvas.eraser-cursor:active {
   }
 }
 
-/* Touch device optimizations */
+// Touch device optimizations
 @media (hover: none) and (pointer: coarse) {
   canvas {
     cursor: default;
@@ -287,7 +294,7 @@ canvas.eraser-cursor:active {
     height: 22px;
   }
 
-  /* Hide scrollbar on touch devices - use two-finger pan instead */
+  // Hide scrollbar on touch devices - use two-finger pan instead
   .canvas-container {
     scrollbar-width: none;
   }

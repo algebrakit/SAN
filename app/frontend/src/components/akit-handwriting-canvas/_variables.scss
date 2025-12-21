@@ -1,0 +1,78 @@
+/**
+ * Configurable CSS custom properties for akit-handwriting-canvas
+ *
+ * Customers can override these variables from a parent scope to customize
+ * the component appearance.
+ */
+
+.akit-handwriting-canvas-container {
+  // ==========================================================================
+  // Convert Button (green up-arrow button)
+  // ==========================================================================
+  --akit-handwriting-canvas-color-convert-button: #22c55e;
+  --akit-handwriting-canvas-color-convert-button-dark: #16a34a;
+  --akit-handwriting-canvas-color-convert-button-darkest: #15803d;
+
+  // ==========================================================================
+  // Submit Button (blue button in submit mode)
+  // ==========================================================================
+  --akit-handwriting-canvas-color-submit-button: #3b82f6;
+  --akit-handwriting-canvas-color-submit-button-dark: #2563eb;
+  --akit-handwriting-canvas-color-submit-button-darkest: #1d4ed8;
+
+  // ==========================================================================
+  // Error Message
+  // ==========================================================================
+  --akit-handwriting-canvas-color-error-text: #c62828;
+  --akit-handwriting-canvas-color-error-bg: #ffebee;
+  --akit-handwriting-canvas-color-error-border: #f44336;
+
+  // ==========================================================================
+  // Toolbar Icons
+  // ==========================================================================
+  --akit-handwriting-canvas-color-icon: #2c3e50;
+  --akit-handwriting-canvas-color-icon-disabled: #c5cdd6;
+  --akit-handwriting-canvas-color-icon-active: #3b82f6;
+
+  // ==========================================================================
+  // Canvas & Container
+  // ==========================================================================
+  --akit-handwriting-canvas-color-background: white;
+  --akit-handwriting-canvas-color-border: #7a8491;
+  --akit-handwriting-canvas-color-border-light: #d1d5db;
+  --akit-handwriting-canvas-color-toolbar-bg: rgba(255, 255, 255, 0.9);
+
+  // ==========================================================================
+  // Scrollbar
+  // ==========================================================================
+  --akit-handwriting-canvas-color-scrollbar-track: #f0f3f7;
+  --akit-handwriting-canvas-color-scrollbar-thumb: #9aa3af;
+  --akit-handwriting-canvas-color-scrollbar-thumb-hover: #7a8491;
+
+  // ==========================================================================
+  // Auto-scroll Zone Indicator
+  // ==========================================================================
+  --akit-handwriting-canvas-color-autoscroll-zone: rgba(90, 159, 212, 0.3);
+
+  // ==========================================================================
+  // Disabled State
+  // ==========================================================================
+  --akit-handwriting-canvas-color-disabled: #cbd5e1;
+
+  // ==========================================================================
+  // Sizes
+  // ==========================================================================
+
+  // Button sizes
+  --akit-handwriting-canvas-convert-button-size: 44px;
+  --akit-handwriting-canvas-icon-button-size: 40px;
+  --akit-handwriting-canvas-icon-size: 20px;
+
+  // Border radius
+  --akit-handwriting-canvas-border-radius: 8px;
+  --akit-handwriting-canvas-border-radius-sm: 6px;
+
+  // Toolbar
+  --akit-handwriting-canvas-toolbar-padding: 6px 8px;
+  --akit-handwriting-canvas-toolbar-gap: 4px;
+}

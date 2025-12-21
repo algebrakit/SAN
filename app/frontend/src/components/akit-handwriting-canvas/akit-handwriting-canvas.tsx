@@ -1,7 +1,7 @@
 import { Component, h, State, Element, Method, Event, EventEmitter, Prop } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
 import { HandwritingCanvasState } from './types';
-import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, CheckmarkIcon, SubmitIcon } from './icons';
+import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, SubmitIcon, UpArrowIcon } from './icons';
 import { convertStrokes } from './api-service';
 import { SymbolAdjustment } from '../akit-config-handwriting/types';
 import {
@@ -33,7 +33,7 @@ const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
 
 @Component({
   tag: 'akit-handwriting-canvas',
-  styleUrl: 'akit-handwriting-canvas.css',
+  styleUrl: 'akit-handwriting-canvas.scss',
   shadow: false,
 })
 export class AkitHandwritingCanvas {
@@ -515,9 +515,23 @@ export class AkitHandwritingCanvas {
     }
 
     // Adjust for scroll offset so button moves with the expression
-    const visualX = this.buttonPosX - this.panOffsetX;
+    let visualX = this.buttonPosX - this.panOffsetX;
+    let visualY = this.buttonPosY;
+
+    // Clamp button position to keep it visible within the container
+    const containerWidth = this.canvasContainer?.clientWidth || 0;
+    const containerHeight = this.canvasContainer?.clientHeight || CANVAS_HEIGHT;
+    const buttonSize = 48; // Approximate button size including padding
+    const margin = 8; // Minimum margin from edges
+
+    // Clamp X: keep button within visible horizontal bounds
+    visualX = Math.max(margin, Math.min(visualX, containerWidth - buttonSize - margin));
+
+    // Clamp Y: keep button within visible vertical bounds
+    visualY = Math.max(margin, Math.min(visualY, containerHeight - buttonSize - margin));
+
     buttonStyle.left = `${visualX}px`;
-    buttonStyle.top = `${this.buttonPosY}px`;
+    buttonStyle.top = `${visualY}px`;
     buttonStyle.right = 'auto';
     buttonStyle.bottom = 'auto';
 
@@ -631,7 +645,7 @@ export class AkitHandwritingCanvas {
                   ? <SpinnerIcon class="spinner" />
                   : isSubmitMode
                     ? <SubmitIcon class="submit-icon" />
-                    : <CheckmarkIcon class="checkmark" />
+                    : <UpArrowIcon class="up-arrow" />
                 }
               </button>
             );

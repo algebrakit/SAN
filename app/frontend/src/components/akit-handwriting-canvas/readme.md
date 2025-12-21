@@ -70,7 +70,7 @@ A canvas component for capturing handwritten mathematical expressions and conver
 
 ### `clearCanvas() => Promise<void>`
 
-
+Clears the canvas without emitting latexChanged event. Use erase() to clear and emit.
 
 #### Returns
 

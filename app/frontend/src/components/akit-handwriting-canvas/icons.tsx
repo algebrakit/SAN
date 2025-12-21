@@ -46,3 +46,10 @@ export const SubmitIcon: FunctionalComponent<{ class?: string }> = (props) => (
     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
   </svg>
 );
+
+export const UpArrowIcon: FunctionalComponent<{ class?: string }> = (props) => (
+  <svg class={props.class || 'up-arrow'} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"></line>
+    <polyline points="5 12 12 5 19 12"></polyline>
+  </svg>
+);
