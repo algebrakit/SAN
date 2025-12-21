@@ -66,7 +66,8 @@ export const MIN_VISIBLE_STROKE_MARGIN = 50;  // Pixels of stroke that must rema
 // =============================================================================
 
 export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
-export const AUTO_SCROLL_PREFERRED_GAP = 200; // px of space to create after scrolling
+export const AUTO_SCROLL_PREFERRED_GAP = 200;  // px of space to create after scrolling
+export const AUTO_SCROLL_DEBOUNCE_MS = 700;   // Wait before auto-scrolling after stroke ends
 
 // =============================================================================
 // Symbol likelihood adjustments

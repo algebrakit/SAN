@@ -1,6 +1,7 @@
 import { Point, Stroke } from './types';
 import {
   countIntersections,
+  getStrokeBoundingBox,
   getStrokesBoundingBox,
   getYPercentile
 } from './geometry';
@@ -229,6 +230,12 @@ export class StrokeManager {
 
   getStrokesBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
     return getStrokesBoundingBox(this.strokes);
+  }
+
+  getLastStrokeBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    if (this.strokes.length === 0) return null;
+    const lastStroke = this.strokes[this.strokes.length - 1];
+    return getStrokeBoundingBox(lastStroke);
   }
 
   getYPercentile(percentile: number): number | null {

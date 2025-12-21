@@ -68,6 +68,29 @@ export function pointToSegmentDistance(point: Point, segStart: Point, segEnd: Po
 }
 
 /**
+ * Calculate the bounding box of a single stroke
+ */
+export function getStrokeBoundingBox(stroke: Stroke): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  if (stroke.points.length === 0) {
+    return null;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const point of stroke.points) {
+    minX = Math.min(minX, point.x);
+    minY = Math.min(minY, point.y);
+    maxX = Math.max(maxX, point.x);
+    maxY = Math.max(maxY, point.y);
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+/**
  * Calculate the bounding box of all strokes
  */
 export function getStrokesBoundingBox(strokes: Stroke[]): { minX: number; minY: number; maxX: number; maxY: number } | null {

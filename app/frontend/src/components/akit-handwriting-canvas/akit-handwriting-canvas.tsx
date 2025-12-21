@@ -19,6 +19,7 @@ import {
   MIN_VISIBLE_STROKE_MARGIN,
   AUTO_SCROLL_MIN_GAP,
   AUTO_SCROLL_PREFERRED_GAP,
+  AUTO_SCROLL_DEBOUNCE_MS,
   SYMBOL_ADJUSTMENTS
 } from './config';
 
@@ -63,21 +64,25 @@ export class AkitHandwritingCanvas {
   // Scroll tracking for button transition
   private isScrolling: boolean = false;
   private scrollEndTimeout: ReturnType<typeof setTimeout> | null = null;
+  private autoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private _symbolAdjustments: SymbolAdjustment[];
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
     this.canvasContainer = this.el.querySelector('.canvas-container');
+    this.setupHighDPICanvas();
+    this.strokeManager = new StrokeManager(this.canvas, SCALE_FACTOR);
+    this.setupTouchEvents();
+    this.setupPanEvents();
+  }
+
+  componentWillUpdate() {
     this._symbolAdjustments = [...this.symbolAdjustments];
     SYMBOL_ADJUSTMENTS.forEach(adj => {
       if (!this._symbolAdjustments.find(a => a.symbol === adj.symbol)) {
         this._symbolAdjustments.push(adj);
       }
     });
-    this.setupHighDPICanvas();
-    this.strokeManager = new StrokeManager(this.canvas, SCALE_FACTOR);
-    this.setupTouchEvents();
-    this.setupPanEvents();
   }
 
   private setupHighDPICanvas() {
@@ -165,6 +170,13 @@ export class AkitHandwritingCanvas {
       this.canvasContainer.addEventListener('scroll', () => {
         this.panOffsetX = this.canvasContainer.scrollLeft;
 
+        // Cancel pending auto-scroll since user is manually scrolling
+        if (this.autoScrollTimeout) {
+          clearTimeout(this.autoScrollTimeout);
+          this.autoScrollTimeout = null;
+          this.isInAutoScrollZone = false;
+        }
+
         // Clamp scroll position to keep strokes visible
         const maxScrollForStrokes = this.getMaxScrollForStrokes();
         if (maxScrollForStrokes !== null && this.panOffsetX > maxScrollForStrokes) {
@@ -188,6 +200,13 @@ export class AkitHandwritingCanvas {
     if (event.touches.length !== 2) return;
 
     this.isPanning = true;
+
+    // Cancel pending auto-scroll since user is panning
+    if (this.autoScrollTimeout) {
+      clearTimeout(this.autoScrollTimeout);
+      this.autoScrollTimeout = null;
+      this.isInAutoScrollZone = false;
+    }
 
     // Cancel any active drawing when pan starts
     this.cancelDrawing();
@@ -307,11 +326,34 @@ export class AkitHandwritingCanvas {
 
   /**
    * Updates the visual indicator state for the auto-scroll trigger zone.
+   * Shows the overlay when drawing position or last stroke edge is in the trigger zone.
+   * @param currentX - Optional current drawing X position (canvas coordinates).
+   *                   If provided, only this position is checked (used during active drawing).
+   *                   If not provided, checks the last completed stroke (used after stroke ends).
    */
-  private updateAutoScrollZoneState(canvasX: number): void {
+  private updateAutoScrollZoneState(currentX?: number): void {
     if (!this.canvasContainer) return;
 
-    const visualX = canvasX - this.panOffsetX;
+    let maxX: number | null = null;
+
+    if (currentX !== undefined) {
+      // During active drawing, only check current position
+      maxX = currentX;
+    } else {
+      // After stroke ends, check the last completed stroke
+      const lastStrokeBbox = this.strokeManager?.getLastStrokeBoundingBox();
+      if (lastStrokeBbox) {
+        maxX = lastStrokeBbox.maxX;
+      }
+    }
+
+    if (maxX === null) {
+      this.isInAutoScrollZone = false;
+      return;
+    }
+
+    // Check if rightmost edge is in the trigger zone
+    const visualX = maxX - this.panOffsetX;
     const containerWidth = this.canvasContainer.clientWidth;
     const rightEdgeDistance = containerWidth - visualX;
 
@@ -330,6 +372,13 @@ export class AkitHandwritingCanvas {
     if (this.panEndTimestamp > 0 && timeSincePanEnd < PAN_COOLDOWN_MS) {
       event.preventDefault();
       return;
+    }
+
+    // Cancel pending auto-scroll since user is starting a new stroke
+    if (this.autoScrollTimeout) {
+      clearTimeout(this.autoScrollTimeout);
+      this.autoScrollTimeout = null;
+      this.isInAutoScrollZone = false;
     }
 
     if (this.isEraserMode) {
@@ -356,6 +405,7 @@ export class AkitHandwritingCanvas {
       this.strokeManager.draw(event);
 
       // Check if we're in the auto-scroll zone to show visual indicator
+      // Pass current touch position so overlay shows during drawing
       const point = this.getCanvasPoint(event);
       this.updateAutoScrollZoneState(point.x);
     }
@@ -389,12 +439,26 @@ export class AkitHandwritingCanvas {
         }
       }
 
-      // Check if we need to auto-scroll after stroke ends (for small screens)
-      const point = this.getCanvasPoint(event);
-      this.checkAutoScroll(point.x);
+      // Cancel any pending auto-scroll (user is still drawing)
+      if (this.autoScrollTimeout) {
+        clearTimeout(this.autoScrollTimeout);
+      }
 
-      // Reset auto-scroll zone indicator
-      this.isInAutoScrollZone = false;
+      // Schedule auto-scroll after debounce period
+      // Use the last stroke's bounding box, not all strokes, so editing at the
+      // start of a formula doesn't trigger auto-scroll to the end
+      const lastStrokeBbox = this.strokeManager.getLastStrokeBoundingBox();
+      if (lastStrokeBbox) {
+        // Update zone state - keep overlay visible if scroll is pending
+        this.updateAutoScrollZoneState();
+
+        this.autoScrollTimeout = setTimeout(() => {
+          this.checkAutoScroll(lastStrokeBbox.maxX);
+          this.autoScrollTimeout = null;
+          // Hide overlay after scroll completes
+          this.isInAutoScrollZone = false;
+        }, AUTO_SCROLL_DEBOUNCE_MS);
+      }
     }
   };
 
@@ -431,6 +495,11 @@ export class AkitHandwritingCanvas {
     this.previewState = 'none';
     this.lastConvertedStrokeCount = 0;
     this.isEraserMode = false; // Exit eraser mode when clearing
+    // Cancel any pending auto-scroll
+    if (this.autoScrollTimeout) {
+      clearTimeout(this.autoScrollTimeout);
+      this.autoScrollTimeout = null;
+    }
     // Reset pan position to start of normal writing area (after prepend area)
     this.panOffsetX = PREPEND_AREA_WIDTH;
     if (this.canvasContainer) {
