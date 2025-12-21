@@ -17,6 +17,9 @@ export namespace Components {
         "adjustments": SymbolAdjustment[];
     }
     interface AkitHandwritingCanvas {
+        /**
+          * Clears the canvas without emitting latexChanged event. Use erase() to clear and emit.
+         */
         "clearCanvas": () => Promise<void>;
         "convertToLatex": () => Promise<void>;
         "getState": () => Promise<HandwritingCanvasState>;

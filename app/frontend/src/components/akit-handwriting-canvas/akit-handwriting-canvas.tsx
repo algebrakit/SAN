@@ -8,13 +8,26 @@ import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   SCALE_FACTOR,
+  PREPEND_AREA_WIDTH,
   BUTTON_GAP_X_LARGE,
   BUTTON_GAP_X_MIN,
+  BUTTON_GAP_X_MAX,
   BUTTON_GAP_Y_LARGE,
   BUTTON_GAP_Y_MIN,
   PAN_COOLDOWN_MS,
   SCROLL_END_DELAY_MS
 } from './config';
+
+// Default symbol adjustments to improve recognition accuracy
+// These are extended with exercise-specific adjustments via the symbolAdjustments prop
+const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
+  { symbol: 'X', offset: 'PENALIZE' }, // resembles x and multiplication
+  { symbol: 's', offset: 'PENALIZE' }, // resembles 5
+  { symbol: 'S', offset: 'PENALIZE' }, // resembles 5
+  { symbol: 'P', offset: 'PENALIZE' }, // resembles p
+  { symbol: 'b', offset: 'PENALIZE' }, // resembles 6
+  { symbol: 'B', offset: 'PENALIZE' }, // resembles 8
+];
 
 @Component({
   tag: 'akit-handwriting-canvas',
@@ -56,10 +69,17 @@ export class AkitHandwritingCanvas {
   // Scroll tracking for button transition
   private isScrolling: boolean = false;
   private scrollEndTimeout: ReturnType<typeof setTimeout> | null = null;
+  private _symbolAdjustments: SymbolAdjustment[];
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
     this.canvasContainer = this.el.querySelector('.canvas-container');
+    this._symbolAdjustments = [...this.symbolAdjustments];
+    SYMBOL_ADJUSTMENTS.forEach(adj => {
+      if (!this._symbolAdjustments.find(a => a.symbol === adj.symbol)) {
+        this._symbolAdjustments.push(adj);
+      }
+    });
     this.setupHighDPICanvas();
     this.strokeManager = new StrokeManager(this.canvas, SCALE_FACTOR);
     this.setupTouchEvents();
@@ -67,13 +87,22 @@ export class AkitHandwritingCanvas {
   }
 
   private setupHighDPICanvas() {
+    // Total canvas width includes prepend area on the left
+    const totalWidth = PREPEND_AREA_WIDTH + CANVAS_WIDTH;
+
     // Set the actual size in memory (scaled up for high DPI)
-    this.canvas.width = CANVAS_WIDTH * SCALE_FACTOR;
+    this.canvas.width = totalWidth * SCALE_FACTOR;
     this.canvas.height = CANVAS_HEIGHT * SCALE_FACTOR;
 
     // Set the display size (CSS pixels) - fixed size, container will clip
-    this.canvas.style.width = `${CANVAS_WIDTH}px`;
+    this.canvas.style.width = `${totalWidth}px`;
     this.canvas.style.height = `${CANVAS_HEIGHT}px`;
+
+    // Start scrolled to the normal writing area (after prepend area)
+    if (this.canvasContainer) {
+      this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
+      this.panOffsetX = PREPEND_AREA_WIDTH;
+    }
   }
 
   private setupTouchEvents() {
@@ -182,11 +211,12 @@ export class AkitHandwritingCanvas {
     // Update pan offset (invert delta for natural scrolling)
     const newOffset = this.panOffsetX - deltaX;
 
-    // Calculate max scroll (canvas width - container width)
-    const containerWidth = this.canvasContainer?.clientWidth || CANVAS_WIDTH;
-    const maxScroll = Math.max(0, CANVAS_WIDTH - containerWidth);
+    // Calculate max scroll (total canvas width - container width)
+    const totalWidth = PREPEND_AREA_WIDTH + CANVAS_WIDTH;
+    const containerWidth = this.canvasContainer?.clientWidth || totalWidth;
+    const maxScroll = Math.max(0, totalWidth - containerWidth);
 
-    // Clamp to bounds
+    // Clamp to bounds (0 to maxScroll, allowing scroll into prepend area)
     this.panOffsetX = Math.max(0, Math.min(maxScroll, newOffset));
 
     // Sync with scrollbar if available
@@ -304,20 +334,22 @@ export class AkitHandwritingCanvas {
     this.latexChanged.emit({ latex: '' });
   }
 
+  /**
+   * Clears the canvas without emitting latexChanged event. Use erase() to clear and emit.
+   */
   @Method()
   async clearCanvas() {
     this.strokeManager.clear();
     this.strokeCount = 0;
     this.latexResult = '';
-    this.latexChanged.emit({ latex: '' });
     this.error = '';
     this.previewState = 'none';
     this.lastConvertedStrokeCount = 0;
     this.isEraserMode = false; // Exit eraser mode when clearing
-    // Reset pan position
-    this.panOffsetX = 0;
+    // Reset pan position to start of normal writing area (after prepend area)
+    this.panOffsetX = PREPEND_AREA_WIDTH;
     if (this.canvasContainer) {
-      this.canvasContainer.scrollLeft = 0;
+      this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
     }
     // Reset button position for hysteresis
     this.buttonPosX = null;
@@ -359,7 +391,7 @@ export class AkitHandwritingCanvas {
     this.error = '';
 
     try {
-      const result = await convertStrokes(strokes, this.symbolAdjustments);
+      const result = await convertStrokes(strokes, this._symbolAdjustments);
       this.latexResult = result.latex;
       this.latexChanged.emit({ latex: result.latex });
       this.lastConvertedStrokeCount = this.strokeCount;
@@ -379,6 +411,65 @@ export class AkitHandwritingCanvas {
     }
   }
 
+  /**
+   * Calculates the button style for positioning the confirm/submit button.
+   * Uses hysteresis to prevent jittery movements - only repositions when
+   * the button is too close to strokes or too far away (after erasing).
+   */
+  private calculateButtonStyle(): { [key: string]: string } {
+    const buttonStyle: { [key: string]: string } = {};
+    const bbox = this.strokeManager?.getStrokesBoundingBox();
+
+    if (!bbox) {
+      return buttonStyle;
+    }
+
+    // Calculate the baseline Y position using 80th percentile
+    const baselineY = this.strokeManager.getYPercentile(80) ?? bbox.maxY;
+
+    // Hysteresis logic: only reposition if current position is too close or too far
+    // This prevents small distracting movements after each stroke
+    let needsReposition = false;
+
+    if (this.buttonPosX === null || this.buttonPosY === null) {
+      // No position set yet, need to position
+      needsReposition = true;
+    } else {
+      // Check if strokes have gotten too close to current button position
+      const currentGapX = this.buttonPosX - bbox.maxX;
+      const currentGapY = this.buttonPosY - baselineY;
+
+      // Reposition if gap in X is too small OR gap in Y is too small (strokes above button)
+      if (currentGapX < BUTTON_GAP_X_MIN || currentGapY < BUTTON_GAP_Y_MIN) {
+        needsReposition = true;
+      }
+      // Also reposition if button is too far from strokes (e.g., after erasing)
+      if (currentGapX > BUTTON_GAP_X_MAX) {
+        needsReposition = true;
+      }
+    }
+
+    if (needsReposition) {
+      // Position button with large gaps
+      this.buttonPosX = bbox.maxX + BUTTON_GAP_X_LARGE;
+      this.buttonPosY = baselineY + BUTTON_GAP_Y_LARGE;
+    }
+
+    // Adjust for scroll offset so button moves with the expression
+    const visualX = this.buttonPosX - this.panOffsetX;
+    buttonStyle.left = `${visualX}px`;
+    buttonStyle.top = `${this.buttonPosY}px`;
+    buttonStyle.right = 'auto';
+    buttonStyle.bottom = 'auto';
+
+    // Only animate left position when not scrolling (smooth reposition during writing)
+    if (!this.isScrolling) {
+      buttonStyle.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease';
+    }
+
+    return buttonStyle;
+  }
+
   @Method()
   async getState(): Promise<HandwritingCanvasState> {
     return {
@@ -387,7 +478,7 @@ export class AkitHandwritingCanvas {
         id: s.id
       })),
       strokeCounter: this.strokeManager.getStrokeCounter(),
-      scrollLeft: this.canvasContainer?.scrollLeft ?? 0
+      scrollLeft: this.canvasContainer?.scrollLeft ?? PREPEND_AREA_WIDTH
     };
   }
 
@@ -463,50 +554,7 @@ export class AkitHandwritingCanvas {
           </div>
 
           {this.strokeManager?.hasStrokes() && (() => {
-            const bbox = this.strokeManager.getStrokesBoundingBox();
-            const buttonStyle: { [key: string]: string } = {};
-
-            if (bbox) {
-              // Calculate the baseline Y position using 80th percentile
-              const baselineY = this.strokeManager.getYPercentile(80) ?? bbox.maxY;
-
-              // Hysteresis logic: only reposition if current position is too close
-              // This prevents small distracting movements after each stroke
-              let needsReposition = false;
-
-              if (this.buttonPosX === null || this.buttonPosY === null) {
-                // No position set yet, need to position
-                needsReposition = true;
-              } else {
-                // Check if strokes have gotten too close to current button position
-                const currentGapX = this.buttonPosX - bbox.maxX;
-                const currentGapY = this.buttonPosY - baselineY;
-
-                // Reposition if gap in X is too small OR gap in Y is too small (strokes above button)
-                if (currentGapX < BUTTON_GAP_X_MIN || currentGapY < BUTTON_GAP_Y_MIN) {
-                  needsReposition = true;
-                }
-              }
-
-              if (needsReposition) {
-                // Position button with large gaps
-                this.buttonPosX = bbox.maxX + BUTTON_GAP_X_LARGE;
-                this.buttonPosY = baselineY + BUTTON_GAP_Y_LARGE;
-              }
-
-              // Adjust for scroll offset so button moves with the expression
-              const visualX = this.buttonPosX - this.panOffsetX;
-              buttonStyle.left = `${visualX}px`;
-              buttonStyle.top = `${this.buttonPosY}px`;
-              buttonStyle.right = 'auto';
-              buttonStyle.bottom = 'auto';
-
-              // Only animate left position when not scrolling (smooth reposition during writing)
-              if (!this.isScrolling) {
-                buttonStyle.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease';
-              }
-            }
-
+            const buttonStyle = this.calculateButtonStyle();
             const isSubmitMode = this.showSubmitButton && this.previewState === 'current';
 
             return (

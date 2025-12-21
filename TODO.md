@@ -1,5 +1,32 @@
 # Backlog
 
+## Improve some math constructs
+Lognl werkt nog niet goed
+Accentnotatie bij expressies: ( 2x(x^2+1))’
+
+## Add symbols
+We lack data for some symbols:
+- money: €, $, £
+- \ddot, \dddot
+
+## Support incomplete expressions
+- 2=
+- y=4+
+
+## Frontend component
+Mathquil: \root, \left{,
+Autoscroll op mobiel
+
+## PARTIALLY DONE: Priors
+- Allow setting symbol priors
+  
+later:
+- Pre-defined prior setting from syntax rules
+  - interval notation
+  - log (might be difficult)
+  - non-standard Greek symbols
+  - advanced math symbols
+
 ## DONE: Handle \lognl
 Create a construct for Log which supports L-sup
 
@@ -30,25 +57,9 @@ Rule:
 ### DONE: Word concept 
 Add inputs with words to the dataset. This allows the model to understand the concept of a word (e.g. that no digits or math symbols exist in them and that spacing is important)
 
-## Priors
-- Allow setting token priors
-- Pre-defined prior setting from syntax rules
-  - interval notation
-  - log (might be difficult)
-  - non-standard Greek symbols
-  - advanced math symbols
 
 ## DONE: Loop protection
 - covered by enforcing image size to be at least 2x16px
-
-## Add symbols
-We lack data for some symbols:
-- money: €, $, £
-- \ddot, \dddot
-
-## Support incomplete expressions
-- 2=
-- y=4+
 
 ## Data collection tool 
 For data collection from real people, it is convenient to have a data collection tool

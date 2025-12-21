@@ -9,6 +9,7 @@
 export const CANVAS_WIDTH = 2000;
 export const CANVAS_HEIGHT = 280;
 export const SCALE_FACTOR = 2; // High-DPI scaling (2x resolution for smoother rendering)
+export const PREPEND_AREA_WIDTH = 200; // Extra space on left for prepending symbols
 
 // =============================================================================
 // Confirm Button Positioning (Hysteresis)
@@ -17,6 +18,7 @@ export const SCALE_FACTOR = 2; // High-DPI scaling (2x resolution for smoother r
 // When repositioning, use large gaps to stay out of the way
 export const BUTTON_GAP_X_LARGE = 80;
 export const BUTTON_GAP_X_MIN = 30;    // Minimum gap before forcing reposition
+export const BUTTON_GAP_X_MAX = 150;   // Maximum gap before forcing reposition (e.g., after erasing)
 export const BUTTON_GAP_Y_LARGE = 40;  // Gap below baseline when repositioning
 export const BUTTON_GAP_Y_MIN = 10;    // Minimum gap before forcing reposition
 
