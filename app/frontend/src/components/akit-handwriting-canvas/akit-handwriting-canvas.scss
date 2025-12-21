@@ -88,9 +88,7 @@
 
 .canvas-container {
   position: relative;
-  border: 2px solid var(--akit-handwriting-canvas-color-border);
-  border-radius: var(--akit-handwriting-canvas-border-radius);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+  border-top: 2px solid var(--akit-handwriting-canvas-color-border);  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   background: var(--akit-handwriting-canvas-color-background);
   overflow-x: auto;
   overflow-y: hidden;
@@ -263,10 +261,6 @@ canvas.eraser-cursor:active {
 }
 
 @media (max-width: 500px) {
-  .akit-handwriting-canvas-container {
-    padding: 10px;
-  }
-
   .icon-button {
     width: 36px;
     height: 36px;

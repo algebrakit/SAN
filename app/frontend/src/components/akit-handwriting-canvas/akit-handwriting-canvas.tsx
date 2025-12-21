@@ -16,20 +16,11 @@ import {
   BUTTON_GAP_Y_MIN,
   PAN_COOLDOWN_MS,
   SCROLL_END_DELAY_MS,
+  MIN_VISIBLE_STROKE_MARGIN,
   AUTO_SCROLL_MIN_GAP,
-  AUTO_SCROLL_PREFERRED_GAP
+  AUTO_SCROLL_PREFERRED_GAP,
+  SYMBOL_ADJUSTMENTS
 } from './config';
-
-// Default symbol adjustments to improve recognition accuracy
-// These are extended with exercise-specific adjustments via the symbolAdjustments prop
-const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
-  { symbol: 'X', offset: 'PENALIZE' }, // resembles x and multiplication
-  { symbol: 's', offset: 'PENALIZE' }, // resembles 5
-  { symbol: 'S', offset: 'PENALIZE' }, // resembles 5
-  { symbol: 'P', offset: 'PENALIZE' }, // resembles p
-  { symbol: 'b', offset: 'PENALIZE' }, // resembles 6
-  { symbol: 'B', offset: 'PENALIZE' }, // resembles 8
-];
 
 @Component({
   tag: 'akit-handwriting-canvas',
@@ -103,8 +94,12 @@ export class AkitHandwritingCanvas {
 
     // Start scrolled to the normal writing area (after prepend area)
     if (this.canvasContainer) {
-      this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
       this.panOffsetX = PREPEND_AREA_WIDTH;
+      setTimeout(() => {
+        if (this.canvasContainer) {
+          this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
+        }
+      }, 0);
     }
   }
 
@@ -170,6 +165,13 @@ export class AkitHandwritingCanvas {
       this.canvasContainer.addEventListener('scroll', () => {
         this.panOffsetX = this.canvasContainer.scrollLeft;
 
+        // Clamp scroll position to keep strokes visible
+        const maxScrollForStrokes = this.getMaxScrollForStrokes();
+        if (maxScrollForStrokes !== null && this.panOffsetX > maxScrollForStrokes) {
+          this.canvasContainer.scrollLeft = maxScrollForStrokes;
+          this.panOffsetX = maxScrollForStrokes;
+        }
+
         // Track scrolling state for button transition
         this.isScrolling = true;
         if (this.scrollEndTimeout) {
@@ -219,8 +221,16 @@ export class AkitHandwritingCanvas {
     const containerWidth = this.canvasContainer?.clientWidth || totalWidth;
     const maxScroll = Math.max(0, totalWidth - containerWidth);
 
-    // Clamp to bounds (0 to maxScroll, allowing scroll into prepend area)
-    this.panOffsetX = Math.max(0, Math.min(maxScroll, newOffset));
+    // Clamp to bounds
+    let clampedOffset = Math.max(0, Math.min(maxScroll, newOffset));
+
+    // Additionally limit scrolling left to keep strokes visible
+    const maxScrollForStrokes = this.getMaxScrollForStrokes();
+    if (maxScrollForStrokes !== null) {
+      clampedOffset = Math.min(clampedOffset, maxScrollForStrokes);
+    }
+
+    this.panOffsetX = clampedOffset;
 
     // Sync with scrollbar if available
     if (this.canvasContainer) {
@@ -237,6 +247,22 @@ export class AkitHandwritingCanvas {
     this.lastTouchPoints = [];
     // Update timestamp when pan actually ends
     this.panEndTimestamp = Date.now();
+  }
+
+  /**
+   * Calculates the maximum scroll position to keep at least part of the strokes visible.
+   * When scrolling left (content moves left), panOffsetX increases.
+   * We limit panOffsetX so strokes don't disappear off the left edge.
+   */
+  private getMaxScrollForStrokes(): number | null {
+    if (!this.strokeManager) return null;
+
+    const bbox = this.strokeManager.getStrokesBoundingBox();
+    if (!bbox) return null;
+
+    // Don't allow scrolling past the point where rightmost stroke edge
+    // is only MIN_VISIBLE_STROKE_MARGIN pixels from left viewport edge
+    return bbox.maxX - MIN_VISIBLE_STROKE_MARGIN;
   }
 
   private getCanvasPoint(event: PointerEvent): { x: number; y: number } {

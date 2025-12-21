@@ -2,6 +2,8 @@
  * Configuration constants for the akit-handwriting-canvas component
  */
 
+import { SymbolAdjustment } from "../../components";
+
 // =============================================================================
 // Canvas Dimensions
 // =============================================================================
@@ -57,6 +59,7 @@ export const PAN_COOLDOWN_MS = 200;           // Cooldown after panning before d
 // =============================================================================
 
 export const SCROLL_END_DELAY_MS = 150;       // Time to wait before considering scroll stopped
+export const MIN_VISIBLE_STROKE_MARGIN = 50;  // Pixels of stroke that must remain visible when scrolling
 
 // =============================================================================
 // Auto-Scroll (for small screens)
@@ -64,6 +67,19 @@ export const SCROLL_END_DELAY_MS = 150;       // Time to wait before considering
 
 export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
 export const AUTO_SCROLL_PREFERRED_GAP = 200; // px of space to create after scrolling
+
+// =============================================================================
+// Symbol likelihood adjustments
+// =============================================================================
+export const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
+  { symbol: 'X', offset: 'PENALIZE' }, // resembles x and multiplication
+  { symbol: 's', offset: 'PENALIZE' }, // resembles 5
+  { symbol: 'S', offset: 'PENALIZE' }, // resembles 5
+  { symbol: 'P', offset: 'PENALIZE' }, // resembles p
+  { symbol: 'b', offset: 'PENALIZE' }, // resembles 6
+  { symbol: 'G', offset: 'PENALIZE' }, // resembles 6
+  { symbol: 'B', offset: 'PENALIZE' }, // resembles 8
+];
 
 // =============================================================================
 // API
