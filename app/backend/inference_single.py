@@ -7,6 +7,7 @@ from model.utils.utils import load_config, load_checkpoint
 from model.inference.Backbone import Backbone
 from model.training.dataset import Words
 from utils.Expression.base import LatexOptions
+from latex_utils import expand_symbol_adjustments
 
 class Inference:
     def __init__(self, confPath='config.yaml'):
@@ -41,13 +42,22 @@ class Inference:
         Args:
             symbol_adjustments: List of dicts with 'symbol' and 'offset' keys.
                                offset is one of: DISABLE, PENALIZE, BOOST, STRONG_BOOST
+                               Symbols can be combined (e.g., 'BD', 'A_{0}') and will be
+                               expanded to their basic symbols.
 
         Returns:
             torch.Tensor of shape (1, word_num) with log prior offsets, or None if no adjustments.
 
         Raises:
-            ValueError: If a symbol is not in the vocabulary or offset type is invalid.
+            ValueError: If offset type is invalid.
         """
+        if not symbol_adjustments:
+            return None
+
+        # Expand combined symbols (e.g., 'BD' -> 'B', 'D') and filter to vocabulary
+        vocabulary = set(self.params['words'].words_index_dict.values())
+        symbol_adjustments = expand_symbol_adjustments(symbol_adjustments, vocabulary)
+
         if not symbol_adjustments:
             return None
 
@@ -70,11 +80,13 @@ class Inference:
                 raise ValueError(f"Invalid offset type: '{offset_type}'. Must be one of: {list(offsets.keys())}")
 
             # Validate symbol exists in vocabulary
-            if symbol not in self.params['words'].words_index_dict.values():
-                raise ValueError(f"Unknown symbol: '{symbol}'")
+            if symbol in self.params['words'].words_index_dict.values():
+                idx = self.params['words'].encode([symbol])[0]
+                priors[0, idx] = offsets[offset_type]
+            else:
+                pass
+                # raise ValueError(f"Unknown symbol: '{symbol}'")
 
-            idx = self.params['words'].encode([symbol])[0]
-            priors[0, idx] = offsets[offset_type]
 
         return priors
 
