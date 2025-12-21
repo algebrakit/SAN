@@ -59,6 +59,13 @@ export const PAN_COOLDOWN_MS = 200;           // Cooldown after panning before d
 export const SCROLL_END_DELAY_MS = 150;       // Time to wait before considering scroll stopped
 
 // =============================================================================
+// Auto-Scroll (for small screens)
+// =============================================================================
+
+export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
+export const AUTO_SCROLL_PREFERRED_GAP = 200; // px of space to create after scrolling
+
+// =============================================================================
 // API
 // =============================================================================
 

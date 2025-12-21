@@ -97,6 +97,19 @@
   scrollbar-color: #9aa3af #f0f3f7;
 }
 
+/* Visual indicator overlay when drawing near the right edge (auto-scroll will trigger) */
+.auto-scroll-zone-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  /* width is set dynamically via inline style using AUTO_SCROLL_MIN_GAP */
+  background: linear-gradient(to right, transparent, rgba(90, 159, 212, 0.3));
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 0 8px 8px 0;
+}
+
 .canvas-container::-webkit-scrollbar {
   height: 8px;
 }

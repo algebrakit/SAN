@@ -15,7 +15,9 @@ import {
   BUTTON_GAP_Y_LARGE,
   BUTTON_GAP_Y_MIN,
   PAN_COOLDOWN_MS,
-  SCROLL_END_DELAY_MS
+  SCROLL_END_DELAY_MS,
+  AUTO_SCROLL_MIN_GAP,
+  AUTO_SCROLL_PREFERRED_GAP
 } from './config';
 
 // Default symbol adjustments to improve recognition accuracy
@@ -45,6 +47,7 @@ export class AkitHandwritingCanvas {
   @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
   @State() panOffsetX: number = 0;
   @State() isEraserMode: boolean = false;
+  @State() isInAutoScrollZone: boolean = false;
 
   // Tracked button position for hysteresis (prevents jittery movements)
   private buttonPosX: number | null = null;
@@ -244,6 +247,51 @@ export class AkitHandwritingCanvas {
     };
   }
 
+  /**
+   * Checks if the drawing position is near the right edge and auto-scrolls if needed.
+   * This helps users on small screens continue writing without manual scrolling.
+   */
+  private checkAutoScroll(canvasX: number): void {
+    if (!this.canvasContainer) return;
+
+    // Convert canvas X to visual X (relative to visible container area)
+    const visualX = canvasX - this.panOffsetX;
+    const containerWidth = this.canvasContainer.clientWidth;
+    const rightEdgeDistance = containerWidth - visualX;
+
+    if (rightEdgeDistance < AUTO_SCROLL_MIN_GAP) {
+      // Calculate scroll amount needed to achieve preferred gap
+      // scrollAmount = preferredGap - currentGap
+      const scrollAmount = AUTO_SCROLL_PREFERRED_GAP - rightEdgeDistance;
+
+      // Calculate new scroll position, respecting max bounds
+      const totalWidth = PREPEND_AREA_WIDTH + CANVAS_WIDTH;
+      const maxScroll = Math.max(0, totalWidth - containerWidth);
+      const newScrollLeft = Math.min(this.panOffsetX + scrollAmount, maxScroll);
+
+      // Only scroll if we're not already at the target position
+      if (newScrollLeft > this.panOffsetX) {
+        this.canvasContainer.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }
+
+  /**
+   * Updates the visual indicator state for the auto-scroll trigger zone.
+   */
+  private updateAutoScrollZoneState(canvasX: number): void {
+    if (!this.canvasContainer) return;
+
+    const visualX = canvasX - this.panOffsetX;
+    const containerWidth = this.canvasContainer.clientWidth;
+    const rightEdgeDistance = containerWidth - visualX;
+
+    this.isInAutoScrollZone = rightEdgeDistance < AUTO_SCROLL_MIN_GAP;
+  }
+
   private startDrawing = (event: PointerEvent) => {
     // Don't start drawing if we're panning
     if (this.isPanning) {
@@ -280,6 +328,10 @@ export class AkitHandwritingCanvas {
     } else {
       // Normal drawing
       this.strokeManager.draw(event);
+
+      // Check if we're in the auto-scroll zone to show visual indicator
+      const point = this.getCanvasPoint(event);
+      this.updateAutoScrollZoneState(point.x);
     }
   };
 
@@ -310,6 +362,13 @@ export class AkitHandwritingCanvas {
           this.previewState = 'outdated';
         }
       }
+
+      // Check if we need to auto-scroll after stroke ends (for small screens)
+      const point = this.getCanvasPoint(event);
+      this.checkAutoScroll(point.x);
+
+      // Reset auto-scroll zone indicator
+      this.isInAutoScrollZone = false;
     }
   };
 
@@ -552,6 +611,9 @@ export class AkitHandwritingCanvas {
               style={{ touchAction: 'none' }}
             />
           </div>
+          {this.isInAutoScrollZone && (
+            <div class="auto-scroll-zone-overlay" style={{ width: `${AUTO_SCROLL_MIN_GAP}px` }}></div>
+          )}
 
           {this.strokeManager?.hasStrokes() && (() => {
             const buttonStyle = this.calculateButtonStyle();
