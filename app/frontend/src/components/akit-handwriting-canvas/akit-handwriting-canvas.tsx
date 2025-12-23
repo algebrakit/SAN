@@ -8,6 +8,7 @@ import katex from 'katex';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
+  CANVAS_VISIBLE_HEIGHT,
   SCALE_FACTOR,
   PREPEND_AREA_WIDTH,
   PAN_COOLDOWN_MS,
@@ -16,7 +17,8 @@ import {
   AUTO_SCROLL_PREFERRED_GAP,
   AUTO_SCROLL_DEBOUNCE_MS,
   AUTO_CONVERT_DEBOUNCE_MS,
-  SYMBOL_ADJUSTMENTS
+  SYMBOL_ADJUSTMENTS,
+  VERTICAL_SCROLL_MAX
 } from './config';
 
 @Component({
@@ -30,6 +32,7 @@ export class AkitHandwritingCanvas {
   @Prop() symbolAdjustments: SymbolAdjustment[] = [];
   @State() strokeCount: number = 0;
   @State() panOffsetX: number = 0;
+  @State() panOffsetY: number = VERTICAL_SCROLL_MAX;  // Start centered vertically
   @State() isEraserMode: boolean = false;
   @State() isInAutoScrollZone: boolean = false;
 
@@ -84,13 +87,19 @@ export class AkitHandwritingCanvas {
     this.canvas.width = totalWidth * SCALE_FACTOR;
     this.canvas.height = CANVAS_HEIGHT * SCALE_FACTOR;
 
-    // Set the display size (CSS pixels) - fixed size, container will clip
+    // Set the display size (CSS pixels) - canvas is taller to allow vertical scroll
     this.canvas.style.width = `${totalWidth}px`;
     this.canvas.style.height = `${CANVAS_HEIGHT}px`;
 
-    // Start scrolled to the normal writing area (after prepend area)
+    // Set container to visible height only (clips the extra vertical space)
+    if (this.canvasContainer) {
+      this.canvasContainer.style.height = `${CANVAS_VISIBLE_HEIGHT}px`;
+    }
+
+    // Start scrolled to the normal writing area (after prepend area) and centered vertically
     if (this.canvasContainer) {
       this.panOffsetX = PREPEND_AREA_WIDTH;
+      this.panOffsetY = VERTICAL_SCROLL_MAX;  // Center vertically
       setTimeout(() => {
         if (this.canvasContainer) {
           this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
@@ -156,7 +165,7 @@ export class AkitHandwritingCanvas {
   }
 
   private setupPanEvents() {
-    // Desktop scrollbar support
+    // Desktop scrollbar support (horizontal)
     if (this.canvasContainer) {
       this.canvasContainer.addEventListener('scroll', () => {
         this.panOffsetX = this.canvasContainer.scrollLeft;
@@ -175,6 +184,19 @@ export class AkitHandwritingCanvas {
           this.panOffsetX = maxScrollForStrokes;
         }
       });
+
+      // Desktop wheel support for vertical scrolling (Shift+wheel or trackpad vertical)
+      this.canvasContainer.addEventListener('wheel', (e) => {
+        // Use deltaY for vertical scrolling when Shift is held, or when it's a vertical scroll
+        if (e.shiftKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          const deltaY = e.deltaY;
+          if (Math.abs(deltaY) > 0) {
+            e.preventDefault();
+            const newOffsetY = this.panOffsetY + deltaY * 0.5; // Scale down for smoother scrolling
+            this.panOffsetY = Math.max(0, Math.min(VERTICAL_SCROLL_MAX * 2, newOffsetY));
+          }
+        }
+      }, { passive: false });
     }
   }
 
@@ -208,32 +230,40 @@ export class AkitHandwritingCanvas {
       { x: event.touches[1].clientX, y: event.touches[1].clientY }
     ];
 
-    // Calculate center point movement
+    // Calculate center point movement (X and Y)
     const lastCenterX = (this.lastTouchPoints[0].x + this.lastTouchPoints[1].x) / 2;
+    const lastCenterY = (this.lastTouchPoints[0].y + this.lastTouchPoints[1].y) / 2;
     const currentCenterX = (currentTouchPoints[0].x + currentTouchPoints[1].x) / 2;
+    const currentCenterY = (currentTouchPoints[0].y + currentTouchPoints[1].y) / 2;
 
     const deltaX = currentCenterX - lastCenterX;
+    const deltaY = currentCenterY - lastCenterY;
 
-    // Update pan offset (invert delta for natural scrolling)
-    const newOffset = this.panOffsetX - deltaX;
+    // Update horizontal pan offset (invert delta for natural scrolling)
+    const newOffsetX = this.panOffsetX - deltaX;
 
-    // Calculate max scroll (total canvas width - container width)
+    // Calculate max horizontal scroll (total canvas width - container width)
     const totalWidth = PREPEND_AREA_WIDTH + CANVAS_WIDTH;
     const containerWidth = this.canvasContainer?.clientWidth || totalWidth;
-    const maxScroll = Math.max(0, totalWidth - containerWidth);
+    const maxScrollX = Math.max(0, totalWidth - containerWidth);
 
-    // Clamp to bounds
-    let clampedOffset = Math.max(0, Math.min(maxScroll, newOffset));
+    // Clamp horizontal to bounds
+    let clampedOffsetX = Math.max(0, Math.min(maxScrollX, newOffsetX));
 
     // Additionally limit scrolling left to keep strokes visible
     const maxScrollForStrokes = this.getMaxScrollForStrokes();
     if (maxScrollForStrokes !== null) {
-      clampedOffset = Math.min(clampedOffset, maxScrollForStrokes);
+      clampedOffsetX = Math.min(clampedOffsetX, maxScrollForStrokes);
     }
 
-    this.panOffsetX = clampedOffset;
+    this.panOffsetX = clampedOffsetX;
 
-    // Sync with scrollbar if available
+    // Update vertical pan offset (invert delta for natural scrolling)
+    const newOffsetY = this.panOffsetY - deltaY;
+    // Clamp vertical to bounds: 0 to VERTICAL_SCROLL_MAX * 2
+    this.panOffsetY = Math.max(0, Math.min(VERTICAL_SCROLL_MAX * 2, newOffsetY));
+
+    // Sync horizontal with scrollbar if available
     if (this.canvasContainer) {
       this.canvasContainer.scrollLeft = this.panOffsetX;
     }
@@ -410,18 +440,25 @@ export class AkitHandwritingCanvas {
         clearTimeout(this.autoScrollTimeout);
       }
 
-      // Hide overlay immediately when drawing stops
-      this.isInAutoScrollZone = false;
-
       // Schedule auto-scroll after debounce period
       // Use the last stroke's bounding box, not all strokes, so editing at the
       // start of a formula doesn't trigger auto-scroll to the end
       const lastStrokeBbox = this.strokeManager.getLastStrokeBoundingBox();
       if (lastStrokeBbox) {
-        this.autoScrollTimeout = setTimeout(() => {
-          this.checkAutoScroll(lastStrokeBbox.maxX);
-          this.autoScrollTimeout = null;
-        }, AUTO_SCROLL_DEBOUNCE_MS);
+        // Check if stroke ended in trigger zone - keep overlay visible during debounce
+        this.updateAutoScrollZoneState(lastStrokeBbox.maxX);
+
+        if (this.isInAutoScrollZone) {
+          // Schedule auto-scroll and hide overlay after it completes
+          this.autoScrollTimeout = setTimeout(() => {
+            this.checkAutoScroll(lastStrokeBbox.maxX);
+            this.isInAutoScrollZone = false;
+            this.autoScrollTimeout = null;
+          }, AUTO_SCROLL_DEBOUNCE_MS);
+        }
+      } else {
+        // No stroke - hide overlay
+        this.isInAutoScrollZone = false;
       }
     }
   };
@@ -469,8 +506,9 @@ export class AkitHandwritingCanvas {
       clearTimeout(this.autoConvertTimeout);
       this.autoConvertTimeout = null;
     }
-    // Reset pan position to start of normal writing area (after prepend area)
+    // Reset pan position to start of normal writing area (after prepend area) and center vertically
     this.panOffsetX = PREPEND_AREA_WIDTH;
+    this.panOffsetY = VERTICAL_SCROLL_MAX;  // Center vertically
     if (this.canvasContainer) {
       this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
     }
@@ -680,7 +718,7 @@ export class AkitHandwritingCanvas {
               onPointerMove={this.draw}
               onPointerUp={this.stopDrawing}
               onPointerOut={this.cancelDrawing}
-              style={{ touchAction: 'none' }}
+              style={{ touchAction: 'none', transform: `translateY(${-this.panOffsetY}px)` }}
             />
           </div>
           {this.isInAutoScrollZone && (

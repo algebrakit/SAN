@@ -9,7 +9,8 @@ import { SymbolAdjustment } from "../../components";
 // =============================================================================
 
 export const CANVAS_WIDTH = 2000;
-export const CANVAS_HEIGHT = 280;
+export const CANVAS_VISIBLE_HEIGHT = 280;                             // What user sees
+export const CANVAS_HEIGHT = CANVAS_VISIBLE_HEIGHT + 200;             // +100px top, +100px bottom for vertical scroll
 export const SCALE_FACTOR = 2; // High-DPI scaling (2x resolution for smoother rendering)
 export const PREPEND_AREA_WIDTH = 200; // Extra space on left for prepending symbols
 
@@ -55,6 +56,13 @@ export const HIGHLIGHT_COLOR = '#ff0000';     // Red for eraser highlight/stroke
 export const PAN_COOLDOWN_MS = 200;           // Cooldown after panning before drawing resumes
 
 // =============================================================================
+// Vertical Scroll (limited)
+// =============================================================================
+
+export const VERTICAL_SCROLL_CELLS = 2;                               // Allow ±2 cells of vertical scroll
+export const VERTICAL_SCROLL_MAX = GRID_SPACING * VERTICAL_SCROLL_CELLS;  // ±100px
+
+// =============================================================================
 // Scroll Tracking
 // =============================================================================
 
@@ -67,7 +75,7 @@ export const MIN_VISIBLE_STROKE_MARGIN = 50;  // Pixels of stroke that must rema
 
 export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
 export const AUTO_SCROLL_PREFERRED_GAP = 200;  // px of space to create after scrolling
-export const AUTO_SCROLL_DEBOUNCE_MS = 600;   // Wait before auto-scrolling after stroke ends
+export const AUTO_SCROLL_DEBOUNCE_MS = 700;   // Wait before auto-scrolling after stroke ends
 
 // =============================================================================
 // Auto-Convert
