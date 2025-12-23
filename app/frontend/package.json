@@ -27,5 +27,8 @@
     "jest-cli": "^29.7.0",
     "typescript": "^5.2.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "katex": "^0.16.27"
+  }
 }

@@ -78,16 +78,6 @@ Type: `Promise<void>`
 
 
 
-### `convertToLatex() => Promise<void>`
-
-
-
-#### Returns
-
-Type: `Promise<void>`
-
-
-
 ### `getState() => Promise<HandwritingCanvasState>`
 
 

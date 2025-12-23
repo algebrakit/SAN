@@ -1,25 +1,21 @@
 import { Component, h, State, Element, Method, Event, EventEmitter, Prop } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
 import { HandwritingCanvasState } from './types';
-import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SpinnerIcon, SubmitIcon, UpArrowIcon } from './icons';
+import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SubmitIcon } from './icons';
 import { convertStrokes } from './api-service';
 import { SymbolAdjustment } from '../akit-config-handwriting/types';
+import katex from 'katex';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   SCALE_FACTOR,
   PREPEND_AREA_WIDTH,
-  BUTTON_GAP_X_LARGE,
-  BUTTON_GAP_X_MIN,
-  BUTTON_GAP_X_MAX,
-  BUTTON_GAP_Y_LARGE,
-  BUTTON_GAP_Y_MIN,
   PAN_COOLDOWN_MS,
-  SCROLL_END_DELAY_MS,
   MIN_VISIBLE_STROKE_MARGIN,
   AUTO_SCROLL_MIN_GAP,
   AUTO_SCROLL_PREFERRED_GAP,
   AUTO_SCROLL_DEBOUNCE_MS,
+  AUTO_CONVERT_DEBOUNCE_MS,
   SYMBOL_ADJUSTMENTS
 } from './config';
 
@@ -33,17 +29,16 @@ export class AkitHandwritingCanvas {
   @Prop() showSubmitButton: boolean = false;
   @Prop() symbolAdjustments: SymbolAdjustment[] = [];
   @State() strokeCount: number = 0;
-  @State() latexResult: string = '';
-  @State() isProcessing: boolean = false;
-  @State() error: string = '';
-  @State() previewState: 'current' | 'outdated' | 'updating' | 'none' = 'none';
   @State() panOffsetX: number = 0;
   @State() isEraserMode: boolean = false;
   @State() isInAutoScrollZone: boolean = false;
 
-  // Tracked button position for hysteresis (prevents jittery movements)
-  private buttonPosX: number | null = null;
-  private buttonPosY: number | null = null;
+  // Preview bar state
+  @State() previewLatex: string = '';
+  @State() isAutoConverting: boolean = false;
+  @State() conversionError: string = '';
+  @State() isDrawing: boolean = false;
+  @State() isPreviewStale: boolean = false; // True when strokes changed but conversion not yet done
 
   @Event() latexChanged: EventEmitter<{ latex: string }>;
   @Event() submitted: EventEmitter<{ latex: string }>;
@@ -51,7 +46,6 @@ export class AkitHandwritingCanvas {
   private canvas: HTMLCanvasElement;
   private canvasContainer: HTMLElement;
   private strokeManager: StrokeManager;
-  private lastConvertedStrokeCount: number = 0;
 
   // Pan gesture tracking
   private isPanning: boolean = false;
@@ -61,10 +55,9 @@ export class AkitHandwritingCanvas {
   // Eraser tracking
   private isErasing: boolean = false;
 
-  // Scroll tracking for button transition
-  private isScrolling: boolean = false;
-  private scrollEndTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Timers
   private autoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
+  private autoConvertTimeout: ReturnType<typeof setTimeout> | null = null;
   private _symbolAdjustments: SymbolAdjustment[];
 
   componentDidLoad() {
@@ -183,15 +176,6 @@ export class AkitHandwritingCanvas {
           this.canvasContainer.scrollLeft = maxScrollForStrokes;
           this.panOffsetX = maxScrollForStrokes;
         }
-
-        // Track scrolling state for button transition
-        this.isScrolling = true;
-        if (this.scrollEndTimeout) {
-          clearTimeout(this.scrollEndTimeout);
-        }
-        this.scrollEndTimeout = setTimeout(() => {
-          this.isScrolling = false;
-        }, SCROLL_END_DELAY_MS);
       });
     }
   }
@@ -326,34 +310,14 @@ export class AkitHandwritingCanvas {
 
   /**
    * Updates the visual indicator state for the auto-scroll trigger zone.
-   * Shows the overlay when drawing position or last stroke edge is in the trigger zone.
-   * @param currentX - Optional current drawing X position (canvas coordinates).
-   *                   If provided, only this position is checked (used during active drawing).
-   *                   If not provided, checks the last completed stroke (used after stroke ends).
+   * Shows the overlay when the current drawing position is in the trigger zone.
+   * @param currentX - Current drawing X position (canvas coordinates).
    */
-  private updateAutoScrollZoneState(currentX?: number): void {
+  private updateAutoScrollZoneState(currentX: number): void {
     if (!this.canvasContainer) return;
 
-    let maxX: number | null = null;
-
-    if (currentX !== undefined) {
-      // During active drawing, only check current position
-      maxX = currentX;
-    } else {
-      // After stroke ends, check the last completed stroke
-      const lastStrokeBbox = this.strokeManager?.getLastStrokeBoundingBox();
-      if (lastStrokeBbox) {
-        maxX = lastStrokeBbox.maxX;
-      }
-    }
-
-    if (maxX === null) {
-      this.isInAutoScrollZone = false;
-      return;
-    }
-
-    // Check if rightmost edge is in the trigger zone
-    const visualX = maxX - this.panOffsetX;
+    // Check if current drawing position is in the trigger zone
+    const visualX = currentX - this.panOffsetX;
     const containerWidth = this.canvasContainer.clientWidth;
     const rightEdgeDistance = containerWidth - visualX;
 
@@ -381,6 +345,16 @@ export class AkitHandwritingCanvas {
       this.isInAutoScrollZone = false;
     }
 
+    // Cancel pending auto-convert and clear preview while drawing
+    if (this.autoConvertTimeout) {
+      clearTimeout(this.autoConvertTimeout);
+      this.autoConvertTimeout = null;
+    }
+    this.isDrawing = true;
+    this.isPreviewStale = true; // Mark preview as stale until new conversion completes
+    // Keep previewLatex visible (grayed out) while drawing
+    this.conversionError = '';
+
     if (this.isEraserMode) {
       // Start erasing
       const point = this.getCanvasPoint(event);
@@ -393,8 +367,8 @@ export class AkitHandwritingCanvas {
   };
 
   private draw = (event: PointerEvent) => {
-    // Don't draw if we're panning
-    if (this.isPanning) return;
+    // Don't draw if we're panning or not actively drawing
+    if (this.isPanning || !this.isDrawing) return;
 
     if (this.isEraserMode) {
       // Continue erasing
@@ -415,54 +389,48 @@ export class AkitHandwritingCanvas {
     // Don't process stop if we're panning
     if (this.isPanning) return;
 
+    this.isDrawing = false;
+
     if (this.isEraserMode && this.isErasing) {
       // Stop erasing - actually delete the strokes
       this.strokeManager.stopErasing();
       this.isErasing = false;
       this.strokeCount = this.strokeManager.getStrokeCount();
 
-      // Update preview state if needed
-      if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
-        this.previewState = 'outdated';
-      }
+      // Schedule auto-convert after erasing
+      this.scheduleAutoConvert();
     } else if (!this.isEraserMode) {
       // Normal drawing stop
       this.strokeManager.stopDrawing(event);
       this.strokeCount = this.strokeManager.getStrokeCount();
 
-      // Show preview in outdated state if there are strokes
-      if (this.strokeCount > 0) {
-        // If we have a result and stroke count changed, mark as outdated
-        // If we don't have a result yet, also show as outdated (needs conversion)
-        if (!this.latexResult || this.strokeCount !== this.lastConvertedStrokeCount) {
-          this.previewState = 'outdated';
-        }
-      }
+      // Schedule auto-convert
+      this.scheduleAutoConvert();
 
       // Cancel any pending auto-scroll (user is still drawing)
       if (this.autoScrollTimeout) {
         clearTimeout(this.autoScrollTimeout);
       }
 
+      // Hide overlay immediately when drawing stops
+      this.isInAutoScrollZone = false;
+
       // Schedule auto-scroll after debounce period
       // Use the last stroke's bounding box, not all strokes, so editing at the
       // start of a formula doesn't trigger auto-scroll to the end
       const lastStrokeBbox = this.strokeManager.getLastStrokeBoundingBox();
       if (lastStrokeBbox) {
-        // Update zone state - keep overlay visible if scroll is pending
-        this.updateAutoScrollZoneState();
-
         this.autoScrollTimeout = setTimeout(() => {
           this.checkAutoScroll(lastStrokeBbox.maxX);
           this.autoScrollTimeout = null;
-          // Hide overlay after scroll completes
-          this.isInAutoScrollZone = false;
         }, AUTO_SCROLL_DEBOUNCE_MS);
       }
     }
   };
 
   private cancelDrawing = () => {
+    this.isDrawing = false;
+
     if (this.isEraserMode && this.isErasing) {
       // Cancel erasing - don't delete, just clear highlights
       this.strokeManager.cancelErasing();
@@ -490,24 +458,24 @@ export class AkitHandwritingCanvas {
   async clearCanvas() {
     this.strokeManager.clear();
     this.strokeCount = 0;
-    this.latexResult = '';
-    this.error = '';
-    this.previewState = 'none';
-    this.lastConvertedStrokeCount = 0;
+    this.previewLatex = '';
+    this.conversionError = '';
+    this.isPreviewStale = false;
     this.isEraserMode = false; // Exit eraser mode when clearing
-    // Cancel any pending auto-scroll
+    // Cancel any pending auto-scroll and auto-convert
     if (this.autoScrollTimeout) {
       clearTimeout(this.autoScrollTimeout);
       this.autoScrollTimeout = null;
+    }
+    if (this.autoConvertTimeout) {
+      clearTimeout(this.autoConvertTimeout);
+      this.autoConvertTimeout = null;
     }
     // Reset pan position to start of normal writing area (after prepend area)
     this.panOffsetX = PREPEND_AREA_WIDTH;
     if (this.canvasContainer) {
       this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
     }
-    // Reset button position for hysteresis
-    this.buttonPosX = null;
-    this.buttonPosY = null;
   }
 
   @Method()
@@ -515,10 +483,8 @@ export class AkitHandwritingCanvas {
     this.strokeManager.undo();
     this.strokeCount = this.strokeManager.getStrokeCount();
 
-    // Mark preview as outdated if we have a result and stroke count changed
-    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
-      this.previewState = 'outdated';
-    }
+    // Schedule auto-convert after undo
+    this.scheduleAutoConvert();
   }
 
   @Method()
@@ -526,116 +492,86 @@ export class AkitHandwritingCanvas {
     this.strokeManager.redo();
     this.strokeCount = this.strokeManager.getStrokeCount();
 
-    // Mark preview as outdated if we have a result and stroke count changed
-    if (this.latexResult && this.strokeCount !== this.lastConvertedStrokeCount) {
-      this.previewState = 'outdated';
-    }
+    // Schedule auto-convert after redo
+    this.scheduleAutoConvert();
   }
 
-  @Method()
-  async convertToLatex() {
-    const strokes = this.strokeManager.getStrokes();
-    if (strokes.length === 0) {
-      this.error = 'Please draw something first';
-      return;
+  /**
+   * Schedules auto-conversion after a debounce period.
+   * Cancels any pending conversion and starts a new timer.
+   */
+  private scheduleAutoConvert() {
+    // Cancel any pending auto-convert
+    if (this.autoConvertTimeout) {
+      clearTimeout(this.autoConvertTimeout);
     }
 
-    this.isProcessing = true;
-    this.previewState = 'updating';
-    this.error = '';
-
-    try {
-      const result = await convertStrokes(strokes, this._symbolAdjustments);
-      this.latexResult = result.latex;
-      this.latexChanged.emit({ latex: result.latex });
-      this.lastConvertedStrokeCount = this.strokeCount;
-      this.previewState = 'current';
-    } catch (err) {
-      this.error = `Error: ${err.message}`;
-      console.error('Conversion error:', err);
-      this.previewState = this.latexResult ? 'outdated' : 'none';
-    } finally {
-      this.isProcessing = false;
-    }
-  }
-
-  private handleSubmit() {
-    if (this.latexResult) {
-      this.submitted.emit({ latex: this.latexResult });
+    // Only schedule if there are strokes
+    if (this.strokeCount > 0) {
+      this.autoConvertTimeout = setTimeout(() => {
+        this.autoConvert();
+        this.autoConvertTimeout = null;
+      }, AUTO_CONVERT_DEBOUNCE_MS);
+    } else {
+      // No strokes - clear preview
+      this.previewLatex = '';
+      this.conversionError = '';
     }
   }
 
   /**
-   * Calculates the button style for positioning the confirm/submit button.
-   * Uses hysteresis to prevent jittery movements - only repositions when
-   * the button is too close to strokes or too far away (after erasing).
+   * Performs auto-conversion of strokes to LaTeX.
+   * Updates preview state but does not emit latexChanged event.
    */
-  private calculateButtonStyle(): { [key: string]: string } {
-    const buttonStyle: { [key: string]: string } = {};
-    const bbox = this.strokeManager?.getStrokesBoundingBox();
-
-    if (!bbox) {
-      return buttonStyle;
+  private async autoConvert() {
+    const strokes = this.strokeManager.getStrokes();
+    if (strokes.length === 0) {
+      this.previewLatex = '';
+      return;
     }
 
-    // Calculate the baseline Y position using 80th percentile
-    const baselineY = this.strokeManager.getYPercentile(80) ?? bbox.maxY;
+    this.isAutoConverting = true;
+    this.conversionError = '';
 
-    // Hysteresis logic: only reposition if current position is too close or too far
-    // This prevents small distracting movements after each stroke
-    let needsReposition = false;
-
-    if (this.buttonPosX === null || this.buttonPosY === null) {
-      // No position set yet, need to position
-      needsReposition = true;
-    } else {
-      // Check if strokes have gotten too close to current button position
-      const currentGapX = this.buttonPosX - bbox.maxX;
-      const currentGapY = this.buttonPosY - baselineY;
-
-      // Reposition if gap in X is too small OR gap in Y is too small (strokes above button)
-      if (currentGapX < BUTTON_GAP_X_MIN || currentGapY < BUTTON_GAP_Y_MIN) {
-        needsReposition = true;
-      }
-      // Also reposition if button is too far from strokes (e.g., after erasing)
-      if (currentGapX > BUTTON_GAP_X_MAX) {
-        needsReposition = true;
-      }
+    try {
+      const result = await convertStrokes(strokes, this._symbolAdjustments);
+      this.previewLatex = result.latex;
+      this.isPreviewStale = false; // Preview is now up-to-date
+    } catch (err) {
+      this.conversionError = 'Conversion failed';
+      console.error('Auto-conversion error:', err);
+    } finally {
+      this.isAutoConverting = false;
     }
+  }
 
-    if (needsReposition) {
-      // Position button with large gaps
-      this.buttonPosX = bbox.maxX + BUTTON_GAP_X_LARGE;
-      this.buttonPosY = baselineY + BUTTON_GAP_Y_LARGE;
+  /**
+   * Handles accepting the current preview LaTeX.
+   * Emits the latexChanged event and optionally the submitted event.
+   */
+  private handleAccept() {
+    if (!this.previewLatex) return;
+
+    this.latexChanged.emit({ latex: this.previewLatex });
+
+    if (this.showSubmitButton) {
+      this.submitted.emit({ latex: this.previewLatex });
     }
+  }
 
-    // Adjust for scroll offset so button moves with the expression
-    let visualX = this.buttonPosX - this.panOffsetX;
-    let visualY = this.buttonPosY;
-
-    // Clamp button position to keep it visible within the container
-    const containerWidth = this.canvasContainer?.clientWidth || 0;
-    const containerHeight = this.canvasContainer?.clientHeight || CANVAS_HEIGHT;
-    const buttonSize = 48; // Approximate button size including padding
-    const margin = 8; // Minimum margin from edges
-
-    // Clamp X: keep button within visible horizontal bounds
-    visualX = Math.max(margin, Math.min(visualX, containerWidth - buttonSize - margin));
-
-    // Clamp Y: keep button within visible vertical bounds
-    visualY = Math.max(margin, Math.min(visualY, containerHeight - buttonSize - margin));
-
-    buttonStyle.left = `${visualX}px`;
-    buttonStyle.top = `${visualY}px`;
-    buttonStyle.right = 'auto';
-    buttonStyle.bottom = 'auto';
-
-    // Only animate left position when not scrolling (smooth reposition during writing)
-    if (!this.isScrolling) {
-      buttonStyle.transition = 'left 0.2s ease-out, top 0.2s ease-out, transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease';
+  /**
+   * Renders LaTeX string to HTML using KaTeX.
+   */
+  private renderLatex(latex: string): string {
+    if (!latex) return '';
+    try {
+      return katex.renderToString(latex, {
+        throwOnError: false,
+        displayMode: true
+      });
+    } catch {
+      return latex; // Fallback to plain text
     }
-
-    return buttonStyle;
   }
 
   @Method()
@@ -663,24 +599,53 @@ export class AkitHandwritingCanvas {
     }
 
     // Reset other state
-    this.latexResult = '';
-    this.error = '';
-    this.previewState = this.strokeCount > 0 ? 'outdated' : 'none';
-    this.lastConvertedStrokeCount = 0;
+    this.previewLatex = '';
+    this.conversionError = '';
+    this.isPreviewStale = false;
     this.isEraserMode = false;
-    this.buttonPosX = null;
-    this.buttonPosY = null;
+
+    // Trigger auto-convert if there are strokes
+    if (this.strokeCount > 0) {
+      this.isPreviewStale = true; // Will be stale until conversion completes
+      this.scheduleAutoConvert();
+    }
   }
 
   render() {
     return (
       <div class="akit-handwriting-canvas-container">
+        {/* Preview bar - shown when there are strokes */}
+        {this.strokeCount > 0 && (
+          <div class={`preview-bar ${this.isPreviewStale ? 'stale' : ''}`}>
+            {this.conversionError && !this.isPreviewStale ? (
+              <div class="preview-error">
+                <span>{this.conversionError}</span>
+              </div>
+            ) : this.previewLatex ? (
+              <div class="preview-content">
+                <div
+                  class="preview-latex"
+                  innerHTML={this.renderLatex(this.previewLatex)}
+                />
+                <button
+                  class="accept-button"
+                  onClick={() => this.handleAccept()}
+                  disabled={this.isPreviewStale || this.isAutoConverting}
+                  title="Accept"
+                >
+                  <SubmitIcon />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        )}
+
         <div class="canvas-wrapper">
           <div class="toolbar">
             <button
               class="icon-button"
               onClick={() => this.undo()}
-              disabled={this.isProcessing || !this.strokeManager?.canUndo()}
+              disabled={this.isAutoConverting || !this.strokeManager?.canUndo()}
               title="Undo"
             >
               <UndoIcon />
@@ -688,7 +653,7 @@ export class AkitHandwritingCanvas {
             <button
               class="icon-button"
               onClick={() => this.redo()}
-              disabled={this.isProcessing || !this.strokeManager?.canRedo()}
+              disabled={this.isAutoConverting || !this.strokeManager?.canRedo()}
               title="Redo"
             >
               <RedoIcon />
@@ -696,7 +661,7 @@ export class AkitHandwritingCanvas {
             <button
               class="icon-button"
               onClick={() => this.erase()}
-              disabled={this.isProcessing}
+              disabled={this.isAutoConverting}
               title="Clear"
             >
               <TrashIcon />
@@ -704,7 +669,7 @@ export class AkitHandwritingCanvas {
             <button
               class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
               onClick={() => this.toggleEraserMode()}
-              disabled={this.isProcessing}
+              disabled={this.isAutoConverting}
               title="Eraser"
             >
               <EraserIcon />
@@ -722,34 +687,6 @@ export class AkitHandwritingCanvas {
           </div>
           {this.isInAutoScrollZone && (
             <div class="auto-scroll-zone-overlay" style={{ width: `${AUTO_SCROLL_MIN_GAP}px` }}></div>
-          )}
-
-          {this.strokeManager?.hasStrokes() && (() => {
-            const buttonStyle = this.calculateButtonStyle();
-            const isSubmitMode = this.showSubmitButton && this.previewState === 'current';
-
-            return (
-              <button
-                class={`confirm-button ${isSubmitMode ? 'submit-mode' : ''}`}
-                style={buttonStyle}
-                onClick={() => isSubmitMode ? this.handleSubmit() : this.convertToLatex()}
-                disabled={this.isProcessing}
-                title={isSubmitMode ? "Submit answer" : "Convert to LaTeX"}
-              >
-                {this.isProcessing
-                  ? <SpinnerIcon class="spinner" />
-                  : isSubmitMode
-                    ? <SubmitIcon class="submit-icon" />
-                    : <UpArrowIcon class="up-arrow" />
-                }
-              </button>
-            );
-          })()}
-
-          {this.error && (
-            <div class="error-message">
-              {this.error}
-            </div>
           )}
         </div>
       </div>

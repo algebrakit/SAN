@@ -32,7 +32,7 @@ export const STROKE_COLOR = '#333390';        // Dark blue for pen-like appearan
 export const BASE_STROKE_WIDTH = 3.2;
 export const MIN_STROKE_WIDTH = 1.5;          // Minimum width when drawing fast
 export const MAX_STROKE_WIDTH = 3.5;          // Maximum width when drawing slow
-export const STROKE_SMOOTHING_FACTOR = 0.3;   // How much to smooth width changes (0-1)
+export const STROKE_SMOOTHING_FACTOR = 0.5;   // How much to smooth width changes (0-1)
 
 // =============================================================================
 // Grid
@@ -67,7 +67,13 @@ export const MIN_VISIBLE_STROKE_MARGIN = 50;  // Pixels of stroke that must rema
 
 export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
 export const AUTO_SCROLL_PREFERRED_GAP = 200;  // px of space to create after scrolling
-export const AUTO_SCROLL_DEBOUNCE_MS = 700;   // Wait before auto-scrolling after stroke ends
+export const AUTO_SCROLL_DEBOUNCE_MS = 600;   // Wait before auto-scrolling after stroke ends
+
+// =============================================================================
+// Auto-Convert
+// =============================================================================
+
+export const AUTO_CONVERT_DEBOUNCE_MS = 1000; // Wait before auto-converting after stroke ends
 
 // =============================================================================
 // Symbol likelihood adjustments
@@ -86,6 +92,7 @@ export const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
 // API
 // =============================================================================
 
-// Use relative URL in production to avoid CORS
+// API base URL
+// Use 'http://localhost:5001' for local development
+// Use '' (empty string) for production (same-origin deployment)
 export const API_BASE_URL = 'http://localhost:5001';
-// export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
