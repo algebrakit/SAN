@@ -38,6 +38,7 @@ export class AkitHandwritingCanvas {
   @State() isAutoConverting: boolean = false;
   @State() conversionError: string = '';
   @State() isDrawing: boolean = false;
+  @State() isErasing: boolean = false;
   @State() isPreviewStale: boolean = false; // True when strokes changed but conversion not yet done
 
   @Event() latexChanged: EventEmitter<{ latex: string }>;
@@ -51,9 +52,6 @@ export class AkitHandwritingCanvas {
   private isPanning: boolean = false;
   private lastTouchPoints: { x: number; y: number }[] = [];
   private panEndTimestamp: number = 0;
-
-  // Eraser tracking
-  private isErasing: boolean = false;
 
   // Timers
   private autoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -641,7 +639,7 @@ export class AkitHandwritingCanvas {
         )}
 
         <div class="canvas-wrapper">
-          <div class="toolbar">
+          <div class={`toolbar ${this.isDrawing || this.isErasing ? 'drawing-active' : ''}`}>
             <button
               class="icon-button"
               onClick={() => this.undo()}
@@ -677,7 +675,7 @@ export class AkitHandwritingCanvas {
           </div>
           <div class="canvas-container">
             <canvas
-              class={this.isEraserMode ? 'eraser-cursor' : ''}
+              class={`${this.isEraserMode ? 'eraser-cursor' : ''} ${this.isDrawing || this.isErasing ? 'drawing-active' : ''}`}
               onPointerDown={this.startDrawing}
               onPointerMove={this.draw}
               onPointerUp={this.stopDrawing}

@@ -25,6 +25,10 @@
   // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   // backdrop-filter: blur(8px);
   // -webkit-backdrop-filter: blur(8px);
+
+  &.drawing-active {
+    z-index: 5; // Below canvas during drawing - allows strokes to pass over buttons
+  }
 }
 
 .icon-button {
@@ -138,6 +142,12 @@ canvas {
   user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 1;
+
+  &.drawing-active {
+    z-index: 10; // Above toolbar during drawing - captures all pointer events
+  }
 }
 
 canvas:active {
