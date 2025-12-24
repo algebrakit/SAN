@@ -1,10 +1,8 @@
 import { Component, h, State, Element, Method, Event, EventEmitter, Prop } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
-import { HandwritingCanvasState } from './types';
+import { HandwritingCanvasState, SymbolAdjustment } from './types';
 import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SubmitIcon } from './icons';
 import { convertStrokes } from './api-service';
-import { SymbolAdjustment } from '../akit-config-handwriting/types';
-import katex from 'katex';
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
@@ -637,21 +635,6 @@ export class AkitHandwritingCanvas {
     }
   }
 
-  /**
-   * Renders LaTeX string to HTML using KaTeX.
-   */
-  private renderLatex(latex: string): string {
-    if (!latex) return '';
-    try {
-      return katex.renderToString(latex, {
-        throwOnError: false,
-        displayMode: true
-      });
-    } catch {
-      return latex; // Fallback to plain text
-    }
-  }
-
   @Method()
   async getState(): Promise<HandwritingCanvasState> {
     return {
@@ -702,9 +685,9 @@ export class AkitHandwritingCanvas {
             ) : this.previewLatex ? (
               <div class="preview-content">
                 <div
-                  class="preview-latex"
-                  innerHTML={this.renderLatex(this.previewLatex)}
-                />
+                  class="preview-latex">
+                  <akit-latex latex={this.previewLatex}></akit-latex>
+                </div>
                 <button
                   class="accept-button"
                   onClick={() => this.handleAccept()}

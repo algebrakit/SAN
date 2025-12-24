@@ -1,3 +1,7 @@
+import { SymbolAdjustment } from '../akit-config-handwriting/types';
+
+export { SymbolAdjustment };
+
 export interface Point {
   x: number;
   y: number;

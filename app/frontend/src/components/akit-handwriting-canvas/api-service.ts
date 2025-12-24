@@ -1,6 +1,5 @@
-import { Stroke } from './types';
+import { Stroke, SymbolAdjustment } from './types';
 import { API_BASE_URL } from './config';
-import { SymbolAdjustment } from '../akit-config-handwriting/types';
 
 export interface ConversionResult {
   latex: string;

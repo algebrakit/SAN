@@ -2,7 +2,7 @@
  * Configuration constants for the akit-handwriting-canvas component
  */
 
-import { SymbolAdjustment } from "../../components";
+import { SymbolAdjustment } from "./types";
 
 // =============================================================================
 // Canvas Dimensions
@@ -106,5 +106,5 @@ export const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
 // API base URL
 // Use 'http://localhost:5001' for local development
 // Use '' (empty string) for production (same-origin deployment)
-// export const API_BASE_URL = 'http://localhost:5001';
-export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';
+export const API_BASE_URL = 'http://localhost:5001';
+// export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';

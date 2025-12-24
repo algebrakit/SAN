@@ -6,9 +6,9 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 import { SymbolAdjustment } from "./components/akit-config-handwriting/types";
-import { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
+import { HandwritingCanvasState, SymbolAdjustment as SymbolAdjustment1 } from "./components/akit-handwriting-canvas/types";
 export { SymbolAdjustment } from "./components/akit-config-handwriting/types";
-export { HandwritingCanvasState } from "./components/akit-handwriting-canvas/types";
+export { HandwritingCanvasState, SymbolAdjustment as SymbolAdjustment1 } from "./components/akit-handwriting-canvas/types";
 export namespace Components {
     interface AkitConfigHandwriting {
         /**
@@ -31,7 +31,7 @@ export namespace Components {
         /**
           * @default []
          */
-        "symbolAdjustments": SymbolAdjustment[];
+        "symbolAdjustments": SymbolAdjustment1[];
         "undo": () => Promise<void>;
     }
 }
@@ -102,7 +102,7 @@ declare namespace LocalJSX {
         /**
           * @default []
          */
-        "symbolAdjustments"?: SymbolAdjustment[];
+        "symbolAdjustments"?: SymbolAdjustment1[];
     }
     interface IntrinsicElements {
         "akit-config-handwriting": AkitConfigHandwriting;
