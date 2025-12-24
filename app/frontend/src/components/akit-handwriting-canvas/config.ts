@@ -75,7 +75,10 @@ export const MIN_VISIBLE_STROKE_MARGIN = 50;  // Pixels of stroke that must rema
 
 export const AUTO_SCROLL_MIN_GAP = 100;        // px from right edge to trigger auto-scroll
 export const AUTO_SCROLL_PREFERRED_GAP = 200;  // px of space to create after scrolling
-export const AUTO_SCROLL_DEBOUNCE_MS = 700;   // Wait before auto-scrolling after stroke ends
+export const AUTO_SCROLL_DEBOUNCE_MS = 700;    // Default debounce before adaptive kicks in
+export const AUTO_SCROLL_DEBOUNCE_MAX_MS = 1500; // Maximum adaptive debounce time
+export const AUTO_SCROLL_DEBOUNCE_MARGIN = 1.25; // Safety margin for Q3-based estimate
+export const AUTO_SCROLL_MIN_STROKE_SAMPLES = 5; // Minimum strokes before using adaptive debounce
 
 // =============================================================================
 // Auto-Convert
@@ -103,4 +106,5 @@ export const SYMBOL_ADJUSTMENTS: SymbolAdjustment[] = [
 // API base URL
 // Use 'http://localhost:5001' for local development
 // Use '' (empty string) for production (same-origin deployment)
-export const API_BASE_URL = 'http://localhost:5001';
+// export const API_BASE_URL = 'http://localhost:5001';
+export const API_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5001';

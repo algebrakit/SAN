@@ -16,6 +16,9 @@ import {
   AUTO_SCROLL_MIN_GAP,
   AUTO_SCROLL_PREFERRED_GAP,
   AUTO_SCROLL_DEBOUNCE_MS,
+  AUTO_SCROLL_DEBOUNCE_MAX_MS,
+  AUTO_SCROLL_DEBOUNCE_MARGIN,
+  AUTO_SCROLL_MIN_STROKE_SAMPLES,
   AUTO_CONVERT_DEBOUNCE_MS,
   SYMBOL_ADJUSTMENTS,
   VERTICAL_SCROLL_MAX
@@ -60,6 +63,32 @@ export class AkitHandwritingCanvas {
   private autoScrollTimeout: ReturnType<typeof setTimeout> | null = null;
   private autoConvertTimeout: ReturnType<typeof setTimeout> | null = null;
   private _symbolAdjustments: SymbolAdjustment[];
+
+  // Inter-stroke timing data collection
+  private lastStrokeEndTimestamp: number = 0;
+  private interStrokeIntervals: number[] = [];
+
+  /**
+   * Calculates adaptive auto-scroll debounce time based on observed inter-stroke intervals.
+   * Uses Q3 (75th percentile) * margin as a robust upper bound estimate.
+   * Falls back to default if not enough samples are collected.
+   */
+  private getAdaptiveDebounceMs(): number {
+    // Need minimum samples before using adaptive timing
+    if (this.interStrokeIntervals.length < AUTO_SCROLL_MIN_STROKE_SAMPLES) {
+      return AUTO_SCROLL_DEBOUNCE_MS;
+    }
+
+    // Calculate Q3 (75th percentile)
+    const sorted = [...this.interStrokeIntervals].sort((a, b) => a - b);
+    const q3Index = Math.floor(sorted.length * 0.75);
+    const q3 = sorted[q3Index];
+
+    // Apply safety margin and cap at maximum
+    const adaptive = Math.min(q3 * AUTO_SCROLL_DEBOUNCE_MARGIN, AUTO_SCROLL_DEBOUNCE_MAX_MS);
+
+    return adaptive;
+  }
 
   componentDidLoad() {
     this.canvas = this.el.querySelector('canvas');
@@ -378,6 +407,13 @@ export class AkitHandwritingCanvas {
       clearTimeout(this.autoConvertTimeout);
       this.autoConvertTimeout = null;
     }
+
+    // Track inter-stroke interval for adaptive debounce
+    if (this.lastStrokeEndTimestamp > 0) {
+      const interval = Date.now() - this.lastStrokeEndTimestamp;
+      this.interStrokeIntervals.push(interval);
+    }
+
     this.isDrawing = true;
     this.isPreviewStale = true; // Mark preview as stale until new conversion completes
     // Keep previewLatex visible (grayed out) while drawing
@@ -413,6 +449,7 @@ export class AkitHandwritingCanvas {
     }
   };
 
+
   private stopDrawing = (event: PointerEvent) => {
     // Don't process stop if we're panning
     if (this.isPanning) return;
@@ -431,6 +468,7 @@ export class AkitHandwritingCanvas {
       // Normal drawing stop
       this.strokeManager.stopDrawing(event);
       this.strokeCount = this.strokeManager.getStrokeCount();
+      this.lastStrokeEndTimestamp = Date.now();  // Record for inter-stroke timing
 
       // Schedule auto-convert
       this.scheduleAutoConvert();
@@ -449,12 +487,13 @@ export class AkitHandwritingCanvas {
         this.updateAutoScrollZoneState(lastStrokeBbox.maxX);
 
         if (this.isInAutoScrollZone) {
+          const scrollX = lastStrokeBbox.maxX;
           // Schedule auto-scroll and hide overlay after it completes
           this.autoScrollTimeout = setTimeout(() => {
-            this.checkAutoScroll(lastStrokeBbox.maxX);
+            this.checkAutoScroll(scrollX);
             this.isInAutoScrollZone = false;
             this.autoScrollTimeout = null;
-          }, AUTO_SCROLL_DEBOUNCE_MS);
+          }, this.getAdaptiveDebounceMs());
         }
       } else {
         // No stroke - hide overlay
@@ -512,6 +551,9 @@ export class AkitHandwritingCanvas {
     if (this.canvasContainer) {
       this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
     }
+    // Reset inter-stroke timing data for new session
+    this.lastStrokeEndTimestamp = 0;
+    this.interStrokeIntervals = [];
   }
 
   @Method()
