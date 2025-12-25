@@ -552,9 +552,19 @@ export class AkitHandwritingCanvas {
     // Reset pan position to start of normal writing area (after prepend area) and center vertically
     this.panOffsetX = PREPEND_AREA_WIDTH;
     this.panOffsetY = VERTICAL_SCROLL_MAX;  // Center vertically
+
+    // Re-query container and force visual scroll reset
+    // Important: Component may be moved in DOM (AKIT_Widgets fixed palette mode)
+    this.canvasContainer = this.el.querySelector('.canvas-container') as HTMLDivElement;
     if (this.canvasContainer) {
-      this.canvasContainer.scrollLeft = PREPEND_AREA_WIDTH;
+      // Use scrollTo with instant behavior to force immediate visual update
+      this.canvasContainer.scrollTo({
+        left: PREPEND_AREA_WIDTH,
+        top: VERTICAL_SCROLL_MAX,
+        behavior: 'instant'
+      });
     }
+
     // Reset inter-stroke timing data for new session
     this.lastStrokeEndTimestamp = 0;
     this.interStrokeIntervals = [];
