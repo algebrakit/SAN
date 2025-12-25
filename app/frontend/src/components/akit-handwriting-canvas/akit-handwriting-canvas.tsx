@@ -306,6 +306,11 @@ export class AkitHandwritingCanvas {
     this.lastTouchPoints = [];
     // Update timestamp when pan actually ends
     this.panEndTimestamp = Date.now();
+
+    // Clear auto-scroll state - strokes drawn before panning should not
+    // trigger auto-scroll based on their new visual position after pan
+    this.isInAutoScrollZone = false;
+    this.strokeManager.clearAutoScrollReferenceStroke();
   }
 
   /**
@@ -478,15 +483,15 @@ export class AkitHandwritingCanvas {
       }
 
       // Schedule auto-scroll after debounce period
-      // Use the last stroke's bounding box, not all strokes, so editing at the
-      // start of a formula doesn't trigger auto-scroll to the end
-      const lastStrokeBbox = this.strokeManager.getLastStrokeBoundingBox();
-      if (lastStrokeBbox) {
+      // Use the auto-scroll reference stroke's bounding box - this is cleared
+      // on pan/erase/undo/redo, so auto-scroll only triggers for active writing
+      const refStrokeBbox = this.strokeManager.getAutoScrollReferenceBoundingBox();
+      if (refStrokeBbox) {
         // Check if stroke ended in trigger zone - keep overlay visible during debounce
-        this.updateAutoScrollZoneState(lastStrokeBbox.maxX);
+        this.updateAutoScrollZoneState(refStrokeBbox.maxX);
 
         if (this.isInAutoScrollZone) {
-          const scrollX = lastStrokeBbox.maxX;
+          const scrollX = refStrokeBbox.maxX;
           // Schedule auto-scroll and hide overlay after it completes
           this.autoScrollTimeout = setTimeout(() => {
             this.checkAutoScroll(scrollX);
@@ -495,7 +500,7 @@ export class AkitHandwritingCanvas {
           }, this.getAdaptiveDebounceMs());
         }
       } else {
-        // No stroke - hide overlay
+        // No reference stroke - hide overlay
         this.isInAutoScrollZone = false;
       }
     }

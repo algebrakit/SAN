@@ -213,6 +213,7 @@ canvas.eraser-cursor:active {
   margin: 0 12px 8px 12px;
   min-height: 48px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 210px;
   max-width: calc(100% - 24px); // Prevent overflow, account for margins
 
   // Gray out the expression when stale (strokes changed, conversion pending)
@@ -259,7 +260,6 @@ canvas.eraser-cursor:active {
 
 .preview-latex {
   font-size: 1.1em;
-  overflow-x: auto;
   padding: 4px 0;
   min-width: 150px;
   color: #111b21;

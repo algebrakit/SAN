@@ -22,6 +22,7 @@ export class StrokeManager {
   private highlightedStrokeIds: number[] = [];
   private eraserRadius: number = getDefaultEraserRadius();
   private strokesToErase: Set<number> = new Set(); // Track strokes to erase during current drag
+  private autoScrollReferenceStroke: Stroke | null = null; // Track stroke for auto-scroll decisions
 
   constructor(canvas: HTMLCanvasElement, scaleFactor: number = 1) {
     this.canvas = canvas;
@@ -96,11 +97,13 @@ export class StrokeManager {
     return this.highlightedStrokeIds;
   }
 
-  stopDrawing(event: PointerEvent): void {
-    if (!this.isDrawing) return;
+  stopDrawing(event: PointerEvent): Stroke | null {
+    if (!this.isDrawing) return null;
 
     event.preventDefault();
     this.isDrawing = false;
+
+    let newStroke: Stroke | null = null;
 
     if (this.currentStroke.length > 1) {
       // Check if this stroke is a scratch gesture
@@ -115,6 +118,9 @@ export class StrokeManager {
         // Remove scratched strokes
         this.strokes = this.strokes.filter(stroke => !scratchedIds.includes(stroke.id));
 
+        // Clear auto-scroll reference - scratch gesture is not normal writing
+        this.autoScrollReferenceStroke = null;
+
         // Clear highlighting and redraw canvas without the deleted strokes
         this.highlightedStrokeIds = [];
         this.redrawCanvas();
@@ -124,11 +130,14 @@ export class StrokeManager {
         this.undoStack.push([...this.strokes]);
         this.redoStack = []; // Clear redo stack when new action is performed
 
-        const newStroke: Stroke = {
+        newStroke = {
           points: [...this.currentStroke],
           id: this.strokeCounter++
         };
         this.strokes = [...this.strokes, newStroke];
+
+        // Set as auto-scroll reference - user is actively writing
+        this.autoScrollReferenceStroke = newStroke;
 
         // Clear highlighting
         this.highlightedStrokeIds = [];
@@ -136,6 +145,7 @@ export class StrokeManager {
     }
 
     this.currentStroke = [];
+    return newStroke;
   }
 
   // Cancel drawing (on pointer out) - don't save the stroke
@@ -154,6 +164,7 @@ export class StrokeManager {
     this.undoStack = [];
     this.redoStack = [];
     this.highlightedStrokeIds = [];
+    this.autoScrollReferenceStroke = null;
     this.renderer.clear();
   }
 
@@ -165,6 +176,9 @@ export class StrokeManager {
 
     // Restore previous state from undo stack
     this.strokes = this.undoStack.pop();
+
+    // Clear auto-scroll reference - user is navigating history
+    this.autoScrollReferenceStroke = null;
 
     // Redraw canvas
     this.redrawCanvas();
@@ -178,6 +192,9 @@ export class StrokeManager {
 
     // Restore state from redo stack
     this.strokes = this.redoStack.pop();
+
+    // Clear auto-scroll reference - user is navigating history
+    this.autoScrollReferenceStroke = null;
 
     // Redraw canvas
     this.redrawCanvas();
@@ -236,6 +253,20 @@ export class StrokeManager {
     if (this.strokes.length === 0) return null;
     const lastStroke = this.strokes[this.strokes.length - 1];
     return getStrokeBoundingBox(lastStroke);
+  }
+
+  // Auto-scroll reference stroke management
+  setAutoScrollReferenceStroke(stroke: Stroke): void {
+    this.autoScrollReferenceStroke = stroke;
+  }
+
+  getAutoScrollReferenceBoundingBox(): { minX: number; minY: number; maxX: number; maxY: number } | null {
+    if (!this.autoScrollReferenceStroke) return null;
+    return getStrokeBoundingBox(this.autoScrollReferenceStroke);
+  }
+
+  clearAutoScrollReferenceStroke(): void {
+    this.autoScrollReferenceStroke = null;
   }
 
   getYPercentile(percentile: number): number | null {
@@ -313,6 +344,9 @@ export class StrokeManager {
       // No strokes were erased, remove the undo state we added
       this.undoStack.pop();
     }
+
+    // Clear auto-scroll reference - user is erasing, not writing
+    this.autoScrollReferenceStroke = null;
 
     // Clear highlighting
     this.highlightedStrokeIds = [];
