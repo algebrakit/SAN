@@ -33,6 +33,24 @@ A canvas component for capturing handwritten mathematical expressions and conver
 </script>
 ```
 
+### Toggle to Formula Editor
+
+In LMS contexts, users may need to switch between handwriting input and a traditional formula editor. Enable the toggle button:
+
+```html
+<akit-handwriting-canvas show-toggle-button="true"></akit-handwriting-canvas>
+
+<script>
+  const canvas = document.querySelector('akit-handwriting-canvas');
+
+  // Listen for toggle editor request
+  canvas.addEventListener('toggleEditor', () => {
+    // Switch to formula editor UI
+    console.log('User wants to switch to formula editor');
+  });
+</script>
+```
+
 ## File Structure
 
 | File | Purpose |
@@ -54,7 +72,7 @@ A canvas component for capturing handwritten mathematical expressions and conver
 
 | Property            | Attribute            | Description | Type                 | Default |
 | ------------------- | -------------------- | ----------- | -------------------- | ------- |
-| `showSubmitButton`  | `show-submit-button` |             | `boolean`            | `false` |
+| `showToggleButton`  | `show-toggle-button` |             | `boolean`            | `false` |
 | `symbolAdjustments` | `symbol-adjustments` |             | `SymbolAdjustment[]` | `[]`    |
 
 
@@ -64,6 +82,7 @@ A canvas component for capturing handwritten mathematical expressions and conver
 | -------------- | ----------- | --------------------------------- |
 | `latexChanged` |             | `CustomEvent<{ latex: string; }>` |
 | `submitted`    |             | `CustomEvent<{ latex: string; }>` |
+| `toggleEditor` |             | `CustomEvent<void>`               |
 
 
 ## Methods

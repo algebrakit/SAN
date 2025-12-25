@@ -27,7 +27,7 @@ export namespace Components {
         /**
           * @default false
          */
-        "showSubmitButton": boolean;
+        "showToggleButton": boolean;
         /**
           * @default []
          */
@@ -64,6 +64,7 @@ declare global {
     interface HTMLAkitHandwritingCanvasElementEventMap {
         "latexChanged": { latex: string };
         "submitted": { latex: string };
+        "toggleEditor": void;
     }
     interface HTMLAkitHandwritingCanvasElement extends Components.AkitHandwritingCanvas, HTMLStencilElement {
         addEventListener<K extends keyof HTMLAkitHandwritingCanvasElementEventMap>(type: K, listener: (this: HTMLAkitHandwritingCanvasElement, ev: AkitHandwritingCanvasCustomEvent<HTMLAkitHandwritingCanvasElementEventMap[K]>) => any, options?: boolean | AddEventListenerOptions): void;
@@ -95,10 +96,11 @@ declare namespace LocalJSX {
     interface AkitHandwritingCanvas {
         "onLatexChanged"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
         "onSubmitted"?: (event: AkitHandwritingCanvasCustomEvent<{ latex: string }>) => void;
+        "onToggleEditor"?: (event: AkitHandwritingCanvasCustomEvent<void>) => void;
         /**
           * @default false
          */
-        "showSubmitButton"?: boolean;
+        "showToggleButton"?: boolean;
         /**
           * @default []
          */

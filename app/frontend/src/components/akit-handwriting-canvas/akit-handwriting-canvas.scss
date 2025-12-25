@@ -9,6 +9,42 @@
   box-sizing: border-box;
 }
 
+.toggle-editor-button {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  padding: 10px;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--akit-handwriting-canvas-border-radius-sm);
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  width: var(--akit-handwriting-canvas-icon-button-size);
+  height: var(--akit-handwriting-canvas-icon-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--akit-handwriting-canvas-color-icon);
+
+  svg {
+    width: var(--akit-handwriting-canvas-icon-size);
+    height: var(--akit-handwriting-canvas-icon-size);
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transform: translateY(0);
+  }
+}
+
 .toolbar {
   position: absolute;
   top: 8px;

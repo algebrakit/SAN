@@ -85,7 +85,7 @@
     <div id="editor">
       <akit-mathquill-editor id="mathquill"></akit-mathquill-editor>
     </div>
-    <akit-handwriting-canvas id="canvas" show-submit-button></akit-handwriting-canvas>
+    <akit-handwriting-canvas id="canvas" show-toggle-button></akit-handwriting-canvas>
 
     <script>
       AlgebraKIT = {
@@ -113,6 +113,11 @@
             .replace(/([\{\}\[\]_^]) /g,'$1');
           console.log('MathDrawer changed:', latex);
           editor.latex(latex);
+        });
+
+        handwritingCanvas.addEventListener('toggleEditor', function() {
+          console.log('Toggle editor button clicked');
+          alert('Switch to formula editor!');
         });
         // editor.addEventListener('latexContentChanged', function(event) {
         //   console.log('MathQuill changed:', event.detail.latex);

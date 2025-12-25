@@ -1,7 +1,7 @@
 import { Component, h, State, Element, Method, Event, EventEmitter, Prop } from '@stencil/core';
 import { StrokeManager } from './stroke-manager';
 import { HandwritingCanvasState, SymbolAdjustment } from './types';
-import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SubmitIcon } from './icons';
+import { UndoIcon, RedoIcon, TrashIcon, EraserIcon, SubmitIcon, KeyboardIcon } from './icons';
 import { convertStrokes } from './api-service';
 import {
   CANVAS_WIDTH,
@@ -29,7 +29,7 @@ import {
 })
 export class AkitHandwritingCanvas {
   @Element() el: HTMLElement;
-  @Prop() showSubmitButton: boolean = false;
+  @Prop() showToggleButton: boolean = false;
   @Prop() symbolAdjustments: SymbolAdjustment[] = [];
   @State() strokeCount: number = 0;
   @State() panOffsetX: number = 0;
@@ -47,6 +47,7 @@ export class AkitHandwritingCanvas {
 
   @Event() latexChanged: EventEmitter<{ latex: string }>;
   @Event() submitted: EventEmitter<{ latex: string }>;
+  @Event() toggleEditor: EventEmitter<void>;
 
   private canvas: HTMLCanvasElement;
   private canvasContainer: HTMLElement;
@@ -629,10 +630,7 @@ export class AkitHandwritingCanvas {
     if (!this.previewLatex) return;
 
     this.latexChanged.emit({ latex: this.previewLatex });
-
-    if (this.showSubmitButton) {
-      this.submitted.emit({ latex: this.previewLatex });
-    }
+    this.submitted.emit({ latex: this.previewLatex });
   }
 
   @Method()
@@ -702,6 +700,15 @@ export class AkitHandwritingCanvas {
         )}
 
         <div class="canvas-wrapper">
+          {this.showToggleButton && (
+            <button
+              class="toggle-editor-button"
+              onClick={() => this.toggleEditor.emit()}
+              title="Switch to formula editor"
+            >
+              <KeyboardIcon />
+            </button>
+          )}
           <div class={`toolbar ${this.isDrawing || this.isErasing ? 'drawing-active' : ''}`}>
             <button
               class="icon-button"
