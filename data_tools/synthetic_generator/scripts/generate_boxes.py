@@ -14,14 +14,12 @@ Usage:
 
 import json
 import argparse
-import subprocess
 import tempfile
 import shutil
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
-import re
+from typing import List, Dict, Optional, Tuple
 
-from utils import tokenize_latex as _tokenize_latex
+from utils import tokenize_latex
 from models import Glyph, DVIBox, BoundingBox
 from glyph_handlers import (
     GlyphMappingContext,
@@ -32,13 +30,10 @@ from glyph_handlers import (
     ExtendedDelimiterHandler,
     create_standard_bbox
 )
-
-try:
-    import matplotlib.dviread as dviread
-except ImportError:
-    print("Error: matplotlib is required for DVI parsing")
-    print("Install with: pip install matplotlib")
-    exit(1)
+from latex_compiler import create_latex_document, compile_to_dvi
+from dvi_parser import parse_dvi
+from token_expander import expand_latex_tokens
+from box_classifier import classify_box
 
 
 class LaTeXToDVIBoxes:
@@ -60,317 +55,6 @@ class LaTeXToDVIBoxes:
             "failed": 0,
             "errors": []
         }
-
-    def tokenize_latex(self, latex: str) -> List[str]:
-        """
-        Tokenize a LaTeX string into individual symbols/commands.
-
-        Args:
-            latex: LaTeX expression string
-
-        Returns:
-            List of tokens
-        """
-        return _tokenize_latex(latex)
-
-    def create_latex_document(self, expression: str) -> str:
-        """
-        Create a minimal LaTeX document containing the expression.
-
-        Args:
-            expression: LaTeX math expression
-
-        Returns:
-            Complete LaTeX document as string
-        """
-        return f"""\\documentclass{{article}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[T1]{{fontenc}}
-\\usepackage{{amsmath}}
-\\usepackage{{amssymb}}
-\\usepackage{{textcomp}}
-\\pagestyle{{empty}}
-\\newcommand\\lognl[1][]{{\\mathop{{ {{}}^{{#1}}\\mathrm{{log}} }} }}
-\\newcommand\\degree{{^\\circ}}
-\\begin{{document}}
-${expression}$
-\\end{{document}}
-"""
-
-    def compile_to_dvi(self, latex_content: str, work_dir: Path) -> Optional[Path]:
-        """
-        Compile LaTeX content to DVI file.
-
-        Args:
-            latex_content: Complete LaTeX document
-            work_dir: Working directory for compilation
-
-        Returns:
-            Path to DVI file, or None if compilation failed
-        """
-        # Write LaTeX file
-        tex_file = work_dir / "document.tex"
-        tex_file.write_text(latex_content, encoding='utf-8')
-
-        # Find LaTeX binary
-        latex_cmd = '/Library/TeX/texbin/latex'
-        if not Path(latex_cmd).exists():
-            # Fallback to PATH
-            latex_cmd = 'latex'
-
-        # Compile with latex
-        try:
-            result = subprocess.run(
-                [latex_cmd, '-interaction=nonstopmode', 'document.tex'],
-                cwd=work_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=10
-            )
-
-            dvi_file = work_dir / "document.dvi"
-            log_file = work_dir / "document.log"
-
-            # Check for LaTeX compilation errors in log file
-            if log_file.exists():
-                log_content = log_file.read_text(encoding='utf-8', errors='ignore')
-
-                # Check for critical errors
-                error_patterns = [
-                    '! Undefined control sequence',
-                    '! LaTeX Error:',
-                    '! Missing',
-                    '! Emergency stop'
-                ]
-
-                for pattern in error_patterns:
-                    if pattern in log_content:
-                        # Extract context around the error for better diagnostics
-                        lines = log_content.split('\n')
-                        for i, line in enumerate(lines):
-                            if pattern in line:
-                                print(f"  LaTeX compilation error detected:")
-                                print(f"  {pattern}")
-                                if '! Undefined control sequence' in pattern and i + 1 < len(lines):
-                                    # Try to extract the undefined command
-                                    next_line = lines[i + 1]
-                                    if next_line.strip():
-                                        print(f"  {next_line.strip()}")
-                                break
-                        return None
-
-                # Check for warnings about missing characters
-                warning_patterns = [
-                    'Missing character:',
-                    'Some font shapes were not available',
-                ]
-
-                for pattern in warning_patterns:
-                    if pattern in log_content:
-                        print(f"  LaTeX compilation warning detected:")
-                        lines = log_content.split('\n')
-                        warning_lines = [line.strip() for line in lines if pattern in line]
-                        # Show first few warnings for context
-                        for warning in warning_lines[:3]:
-                            print(f"  {warning}")
-                        if len(warning_lines) > 3:
-                            print(f"  ... and {len(warning_lines) - 3} more warnings")
-                        return None
-
-            if dvi_file.exists():
-                return dvi_file
-            else:
-                return None
-
-        except subprocess.TimeoutExpired:
-            print(f"  Compilation timeout")
-            return None
-        except Exception as e:
-            print(f"  Compilation error: {e}")
-            return None
-
-    def parse_dvi(self, dvi_path: Path) -> Tuple[List[Glyph], List[DVIBox]]:
-        """
-        Parse DVI file to extract glyph positions and boxes.
-
-        Args:
-            dvi_path: Path to DVI file
-
-        Returns:
-            Tuple of (glyphs, boxes):
-            - glyphs: List of Glyph objects
-            - boxes: List of DVIBox objects
-        """
-        glyphs: List[Glyph] = []
-        boxes: List[DVIBox] = []
-
-        # Ensure TeX binaries are in PATH so matplotlib can find TFM files via kpsewhich
-        import os
-        old_path = os.environ.get('PATH', '')
-        if '/Library/TeX/texbin' not in old_path:
-            os.environ['PATH'] = '/Library/TeX/texbin:' + old_path
-
-        try:
-            with dviread.Dvi(str(dvi_path), dpi=self.dpi) as dvi:
-                for page in dvi:
-                    # Extract glyphs
-                    for x, y, font, glyph_code, width in page.text:
-                        # Convert glyph code to character
-                        # Note: This is a simplified mapping
-                        try:
-                            char = chr(glyph_code) if glyph_code < 128 else f"\\glyph{{{glyph_code}}}"
-                        except:
-                            char = f"\\glyph{{{glyph_code}}}"
-
-                        # Extract actual height and depth from font metrics
-                        # NOTE: page.text already contains scaled x,y,width values
-                        # but height/depth from font._height_depth_of() are in DVI units
-                        # We need to scale them to match the page coordinate system
-                        height_depth_dvi = font._height_depth_of(glyph_code)
-
-                        # Calculate scaling factor (same as matplotlib dviread uses)
-                        scaling_factor = self.dpi / (72.27 * 2**16)
-
-                        # Scale height and depth to page coordinates
-                        height = height_depth_dvi[0] * scaling_factor
-                        depth = height_depth_dvi[1] * scaling_factor
-
-                        glyphs.append(Glyph(
-                            x=x,
-                            y=y,
-                            char=char,
-                            width=width,
-                            height=height,
-                            depth=depth
-                        ))
-
-                    # Extract boxes (fraction bars, overlines, etc.)
-                    for box in page.boxes:
-                        boxes.append(DVIBox(
-                            x=box.x,
-                            y=box.y,
-                            width=box.width,
-                            height=box.height
-                        ))
-
-        except Exception as e:
-            print(f"  DVI parsing error: {e}")
-            return [], []
-
-        return glyphs, boxes
-
-    def classify_box(
-        self,
-        box: DVIBox,
-        glyphs: List[Glyph],
-        tokens: List[str]
-    ) -> Optional[str]:
-        """
-        Classify a DVI box to determine what LaTeX symbol it represents.
-
-        Args:
-            box: DVIBox object with position and dimensions
-            glyphs: List of all Glyph objects in the expression
-            tokens: List of LaTeX tokens (for context)
-
-        Returns:
-            Token string ('\\frac', '\\overline', '\\underline') or None to skip
-        """
-        # Check for fraction bar:
-        # - Horizontal box (width >> height)
-        # - Has glyphs above and below at similar x-position
-        if box.width > box.height * 2:  # Horizontal line
-            # Check if this is a sqrt overline (part of radical symbol)
-            # Heuristic: if we have \\sqrt in tokens, check if this box is at high y-position
-            # Sqrt overlines are typically at y > 5
-            if '\\sqrt' in tokens and box.y > 5.0:
-                # This is likely the sqrt overline, which is already part of the radical glyph
-                return None
-
-            # Look for glyphs above and below this box
-            glyphs_above = [g for g in glyphs
-                          if abs(g.x - box.x) < box.width and g.y > box.y + box.height]
-            glyphs_below = [g for g in glyphs
-                          if abs(g.x - box.x) < box.width and g.y < box.y]
-
-            if glyphs_above and glyphs_below:
-                # Likely a fraction bar with numerator and denominator
-                return '\\frac'
-
-            # Check for overline (line above glyphs)
-            if glyphs_below and not glyphs_above and box.y > 4.0:
-                return '\\overline'
-
-            # Check for underline (line below glyphs)
-            if glyphs_above and not glyphs_below and box.y < -1.0:
-                return '\\underline'
-
-        return None
-
-    def expand_latex_tokens(self, tokens: List[str]) -> List[str]:
-        """
-        Expand multi-character LaTeX commands to match actual DVI glyphs.
-
-        Examples:
-            \\cos -> ['c', 'o', 's']
-            \\left( -> ['(']
-            \\sin -> ['s', 'i', 'n']
-            x -> ['x']
-
-        Args:
-            tokens: List of LaTeX tokens
-
-        Returns:
-            Expanded list of tokens matching DVI glyphs
-        """
-        # Function names that render as individual letters
-        # NOTE: Only include built-in LaTeX function names here, NOT custom macros
-        # Custom macros like \lognl should NOT be expanded to letters
-        function_names = {
-            'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
-            'sinh', 'cosh', 'tanh', 'coth',
-            'arcsin', 'arccos', 'arctan',
-            'log', 'ln', 'exp',
-            'lim', 'sup', 'inf',
-            'max', 'min',
-            'det', 'dim', 'deg',
-            'gcd', 'arg'
-        }
-
-        # Sizing commands that don't produce glyphs
-        sizing_commands = {'left', 'right', 'big', 'Big', 'bigg', 'Bigg', 'bigl', 'bigr', 'Bigl', 'Bigr'}
-
-        # Custom macro expansions (defined in LaTeX preamble)
-        # These macros expand to other symbols that exist in the symbol library
-        macro_expansions = {
-            'degree': '\\circ',  # \degree is defined as ^\circ in preamble
-        }
-
-        expanded = []
-
-        for token in tokens:
-            # Handle LaTeX commands
-            if token.startswith('\\'):
-                cmd_name = token[1:]  # Remove backslash
-
-                # Skip sizing commands
-                if cmd_name in sizing_commands:
-                    continue
-
-                # Expand custom macros
-                if cmd_name in macro_expansions:
-                    expanded.append(macro_expansions[cmd_name])
-                # Expand function names to individual letters
-                elif cmd_name in function_names:
-                    expanded.extend(list(cmd_name))
-                else:
-                    # Keep as-is (Greek letters, special symbols, etc.)
-                    expanded.append(token)
-            else:
-                # Regular characters, keep as-is
-                expanded.append(token)
-
-        return expanded
 
     def handle_environment_token(
         self,
@@ -524,7 +208,7 @@ ${expression}$
             List of BoundingBox objects, sorted by x-position
         """
         # Expand multi-character tokens (like \cos -> c, o, s) to match DVI glyphs
-        expanded_tokens = self.expand_latex_tokens(tokens)
+        expanded_tokens = expand_latex_tokens(tokens)
 
         # Find sqrt overline boxes for proper sqrt sizing
         sqrt_boxes: Dict[int, DVIBox] = {}
@@ -603,7 +287,7 @@ ${expression}$
 
         # Process boxes (fraction bars, overlines, etc.)
         for box in boxes:
-            box_token = self.classify_box(box, glyphs, ctx.tokens)
+            box_token = classify_box(box, glyphs, ctx.tokens)
             if box_token:
                 bbox = BoundingBox(
                     token=box_token,
@@ -653,18 +337,18 @@ ${expression}$
 
         try:
             # Tokenize
-            tokens = self.tokenize_latex(expression)
+            tokens = tokenize_latex(expression)
 
             # Create LaTeX document
-            latex_doc = self.create_latex_document(expression)
+            latex_doc = create_latex_document(expression)
 
             # Compile to DVI
-            dvi_path = self.compile_to_dvi(latex_doc, work_dir)
+            dvi_path = compile_to_dvi(latex_doc, work_dir)
             if dvi_path is None:
                 return None
 
             # Parse DVI
-            glyphs, boxes = self.parse_dvi(dvi_path)
+            glyphs, boxes = parse_dvi(dvi_path, dpi=self.dpi)
             if not glyphs:
                 return None
 
