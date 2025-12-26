@@ -287,7 +287,9 @@ def fit_to_bbox(
     x_max: float,
     y_max: float,
     preserve_aspect: bool = True,
-    padding: float = 0.0
+    padding: float = 0.0,
+    glyph_height: Optional[float] = None,
+    glyph_depth: Optional[float] = None
 ) -> StrokeSet:
     """
     Transform strokes to fit within a target bounding box.
@@ -303,6 +305,8 @@ def fit_to_bbox(
         preserve_aspect: If True, preserve aspect ratio
         padding: Padding ratio (0.0-1.0) to shrink target bbox and create gaps.
                  E.g., 0.05 = 5% padding on each side
+        glyph_height: Height above baseline (for baseline-aware positioning)
+        glyph_depth: Depth below baseline (for baseline-aware positioning)
 
     Returns:
         New StrokeSet fitted to target bounding box
@@ -327,15 +331,24 @@ def fit_to_bbox(
     # Scale to target dimensions
     scaled = stroke_set.scale(target_width, target_height, preserve_aspect)
 
-    # If aspect ratio was preserved, center the result
+    # If aspect ratio was preserved, position the result
     if preserve_aspect:
         scaled_bbox = scaled.get_bounding_box()
         scaled_width = scaled_bbox[2] - scaled_bbox[0]
         scaled_height = scaled_bbox[3] - scaled_bbox[1]
 
-        # Center horizontally and vertically
+        # Center horizontally
         dx = x_min + (target_width - scaled_width) / 2 - scaled_bbox[0]
-        dy = y_min + (target_height - scaled_height) / 2 - scaled_bbox[1]
+
+        # Vertical positioning: align top of strokes with y_max (baseline)
+        # This preserves the natural baseline relationship from source symbols
+        if glyph_height is not None:
+            # Baseline-aware: align top of scaled strokes with y_max
+            # The top of the source strokes should align with the top of the target box
+            dy = y_max - scaled_bbox[3]
+        else:
+            # Fallback: center vertically (for symbols without glyph metrics)
+            dy = y_min + (target_height - scaled_height) / 2 - scaled_bbox[1]
     else:
         # Just translate to target position
         dx = x_min

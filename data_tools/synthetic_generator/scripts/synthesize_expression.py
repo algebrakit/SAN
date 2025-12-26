@@ -163,7 +163,9 @@ class ExpressionSynthesizer:
                     symbol_strokes,
                     bbox.x_min, bbox.y_min, bbox.x_max, bbox.y_max,
                     preserve_aspect=preserve_symbol_aspect,
-                    padding=padding
+                    padding=padding,
+                    glyph_height=bbox.glyph_height,
+                    glyph_depth=bbox.glyph_depth
                 )
 
                 # Debug logging for bounding box info
@@ -177,6 +179,12 @@ class ExpressionSynthesizer:
                         print(f"  Glyph: height={bbox.glyph_height:.2f}, depth={bbox.glyph_depth:.2f}")
                     print(f"  Symbol file: {inkml_path.name}")
                     print(f"  Strokes: {stroke_ids}")
+                    # Detailed stroke info
+                    for i, stroke in enumerate(fitted_strokes.strokes):
+                        stroke_id = trace_id_counter + i
+                        s_x_min, s_y_min = float(stroke.x.min()), float(stroke.y.min())
+                        s_x_max, s_y_max = float(stroke.x.max()), float(stroke.y.max())
+                        print(f"    Stroke {stroke_id}: ({s_x_min:.2f}, {s_y_min:.2f}) → ({s_x_max:.2f}, {s_y_max:.2f})")
                 trace_id_counter += num_strokes
 
                 stroke_sets.append(fitted_strokes)

@@ -144,10 +144,19 @@ class BoundingBox:
 
     @classmethod
     def from_glyph(cls, token: str, glyph: Glyph) -> 'BoundingBox':
-        """Create bbox from a glyph with standard coordinate conversion.
+        """Create bbox from a glyph with DVI-to-output coordinate conversion.
 
-        Converts DVI coords (y increases down) to output coords (y increases up)
-        by negating the y values.
+        Coordinate System:
+        - DVI: y increases downward, baseline at glyph.y
+        - Output: negative y = up, positive y = down, baseline at y=0
+
+        For a glyph at baseline (glyph.y = 0):
+        - Height extends ABOVE baseline → negative y (up)
+        - Depth extends BELOW baseline → positive y (down)
+
+        Example: 'g' with height=4.29, depth=1.94
+        - y_min = -4.29 (top of body, above baseline)
+        - y_max = +1.94 (bottom of descender, below baseline)
 
         Args:
             token: The LaTeX token for this glyph
@@ -156,13 +165,12 @@ class BoundingBox:
         Returns:
             BoundingBox in output coordinates
         """
-        total_height = glyph.height + glyph.depth
         return cls(
             token=token,
             x_min=glyph.x,
-            y_min=-glyph.y - total_height,  # Bottom: negate and extend by total height
+            y_min=-glyph.y - glyph.height,  # Top: height above baseline
             x_max=glyph.x + glyph.width,
-            y_max=-glyph.y,                  # Top: just negate baseline position
+            y_max=-glyph.y + glyph.depth,   # Bottom: depth below baseline
             glyph_height=glyph.height,
             glyph_depth=glyph.depth
         )
@@ -179,8 +187,9 @@ class BoundingBox:
     ) -> 'BoundingBox':
         """Create bbox from raw DVI coordinates.
 
-        This is a convenience method for creating bboxes when you have
-        raw coordinate values rather than a Glyph object.
+        Uses the same coordinate conversion as from_glyph():
+        - y_min = top of glyph (height above baseline)
+        - y_max = bottom of glyph (depth below baseline)
 
         Args:
             token: The LaTeX token
@@ -193,13 +202,12 @@ class BoundingBox:
         Returns:
             BoundingBox in output coordinates
         """
-        total_height = height + depth
         return cls(
             token=token,
             x_min=x,
-            y_min=-y - total_height,
+            y_min=-y - height,   # Top: height above baseline
             x_max=x + width,
-            y_max=-y,
+            y_max=-y + depth,    # Bottom: depth below baseline
             glyph_height=height,
             glyph_depth=depth
         )

@@ -198,13 +198,7 @@ class SqrtHandler:
                     index_token = ctx.tokens[ctx.token_idx]
                     ctx.advance_token()
 
-                    bbox = BoundingBox(
-                        token=index_token,
-                        x_min=float(idx_glyph.x),
-                        y_min=float(-idx_glyph.y - idx_glyph.total_height),
-                        x_max=float(idx_glyph.x + idx_glyph.width),
-                        y_max=float(-idx_glyph.y)
-                    )
+                    bbox = BoundingBox.from_glyph(index_token, idx_glyph)
                     ctx.append_bbox(bbox)
 
                 ctx.advance_glyph()
@@ -260,13 +254,7 @@ class SqrtHandler:
                 rad_glyph = ctx.glyphs[ctx.glyph_idx]
                 radicand_token = ctx.tokens[ctx.token_idx] if ctx.has_tokens() else rad_glyph.char
 
-                radicand_bbox = BoundingBox(
-                    token=radicand_token,
-                    x_min=float(rad_glyph.x),
-                    y_min=float(-rad_glyph.y - rad_glyph.total_height),
-                    x_max=float(rad_glyph.x + rad_glyph.width),
-                    y_max=float(-rad_glyph.y)
-                )
+                radicand_bbox = BoundingBox.from_glyph(radicand_token, rad_glyph)
                 ctx.append_bbox(radicand_bbox)
 
                 ctx.advance_glyph()
@@ -315,40 +303,20 @@ class LognlHandler:
             if not ctx.has_glyphs():
                 break
             sup_glyph = ctx.glyphs[ctx.glyph_idx]
-            bbox = BoundingBox(
-                token=sup_glyph.char,
-                x_min=float(sup_glyph.x),
-                y_min=float(-sup_glyph.y - sup_glyph.total_height),
-                x_max=float(sup_glyph.x + sup_glyph.width),
-                y_max=float(-sup_glyph.y),
-                glyph_height=float(sup_glyph.height),
-                glyph_depth=float(sup_glyph.depth)
-            )
+            bbox = BoundingBox.from_glyph(sup_glyph.char, sup_glyph)
             ctx.append_bbox(bbox)
             ctx.advance_glyph()
 
-        # Collect 'l', 'o', 'g' glyphs for height normalization
+        # Collect 'l', 'o', 'g' glyphs
         log_glyphs: List[Glyph] = []
         for i in range(3):
             if ctx.glyph_idx + i < len(ctx.glyphs):
                 log_glyphs.append(ctx.glyphs[ctx.glyph_idx + i])
 
-        # Calculate max height for normalization
-        max_height = 0.0
+        # Create bboxes using centralized coordinate conversion
+        # This preserves proper descender positioning for 'g'
         for log_glyph in log_glyphs:
-            max_height = max(max_height, log_glyph.total_height)
-
-        # Create bboxes with normalized heights
-        for log_glyph in log_glyphs:
-            bbox = BoundingBox(
-                token=log_glyph.char,
-                x_min=float(log_glyph.x),
-                y_min=float(-log_glyph.y - max_height),
-                x_max=float(log_glyph.x + log_glyph.width),
-                y_max=float(-log_glyph.y),
-                glyph_height=float(log_glyph.height),
-                glyph_depth=float(log_glyph.depth)
-            )
+            bbox = BoundingBox.from_glyph(log_glyph.char, log_glyph)
             ctx.append_bbox(bbox)
             ctx.advance_glyph()
 
@@ -447,15 +415,7 @@ class LargeOperatorHandler:
             sub_token = ctx.tokens[ctx.token_idx]
             ctx.advance_token()
 
-            sub_bbox = BoundingBox(
-                token=sub_token,
-                x_min=float(sub_glyph.x),
-                y_min=float(-sub_glyph.y - sub_glyph.total_height),
-                x_max=float(sub_glyph.x + sub_glyph.width),
-                y_max=float(-sub_glyph.y),
-                glyph_height=float(sub_glyph.height),
-                glyph_depth=float(sub_glyph.depth)
-            )
+            sub_bbox = BoundingBox.from_glyph(sub_token, sub_glyph)
             ctx.append_bbox(sub_bbox)
 
         # Superscript glyphs appear BEFORE subscript glyphs in DVI
@@ -469,15 +429,7 @@ class LargeOperatorHandler:
             sup_token = ctx.tokens[ctx.token_idx]
             ctx.advance_token()
 
-            sup_bbox = BoundingBox(
-                token=sup_token,
-                x_min=float(sup_glyph.x),
-                y_min=float(-sup_glyph.y - sup_glyph.total_height),
-                x_max=float(sup_glyph.x + sup_glyph.width),
-                y_max=float(-sup_glyph.y),
-                glyph_height=float(sup_glyph.height),
-                glyph_depth=float(sup_glyph.depth)
-            )
+            sup_bbox = BoundingBox.from_glyph(sup_token, sup_glyph)
             ctx.append_bbox(sup_bbox)
 
         # Advance past all sub/superscript glyphs
@@ -535,12 +487,4 @@ def create_standard_bbox(token: str, glyph: Glyph) -> BoundingBox:
     Returns:
         BoundingBox with DVI-to-output coordinate conversion
     """
-    return BoundingBox(
-        token=token,
-        x_min=float(glyph.x),
-        y_min=float(-glyph.y - glyph.total_height),
-        x_max=float(glyph.x + glyph.width),
-        y_max=float(-glyph.y),
-        glyph_height=float(glyph.height),
-        glyph_depth=float(glyph.depth)
-    )
+    return BoundingBox.from_glyph(token, glyph)
