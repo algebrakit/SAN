@@ -12,7 +12,7 @@ import {
   PAN_COOLDOWN_MS,
   MIN_VISIBLE_STROKE_MARGIN,
   AUTO_SCROLL_MIN_GAP,
-  AUTO_SCROLL_PREFERRED_GAP,
+  AUTO_SCROLL_PREFERRED_GAP_PERCENT,
   AUTO_SCROLL_DEBOUNCE_MS,
   AUTO_SCROLL_DEBOUNCE_MAX_MS,
   AUTO_SCROLL_DEBOUNCE_MARGIN,
@@ -350,9 +350,9 @@ export class AkitHandwritingCanvas {
     const rightEdgeDistance = containerWidth - visualX;
 
     if (rightEdgeDistance < AUTO_SCROLL_MIN_GAP) {
-      // Calculate scroll amount needed to achieve preferred gap
-      // scrollAmount = preferredGap - currentGap
-      const scrollAmount = AUTO_SCROLL_PREFERRED_GAP - rightEdgeDistance;
+      // Calculate scroll amount needed to achieve preferred gap (percentage of container width)
+      const preferredGap = containerWidth * AUTO_SCROLL_PREFERRED_GAP_PERCENT;
+      const scrollAmount = preferredGap - rightEdgeDistance;
 
       // Calculate new scroll position, respecting max bounds
       const totalWidth = PREPEND_AREA_WIDTH + CANVAS_WIDTH;
