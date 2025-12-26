@@ -16,6 +16,24 @@ from typing import List, Dict, Optional, Tuple
 from models import Glyph, DVIBox, BoundingBox
 
 
+def _is_structural_token(token: str) -> bool:
+    """Check if token is a structural/spacing token that doesn't render as a glyph.
+
+    Structural tokens control layout but don't produce visible glyphs in DVI output.
+    This includes:
+    - Grouping: ^, _, {, }
+    - Spacing commands: \\ , \\,, \\;, etc.
+    - Font commands: \\mathrm, \\mathbf, etc.
+    - Fraction commands: \\frac (the fraction bar is handled separately as a box)
+    """
+    structural_tokens = [
+        '^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
+        '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
+        '\\mathfrak', '\\mathnormal'
+    ]
+    return token in structural_tokens or token.startswith('\\frac')
+
+
 @dataclass
 class GlyphMappingContext:
     """Context for tracking state during glyph-to-token mapping.
@@ -217,21 +235,29 @@ class SqrtHandler:
             max_y = radical_glyph.y
             radicand_glyph_count = 0
 
+            radicand_x_min = sqrt_box.x
             radicand_x_max = sqrt_box.x + sqrt_box.width
-            prev_glyph_right = sqrt_box.x
 
             for next_glyph in ctx.glyphs[ctx.glyph_idx + 1:]:
-                # Stop if we've gone past the overline box or hit another sqrt
-                if next_glyph.x >= radicand_x_max or next_glyph.y > 5.0:
+                # Stop if glyph is another sqrt/radical (high y position)
+                if next_glyph.y > 5.0:
                     break
 
-                # Detect gaps that indicate non-continuous content
-                gap = next_glyph.x - prev_glyph_right
-                if gap < -1.0 or gap > 5.0:
+                # Check if glyph's x-range overlaps with sqrt box x-range
+                # This handles fractions where numerator and denominator share x-range
+                glyph_x_min = next_glyph.x
+                glyph_x_max = next_glyph.x + next_glyph.width
+
+                # Glyph is inside sqrt if it overlaps with the sqrt box horizontally
+                # Allow small tolerance for edge cases
+                if glyph_x_min >= radicand_x_max + 1.0:
+                    # Glyph starts after sqrt box ends - not part of radicand
+                    break
+                if glyph_x_max < radicand_x_min - 1.0:
+                    # Glyph ends before sqrt box starts - not part of radicand
                     break
 
                 radicand_glyph_count += 1
-                prev_glyph_right = next_glyph.x + next_glyph.width
                 min_y = min(min_y, next_glyph.y)
                 max_y = max(max_y, next_glyph.y + next_glyph.total_height)
 
@@ -252,6 +278,11 @@ class SqrtHandler:
                     break
 
                 rad_glyph = ctx.glyphs[ctx.glyph_idx]
+
+                # Skip structural tokens (like \frac) that don't consume glyphs
+                while ctx.has_tokens() and _is_structural_token(ctx.tokens[ctx.token_idx]):
+                    ctx.advance_token()
+
                 radicand_token = ctx.tokens[ctx.token_idx] if ctx.has_tokens() else rad_glyph.char
 
                 radicand_bbox = BoundingBox.from_glyph(radicand_token, rad_glyph)
