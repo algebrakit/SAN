@@ -97,25 +97,34 @@ class BoundingBox:
         y_min: Bottom edge (minimum y, lowest visual position)
         x_max: Right edge (maximum x)
         y_max: Top edge (maximum y, highest visual position)
+        glyph_height: Height above baseline (from original glyph, optional)
+        glyph_depth: Depth below baseline (from original glyph, optional)
     """
     token: str
     x_min: float
     y_min: float
     x_max: float
     y_max: float
+    glyph_height: Optional[float] = None
+    glyph_depth: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization.
 
         Uses camelCase keys to match existing output format.
         """
-        return {
+        result = {
             "token": self.token,
             "xMin": self.x_min,
             "yMin": self.y_min,
             "xMax": self.x_max,
             "yMax": self.y_max
         }
+        if self.glyph_height is not None:
+            result["glyphHeight"] = self.glyph_height
+        if self.glyph_depth is not None:
+            result["glyphDepth"] = self.glyph_depth
+        return result
 
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> 'BoundingBox':
@@ -128,7 +137,9 @@ class BoundingBox:
             x_min=d.get("xMin", d.get("x_min", 0.0)),
             y_min=d.get("yMin", d.get("y_min", 0.0)),
             x_max=d.get("xMax", d.get("x_max", 0.0)),
-            y_max=d.get("yMax", d.get("y_max", 0.0))
+            y_max=d.get("yMax", d.get("y_max", 0.0)),
+            glyph_height=d.get("glyphHeight"),
+            glyph_depth=d.get("glyphDepth")
         )
 
     @classmethod
@@ -151,7 +162,9 @@ class BoundingBox:
             x_min=glyph.x,
             y_min=-glyph.y - total_height,  # Bottom: negate and extend by total height
             x_max=glyph.x + glyph.width,
-            y_max=-glyph.y                   # Top: just negate baseline position
+            y_max=-glyph.y,                  # Top: just negate baseline position
+            glyph_height=glyph.height,
+            glyph_depth=glyph.depth
         )
 
     @classmethod
@@ -186,7 +199,9 @@ class BoundingBox:
             x_min=x,
             y_min=-y - total_height,
             x_max=x + width,
-            y_max=-y
+            y_max=-y,
+            glyph_height=height,
+            glyph_depth=depth
         )
 
     @property

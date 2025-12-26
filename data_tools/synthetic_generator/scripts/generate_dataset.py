@@ -36,7 +36,8 @@ class DatasetGenerator:
         self,
         symbol_index_path: Path,
         symbols_dir: Path,
-        random_seed: Optional[int] = None
+        random_seed: Optional[int] = None,
+        debug: bool = False
     ):
         """
         Initialize the dataset generator.
@@ -45,16 +46,19 @@ class DatasetGenerator:
             symbol_index_path: Path to symbol_index.json
             symbols_dir: Directory containing symbol InkML files
             random_seed: Random seed for reproducible synthesis
+            debug: Enable debug logging for bounding boxes
         """
         self.symbol_index_path = Path(symbol_index_path)
         self.symbols_dir = Path(symbols_dir)
+        self.debug = debug
 
         # Initialize components
         self.bbox_generator = LaTeXToDVIBoxes(dpi=72, keep_temp=False)
         self.synthesizer = ExpressionSynthesizer(
             symbol_index_path,
             symbols_dir,
-            random_seed=random_seed
+            random_seed=random_seed,
+            debug=debug
         )
 
         self.stats = {
@@ -395,6 +399,12 @@ def main():
         help="Random seed for reproducible generation"
     )
 
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help="Enable debug logging for bounding boxes"
+    )
+
     args = parser.parse_args()
 
     # Validate paths
@@ -420,7 +430,8 @@ def main():
     generator = DatasetGenerator(
         symbol_index_path,
         symbols_dir,
-        random_seed=args.seed
+        random_seed=args.seed,
+        debug=args.debug
     )
 
     # Generate dataset

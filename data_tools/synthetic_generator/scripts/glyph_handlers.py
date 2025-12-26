@@ -320,7 +320,9 @@ class LognlHandler:
                 x_min=float(sup_glyph.x),
                 y_min=float(-sup_glyph.y - sup_glyph.total_height),
                 x_max=float(sup_glyph.x + sup_glyph.width),
-                y_max=float(-sup_glyph.y)
+                y_max=float(-sup_glyph.y),
+                glyph_height=float(sup_glyph.height),
+                glyph_depth=float(sup_glyph.depth)
             )
             ctx.append_bbox(bbox)
             ctx.advance_glyph()
@@ -343,7 +345,9 @@ class LognlHandler:
                 x_min=float(log_glyph.x),
                 y_min=float(-log_glyph.y - max_height),
                 x_max=float(log_glyph.x + log_glyph.width),
-                y_max=float(-log_glyph.y)
+                y_max=float(-log_glyph.y),
+                glyph_height=float(log_glyph.height),
+                glyph_depth=float(log_glyph.depth)
             )
             ctx.append_bbox(bbox)
             ctx.advance_glyph()
@@ -448,7 +452,9 @@ class LargeOperatorHandler:
                 x_min=float(sub_glyph.x),
                 y_min=float(-sub_glyph.y - sub_glyph.total_height),
                 x_max=float(sub_glyph.x + sub_glyph.width),
-                y_max=float(-sub_glyph.y)
+                y_max=float(-sub_glyph.y),
+                glyph_height=float(sub_glyph.height),
+                glyph_depth=float(sub_glyph.depth)
             )
             ctx.append_bbox(sub_bbox)
 
@@ -468,7 +474,9 @@ class LargeOperatorHandler:
                 x_min=float(sup_glyph.x),
                 y_min=float(-sup_glyph.y - sup_glyph.total_height),
                 x_max=float(sup_glyph.x + sup_glyph.width),
-                y_max=float(-sup_glyph.y)
+                y_max=float(-sup_glyph.y),
+                glyph_height=float(sup_glyph.height),
+                glyph_depth=float(sup_glyph.depth)
             )
             ctx.append_bbox(sup_bbox)
 
@@ -511,7 +519,9 @@ class ExtendedDelimiterHandler:
             x_min=float(glyph.x),
             y_min=float(-glyph.total_height),
             x_max=float(glyph.x + glyph.width),
-            y_max=float(0.0)
+            y_max=float(0.0),
+            glyph_height=float(glyph.height),
+            glyph_depth=float(glyph.depth)
         )
 
 
@@ -530,5 +540,7 @@ def create_standard_bbox(token: str, glyph: Glyph) -> BoundingBox:
         x_min=float(glyph.x),
         y_min=float(-glyph.y - glyph.total_height),
         x_max=float(glyph.x + glyph.width),
-        y_max=float(-glyph.y)
+        y_max=float(-glyph.y),
+        glyph_height=float(glyph.height),
+        glyph_depth=float(glyph.depth)
     )

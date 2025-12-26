@@ -23,7 +23,13 @@ from models import BoundingBox
 class ExpressionSynthesizer:
     """Synthesizes handwritten expressions from bounding boxes and symbol library."""
 
-    def __init__(self, symbol_index_path: Path, symbols_dir: Path, random_seed: Optional[int] = None):
+    def __init__(
+        self,
+        symbol_index_path: Path,
+        symbols_dir: Path,
+        random_seed: Optional[int] = None,
+        debug: bool = False
+    ):
         """
         Initialize the synthesizer.
 
@@ -31,9 +37,11 @@ class ExpressionSynthesizer:
             symbol_index_path: Path to symbol_index.json
             symbols_dir: Directory containing symbol InkML files
             random_seed: Random seed for reproducible variant selection
+            debug: Enable debug logging for bounding boxes
         """
         self.symbol_index_path = Path(symbol_index_path)
         self.symbols_dir = Path(symbols_dir)
+        self.debug = debug
         self.symbol_index: Dict[str, List[str]] = {}
         self.stats = {
             "expressions_processed": 0,
@@ -106,6 +114,7 @@ class ExpressionSynthesizer:
             return None, {"error": "No bounding boxes provided"}
 
         stroke_sets = []
+        trace_id_counter = 0  # Track stroke IDs for debug output
         metadata = {
             "label": label,
             "normalized_label": normalized_label,
@@ -156,6 +165,19 @@ class ExpressionSynthesizer:
                     preserve_aspect=preserve_symbol_aspect,
                     padding=padding
                 )
+
+                # Debug logging for bounding box info
+                num_strokes = len(fitted_strokes.strokes)
+                if self.debug:
+                    stroke_ids = list(range(trace_id_counter, trace_id_counter + num_strokes))
+                    print(f"\n[BOX] Token: '{bbox.token}'")
+                    print(f"  Position: ({bbox.x_min:.2f}, {bbox.y_min:.2f}) → ({bbox.x_max:.2f}, {bbox.y_max:.2f})")
+                    print(f"  Dimensions: {bbox.width:.2f} × {bbox.height:.2f}")
+                    if bbox.glyph_height is not None:
+                        print(f"  Glyph: height={bbox.glyph_height:.2f}, depth={bbox.glyph_depth:.2f}")
+                    print(f"  Symbol file: {inkml_path.name}")
+                    print(f"  Strokes: {stroke_ids}")
+                trace_id_counter += num_strokes
 
                 stroke_sets.append(fitted_strokes)
                 metadata["symbols_placed"] += 1
@@ -388,6 +410,12 @@ def main():
         help="Random seed for reproducible variant selection"
     )
 
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help="Enable debug logging for bounding boxes"
+    )
+
     args = parser.parse_args()
 
     # Validate paths
@@ -412,7 +440,8 @@ def main():
     synthesizer = ExpressionSynthesizer(
         index_path,
         symbols_dir,
-        random_seed=args.seed
+        random_seed=args.seed,
+        debug=args.debug
     )
 
     # Process boxes file
