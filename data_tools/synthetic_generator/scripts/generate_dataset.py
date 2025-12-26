@@ -360,6 +360,13 @@ class DatasetGenerator:
 
 def main():
     """Main entry point."""
+
+    defaultInput = 'data-sources/ak_synthetic_log/dev/labels.txt'
+    defaultOutput = 'data_tools/synthetic_generator/output'
+    defaultSymbolIndex = 'data_tools/synthetic_generator/symbol_index.json'
+    defaultSymbolDir = 'data-sources/symbols'
+    defaultDebug = True
+
     parser = argparse.ArgumentParser(
         description="Generate complete dataset from LaTeX expressions",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -368,28 +375,28 @@ def main():
     parser.add_argument(
         '--input',
         type=str,
-        default='latex.txt',
+        default=defaultInput,
         help="Input file with LaTeX expressions (one per line)"
     )
 
     parser.add_argument(
         '--output-dir',
         type=str,
-        default='output',
+        default=defaultOutput,
         help="Output directory for InkML files and labels"
     )
 
     parser.add_argument(
         '--symbol-index',
         type=str,
-        default='output/symbol_index.json',
+        default=defaultSymbolIndex,
         help="Path to symbol index JSON"
     )
 
     parser.add_argument(
         '--symbols-dir',
         type=str,
-        default='symbols',
+        default=defaultSymbolDir,
         help="Directory containing symbol InkML files"
     )
 
@@ -402,6 +409,7 @@ def main():
     parser.add_argument(
         '--debug',
         action='store_true',
+        default=defaultDebug,
         help="Enable debug logging for bounding boxes"
     )
 
@@ -448,4 +456,5 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    main()
+    # sys.exit(main())
