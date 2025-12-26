@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import xml.etree.ElementTree as ET
 from stroke_transformer import StrokeSet, combine_stroke_sets, fit_to_bbox
+from models import BoundingBox
 
 
 class ExpressionSynthesizer:
@@ -113,29 +114,26 @@ class ExpressionSynthesizer:
             "missing_symbols": [],
         }
 
-        for bbox in bboxes:
-            token = bbox.get('token', '')
-            x_min = bbox.get('xMin', 0)
-            y_min = bbox.get('yMin', 0)
-            x_max = bbox.get('xMax', 0)
-            y_max = bbox.get('yMax', 0)
+        for bbox_dict in bboxes:
+            # Convert dict to BoundingBox object for type safety
+            bbox = BoundingBox.from_dict(bbox_dict)
 
             # Skip empty tokens or whitespace
-            if not token or token.isspace():
+            if not bbox.token or bbox.token.isspace():
                 continue
 
             # Get random variant for this symbol
-            inkml_path = self.get_random_variant(token)
+            inkml_path = self.get_random_variant(bbox.token)
 
             if inkml_path is None or not inkml_path.exists():
                 # Symbol not in library
-                metadata["missing_symbols"].append(token)
+                metadata["missing_symbols"].append(bbox.token)
                 metadata["symbols_skipped"] += 1
                 self.stats["symbols_skipped"] += 1
-                self.stats["missing_symbols"].add(token)
+                self.stats["missing_symbols"].add(bbox.token)
 
                 if not skip_missing:
-                    raise ValueError(f"Symbol '{token}' not found in library")
+                    raise ValueError(f"Symbol '{bbox.token}' not found in library")
 
                 continue
 
@@ -145,15 +143,16 @@ class ExpressionSynthesizer:
 
                 # Fit to bounding box with padding to prevent overlap
                 # Use 5% padding for content symbols, 0% for structural symbols
-                padding = 0.0 if token in ['\\sqrt', '\\frac', '\\overline', '\\underline'] else 0.05
+                structural_symbols = ['\\sqrt', '\\frac', '\\overline', '\\underline']
+                padding = 0.0 if bbox.token in structural_symbols else 0.05
 
                 # Disable aspect preservation for structural symbols (frac bars, overlines, underlines)
                 # to allow them to stretch to correct dimensions
-                preserve_symbol_aspect = preserve_aspect and token not in ['\\frac', '\\overline', '\\underline']
+                preserve_symbol_aspect = preserve_aspect and bbox.token not in ['\\frac', '\\overline', '\\underline']
 
                 fitted_strokes = fit_to_bbox(
                     symbol_strokes,
-                    x_min, y_min, x_max, y_max,
+                    bbox.x_min, bbox.y_min, bbox.x_max, bbox.y_max,
                     preserve_aspect=preserve_symbol_aspect,
                     padding=padding
                 )
@@ -163,7 +162,7 @@ class ExpressionSynthesizer:
                 self.stats["symbols_placed"] += 1
 
             except Exception as e:
-                print(f"Warning: Error processing symbol '{token}' from {inkml_path.name}: {e}")
+                print(f"Warning: Error processing symbol '{bbox.token}' from {inkml_path.name}: {e}")
                 metadata["symbols_skipped"] += 1
                 self.stats["symbols_skipped"] += 1
                 continue

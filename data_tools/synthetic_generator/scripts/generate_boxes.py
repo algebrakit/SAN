@@ -23,6 +23,15 @@ import re
 
 from utils import tokenize_latex as _tokenize_latex
 from models import Glyph, DVIBox, BoundingBox
+from glyph_handlers import (
+    GlyphMappingContext,
+    CasesHandler,
+    SqrtHandler,
+    LognlHandler,
+    LargeOperatorHandler,
+    ExtendedDelimiterHandler,
+    create_standard_bbox
+)
 
 try:
     import matplotlib.dviread as dviread
@@ -369,7 +378,7 @@ ${expression}$
         tokens: List[str],
         glyphs: List[Glyph],
         glyph_idx: int
-    ) -> Tuple[bool, Optional[str], Optional[Dict]]:
+    ) -> Tuple[bool, Optional[str], Optional[BoundingBox]]:
         r"""
         Handle \begin{...} and \end{...} environment tokens.
 
@@ -383,10 +392,10 @@ ${expression}$
             glyph_idx: Current index in glyphs list
 
         Returns:
-            Tuple of (should_skip, mapped_token, bbox_dict):
+            Tuple of (should_skip, mapped_token, bbox):
             - should_skip: True if token should be skipped without consuming a glyph
             - mapped_token: Mapped token string (e.g., '(' for pmatrix), or None to skip
-            - bbox_dict: Precomputed bbox dictionary if special handling is needed, None otherwise
+            - bbox: Precomputed BoundingBox if special handling is needed, None otherwise
         """
         # Matrix environments: pmatrix, bmatrix, Bmatrix, matrix
         # These produce large delimiter glyphs from cmex10 font
@@ -465,13 +474,13 @@ ${expression}$
                     # Position delimiter to span content with padding
                     # This aligns delimiter extent with actual content, not an abstract center point
                     mapped_token = matrix_delimiters[token]
-                    bbox = {
-                        "token": mapped_token,
-                        "xMin": float(glyph.x),
-                        "yMin": float(content_bottom_negated - padding),  # Bottom edge with padding
-                        "xMax": float(glyph.x + glyph.width),
-                        "yMax": float(content_top_negated + padding)      # Top edge with padding
-                    }
+                    bbox = BoundingBox(
+                        token=mapped_token,
+                        x_min=float(glyph.x),
+                        y_min=float(content_bottom_negated - padding),  # Bottom edge with padding
+                        x_max=float(glyph.x + glyph.width),
+                        y_max=float(content_top_negated + padding)      # Top edge with padding
+                    )
                     return (False, mapped_token, bbox)
 
             # If glyph doesn't match matrix delimiter characteristics, skip token
@@ -498,12 +507,13 @@ ${expression}$
         tokens: List[str],
         glyphs: List[Glyph],
         boxes: List[DVIBox]
-    ) -> List[Dict]:
+    ) -> List[BoundingBox]:
         """
         Map DVI glyphs and boxes to LaTeX tokens and create bounding boxes.
 
         This uses a simple sequential mapping strategy for glyphs,
-        and classification for boxes.
+        and classification for boxes. Special constructs (sqrt, cases, lognl,
+        large operators) are handled by dedicated handler classes.
 
         Args:
             tokens: List of LaTeX tokens
@@ -511,459 +521,112 @@ ${expression}$
             boxes: List of DVIBox objects from DVI
 
         Returns:
-            List of bounding box dictionaries, sorted by x-position
+            List of BoundingBox objects, sorted by x-position
         """
-        bboxes = []
-
         # Expand multi-character tokens (like \cos -> c, o, s) to match DVI glyphs
-        tokens = self.expand_latex_tokens(tokens)
+        expanded_tokens = self.expand_latex_tokens(tokens)
 
         # Find sqrt overline boxes for proper sqrt sizing
-        sqrt_boxes: Dict[int, DVIBox] = {}  # Maps glyph index to sqrt overline box
-        if '\\sqrt' in tokens:
+        sqrt_boxes: Dict[int, DVIBox] = {}
+        if '\\sqrt' in expanded_tokens:
             for box in boxes:
-                # Sqrt overlines are at high y-position and wide
                 if box.y > 5.0 and box.width > 2.0:
-                    # Find the sqrt glyph this box corresponds to
                     for i, glyph in enumerate(glyphs):
-                        # Sqrt radical glyph starts near the box start
                         if abs(glyph.x - (box.x - glyph.width)) < 2.0 and abs(glyph.y - box.y) < 1.0:
                             sqrt_boxes[i] = box
                             break
 
-        # Simple strategy: match tokens to glyphs sequentially
-        # Skip tokens that don't produce glyphs (like ^, _, etc.)
-        glyph_idx = 0
-        token_idx = 0
+        # Create mapping context
+        ctx = GlyphMappingContext(
+            tokens=expanded_tokens,
+            glyphs=glyphs,
+            sqrt_boxes=sqrt_boxes
+        )
 
-        while token_idx < len(tokens):
-            token = tokens[token_idx]
-            token_idx += 1
-            if glyph_idx >= len(glyphs):
+        # Process tokens
+        while ctx.has_tokens():
+            token = ctx.tokens[ctx.token_idx]
+            ctx.advance_token()
+
+            if not ctx.has_glyphs():
                 break
 
             # Handle environment tokens (cases, pmatrix, bmatrix, etc.)
             should_skip, mapped_token, precomputed_bbox = self.handle_environment_token(
-                token, tokens, glyphs, glyph_idx
+                token, ctx.tokens, ctx.glyphs, ctx.glyph_idx
             )
 
             if should_skip:
-                # Token produces no glyph, skip it
                 continue
 
             if precomputed_bbox:
-                # Environment token with special bbox handling (e.g., matrix delimiters)
-                bboxes.append(precomputed_bbox)
-                glyph_idx += 1
+                ctx.append_bbox(precomputed_bbox)
+                ctx.advance_glyph()
                 continue
 
             if mapped_token:
-                # Environment token mapped to different token (e.g., \begin{cases} -> \{)
                 token = mapped_token
 
-            # Skip structural tokens and spacing commands that don't render as glyphs
-            # Note: \frac is skipped here (only renders as box), but \sqrt produces a glyph
-            # Font-changing commands (\mathrm, \mathbf, etc.) don't produce glyphs, only style content
-            if token in ['^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
-                        '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
-                        '\\mathfrak', '\\mathnormal'] or \
-               token.startswith('\\frac'):
+            # Skip structural tokens and spacing commands
+            if self._is_structural_token(token):
                 continue
 
-            # Get current glyph
-            glyph = glyphs[glyph_idx]
+            glyph = ctx.current_glyph
 
-            # Special handling for cases environment brace - extend to cover all content
-            if token == '\\{' and '\\begin{cases}' in tokens:
-                # Find the vertical extent of all content after the brace
-                # In DVI coords: smaller y is higher, larger y is lower
-                # Initialize to extreme values so content determines extent (not brace position)
-                min_y = float('inf')  # Will be updated to smallest y (highest position)
-                max_y = float('-inf')  # Will be updated to largest y (lowest position)
-
-                prev_glyph_right = glyph.x + glyph.width  # Track previous glyph's right edge
-
-                for next_glyph in glyphs[glyph_idx + 1:]:
-                    gap = next_glyph.x - prev_glyph_right
-
-                    # Stop if we hit another elevated glyph (another brace)
-                    # Braces are at highly elevated y-positions (> 15.0 in DVI coords)
-                    # Fraction numerators are at y ≈ 10-11, so use 15.0 threshold
-                    if next_glyph.y > 15.0:
-                        break
-
-                    # Stop if there's a large horizontal gap (indicates next cases environment)
-                    if gap > 10.0:
-                        break
-
-                    min_y = min(min_y, next_glyph.y)
-                    max_y = max(max_y, next_glyph.y)
-                    # Use actual glyph height (extends downward in DVI)
-                    max_y = max(max_y, next_glyph.y + next_glyph.total_height)
-                    prev_glyph_right = next_glyph.x + next_glyph.width
-
-                # Create bbox that spans all content lines
-                # Note: DVI y goes down, we negate for standard math convention
-                bbox = {
-                    "token": token,
-                    "xMin": float(glyph.x),
-                    "yMin": float(-max_y),  # Lowest point in standard coords
-                    "xMax": float(glyph.x + glyph.width),
-                    "yMax": float(-min_y + 2.0)  # Highest point in standard coords + padding
-                }
-                bboxes.append(bbox)
-                glyph_idx += 1  # Skip the brace glyph
-                continue  # Skip common bbox append
-            # Special handling for sqrt radical
-            elif token == '\\sqrt':
-                # Check if this sqrt has an index: next token is '['
-                has_index = token_idx < len(tokens) and tokens[token_idx] == '['
-
-                # Track the rightmost x-position of index glyphs (where sqrt bbox should start)
-                index_x_max = None
-
-                # If there's an index, we need to process index glyphs first
-                # Index glyphs appear at elevated y-position before the radical glyph
-                if has_index:
-                    # Skip opening '[' token
-                    if token_idx < len(tokens) and tokens[token_idx] == '[':
-                        token_idx += 1
-
-                    # Process index glyphs until we find the radical
-                    while glyph_idx < len(glyphs) and glyph_idx not in sqrt_boxes:
-                        idx_glyph = glyphs[glyph_idx]
-
-                        # Track the rightmost edge of index glyphs
-                        # The sqrt bbox should start after the index to avoid overlap
-                        if index_x_max is None:
-                            index_x_max = idx_glyph.x + idx_glyph.width
-                        else:
-                            index_x_max = max(index_x_max, idx_glyph.x + idx_glyph.width)
-
-                        if token_idx < len(tokens):
-                            index_token = tokens[token_idx]
-                            token_idx += 1
-
-                            # Create bbox for index glyph
-                            bbox = {
-                                "token": index_token,
-                                "xMin": float(idx_glyph.x),
-                                "yMin": float(-idx_glyph.y - idx_glyph.total_height),
-                                "xMax": float(idx_glyph.x + idx_glyph.width),
-                                "yMax": float(-idx_glyph.y)
-                            }
-                            bboxes.append(bbox)
-
-                        glyph_idx += 1
-
-                    # Skip closing ']' token
-                    if token_idx < len(tokens) and tokens[token_idx] == ']':
-                        token_idx += 1
-
-                # Now process the radical if we're at one
-                if glyph_idx in sqrt_boxes:
-                    radical_glyph = glyphs[glyph_idx]
-                    # Use the sqrt overline box to determine proper extent
-                    sqrt_box = sqrt_boxes[glyph_idx]
-
-                    # Find vertical extent by scanning all glyphs under the overline
-                    # In DVI coords: y increases downward, so max_y is the bottom
-                    min_y = radical_glyph.y
-                    max_y = radical_glyph.y
-                    radicand_glyph_count = 0  # Count glyphs in radicand to skip them later
-
-                    # The overline box width tells us the horizontal extent of the radicand
-                    # box_x is where the overline starts, box_width is its length
-                    radicand_x_max = sqrt_box.x + sqrt_box.width
-
-                    prev_glyph_right = sqrt_box.x  # Track previous glyph's right edge
-
-                    for next_glyph in glyphs[glyph_idx + 1:]:
-                        # Stop if we've gone past the overline box or hit another sqrt
-                        if next_glyph.x >= radicand_x_max or next_glyph.y > 5.0:
-                            break
-
-                        # Detect gaps that indicate non-continuous content
-                        # - Backwards jump (gap < -1.0) indicates fraction denominator or other content
-                        # - Large forward gap (> 5.0) indicates next expression part
-                        # Stop processing entirely - vertical extent should only cover continuous content
-                        gap = next_glyph.x - prev_glyph_right
-                        if gap < -1.0 or gap > 5.0:
-                            break
-
-                        # Count continuous radicand glyphs and update extents
-                        radicand_glyph_count += 1
-                        prev_glyph_right = next_glyph.x + next_glyph.width
-
-                        # Update vertical extent for continuous radicand glyphs only
-                        min_y = min(min_y, next_glyph.y)
-                        max_y = max(max_y, next_glyph.y + next_glyph.total_height)
-
-                    # Create bbox that covers from top of radicand to bottom of content
-                    # Use overline box width for horizontal extent (not actual glyph positions)
-                    # This ensures the sqrt bbox covers the full radicand including fractions
-                    # In standard coords (negated DVI): yMin=bottom, yMax=top
-                    # Note: If index exists, start after the index to avoid overlap
-                    # Otherwise start at radical glyph position
-                    bbox = {
-                        "token": token,
-                        "xMin": float(index_x_max if index_x_max is not None else radical_glyph.x),
-                        "yMin": float(-max_y - 2.0),  # Bottom of content (most negative)
-                        "xMax": float(radicand_x_max),  # Use overline box width
-                        "yMax": float(-min_y + 2.0)  # Top of radicand (least negative)
-                    }
-                    bboxes.append(bbox)
-                    glyph_idx += 1  # Skip the radical glyph
-
-                    # Create separate bboxes for radicand content
-                    # The radicand glyphs need their own bboxes so they get synthesized
-                    for _ in range(radicand_glyph_count):
-                        if glyph_idx >= len(glyphs):
-                            break
-
-                        # Get radicand glyph info
-                        rad_content_glyph = glyphs[glyph_idx]
-
-                        # Get corresponding token (should be the radicand content)
-                        radicand_token = tokens[token_idx] if token_idx < len(tokens) else rad_content_glyph.char
-
-                        # Create bbox for this radicand glyph
-                        radicand_bbox = {
-                            "token": radicand_token,
-                            "xMin": float(rad_content_glyph.x),
-                            "yMin": float(-rad_content_glyph.y - rad_content_glyph.total_height),
-                            "xMax": float(rad_content_glyph.x + rad_content_glyph.width),
-                            "yMax": float(-rad_content_glyph.y)
-                        }
-                        bboxes.append(radicand_bbox)
-
-                        glyph_idx += 1
-                        token_idx += 1
-
-                    # Skip any spacing tokens like '\ ' that don't correspond to glyphs
-                    while token_idx < len(tokens) and tokens[token_idx] in ['\\ ', '\\,', '\\;', '\\:', '\\!', ' ']:
-                        token_idx += 1
-
-                    continue  # Skip the common bbox append at line 510
-            # Special handling for \lognl custom macro
-            # \lognl[n] expands to: superscript 'n' + 'l' + 'o' + 'g'
-            elif token == '\\lognl':
-                # \lognl produces N+3 glyphs: N superscript characters, then 'l', 'o', 'g'
-                # We need to dynamically count how many superscript glyphs there are
-
-                # Count superscript tokens by looking ahead for '[' ... ']' sequence
-                superscript_token_count = 0
-                if token_idx < len(tokens) and tokens[token_idx] == '[':
-                    # Scan ahead to count tokens between brackets
-                    scan_idx = token_idx + 1
-                    while scan_idx < len(tokens) and tokens[scan_idx] != ']':
-                        superscript_token_count += 1
-                        scan_idx += 1
-
-                # Process N superscript glyphs (all at elevated y-position)
-                for i in range(superscript_token_count):
-                    if glyph_idx >= len(glyphs):
-                        break
-                    sup_glyph = glyphs[glyph_idx]
-                    bbox = {
-                        "token": sup_glyph.char,  # Use the actual character
-                        "xMin": float(sup_glyph.x),
-                        "yMin": float(-sup_glyph.y - sup_glyph.total_height),
-                        "xMax": float(sup_glyph.x + sup_glyph.width),
-                        "yMax": float(-sup_glyph.y)
-                    }
-                    bboxes.append(bbox)
-                    glyph_idx += 1
-
-                # Next 3 glyphs: 'l', 'o', 'g'
-                # Collect all three glyphs first to normalize their heights
-                log_glyphs_list: List[Glyph] = []
-                for i in range(3):
-                    if glyph_idx + i >= len(glyphs):
-                        break
-                    log_glyphs_list.append(glyphs[glyph_idx + i])
-
-                # Calculate max height among the 'log' letters for normalization
-                max_height = 0.0
-                for log_glyph in log_glyphs_list:
-                    max_height = max(max_height, log_glyph.total_height)
-
-                # Create bboxes with normalized heights
-                for log_glyph in log_glyphs_list:
-                    # Use max_height for all letters to make them uniform
-                    bbox = {
-                        "token": log_glyph.char,  # 'l', 'o', or 'g'
-                        "xMin": float(log_glyph.x),
-                        "yMin": float(-log_glyph.y - max_height),  # Normalized height
-                        "xMax": float(log_glyph.x + log_glyph.width),
-                        "yMax": float(-log_glyph.y)
-                    }
-                    bboxes.append(bbox)
-                    glyph_idx += 1
-
-                # Skip the bracket tokens: '[', ..., ']'  (e.g., [10] in \lognl[10]{x})
-                # \lognl takes an optional argument in square brackets
-                if token_idx < len(tokens) and tokens[token_idx] == '[':
-                    token_idx += 1  # Skip '['
-                    # Skip all superscript tokens
-                    for i in range(superscript_token_count):
-                        if token_idx < len(tokens):
-                            token_idx += 1
-                    # Skip ']'
-                    if token_idx < len(tokens) and tokens[token_idx] == ']':
-                        token_idx += 1
-                # Continue to next token without appending another bbox
+            # Try specialized handlers in order
+            if CasesHandler.can_handle(token, ctx.tokens):
+                CasesHandler.handle(ctx, token)
                 continue
-            else:
-                # Standard bbox calculation
-                # Use actual font metrics for height
 
-                # Detect extended delimiters created by \left and \right commands
-                # These are positioned at vertical center of content, not baseline
-                # Characteristics: large depth, elevated y-position, small height
-                is_extended_delimiter = (glyph.depth > 10.0 and glyph.y > 5.0 and glyph.height < 1.0)
+            if SqrtHandler.can_handle(token):
+                SqrtHandler.handle(ctx, token)
+                continue
 
-                # Detect inline large operators (sum, prod, int, bigcup, etc.)
-                # These have similar characteristics but need different positioning
-                # Characteristics: large depth (> 9.0), elevated y (5.0 < y < 10.0), minimal height (< 1.0)
-                is_large_operator = (glyph.depth > 9.0 and 5.0 < glyph.y < 10.0 and glyph.height < 1.0)
+            if LognlHandler.can_handle(token):
+                LognlHandler.handle(ctx, token)
+                continue
 
-                if is_extended_delimiter:
-                    # Extended delimiters need special positioning
-                    # These delimiters should span from baseline upward to cover the content
-                    # Force bottom edge (yMin) to be at baseline (0 in negated coords)
-                    bbox = {
-                        "token": token,
-                        "xMin": float(glyph.x),
-                        "yMin": float(-glyph.total_height),  # Bottom at baseline, extends up
-                        "xMax": float(glyph.x + glyph.width),
-                        "yMax": float(0.0)                    # Top aligned with baseline
-                    }
-                elif is_large_operator:
-                    # Large operators in inline mode need baseline alignment
-                    # Position so the operator top aligns with baseline, extending downward
-                    # This ensures the operator aligns with following content on the same baseline
-                    bbox = {
-                        "token": token,
-                        "xMin": float(glyph.x),
-                        "yMin": float(-glyph.total_height),  # Bottom edge extends below baseline
-                        "xMax": float(glyph.x + glyph.width),
-                        "yMax": float(0.0)             # Top aligned with baseline
-                    }
+            if LargeOperatorHandler.can_handle(token, glyph):
+                LargeOperatorHandler.handle(ctx, token)
+                continue
 
-                    # Handle subscript/superscript for large operators
-                    # In DVI: operator, superscript glyphs, subscript glyphs
-                    # In tokens: operator, subscript tokens, superscript tokens
-                    # Need to reorder glyph consumption to match token order
+            if ExtendedDelimiterHandler.can_handle(glyph):
+                bbox = ExtendedDelimiterHandler.create_bbox(token, glyph)
+                ctx.append_bbox(bbox)
+                ctx.advance_glyph()
+                continue
 
-                    # Append the operator bbox first
-                    bboxes.append(bbox)
-                    glyph_idx += 1
-
-                    # Look ahead to detect superscript and subscript glyphs
-                    superscript_glyph_count = 0
-                    subscript_glyph_count = 0
-
-                    # Scan glyphs after the operator to count superscript (y > 2.0) and subscript (y < -1.0)
-                    # Only consider glyphs that are horizontally near the operator (within width + 15 units)
-                    operator_x_max = glyph.x + glyph.width + 15.0  # Generous range for sub/superscripts
-
-                    for scan_glyph in glyphs[glyph_idx:]:
-                        # Stop if we've moved too far horizontally (beyond operator's immediate vicinity)
-                        if scan_glyph.x > operator_x_max:
-                            break
-
-                        # Superscript glyphs have elevated positive y-position (above baseline in DVI)
-                        if scan_glyph.y > 2.0 and scan_glyph.y < 8.0:  # Superscript range
-                            superscript_glyph_count += 1
-                        # Subscript glyphs have negative y-position (below baseline in DVI)
-                        elif scan_glyph.y < -1.0:
-                            subscript_glyph_count += 1
-                        else:
-                            # No more sub/superscript glyphs
-                            break
-
-                    # Now process in token order: subscripts first, then superscripts
-                    # Process subscript glyphs (which appear AFTER superscript glyphs in DVI)
-                    subscript_start_glyph = glyph_idx + superscript_glyph_count
-                    for i in range(subscript_glyph_count):
-                        if subscript_start_glyph + i >= len(glyphs):
-                            break
-                        if token_idx >= len(tokens):
-                            break
-
-                        sub_glyph = glyphs[subscript_start_glyph + i]
-                        sub_token = tokens[token_idx]
-                        token_idx += 1
-
-                        # Create bbox for subscript glyph
-                        sub_bbox = {
-                            "token": sub_token,
-                            "xMin": float(sub_glyph.x),
-                            "yMin": float(-sub_glyph.y - sub_glyph.total_height),
-                            "xMax": float(sub_glyph.x + sub_glyph.width),
-                            "yMax": float(-sub_glyph.y)
-                        }
-                        bboxes.append(sub_bbox)
-
-                    # Process superscript glyphs (which appear BEFORE subscript glyphs in DVI)
-                    for i in range(superscript_glyph_count):
-                        if glyph_idx + i >= len(glyphs):
-                            break
-                        if token_idx >= len(tokens):
-                            break
-
-                        sup_glyph = glyphs[glyph_idx + i]
-                        sup_token = tokens[token_idx]
-                        token_idx += 1
-
-                        # Create bbox for superscript glyph
-                        sup_bbox = {
-                            "token": sup_token,
-                            "xMin": float(sup_glyph.x),
-                            "yMin": float(-sup_glyph.y - sup_glyph.total_height),
-                            "xMax": float(sup_glyph.x + sup_glyph.width),
-                            "yMax": float(-sup_glyph.y)
-                        }
-                        bboxes.append(sup_bbox)
-
-                    # Advance glyph_idx past all sub/superscript glyphs
-                    glyph_idx += superscript_glyph_count + subscript_glyph_count
-
-                    # Skip the common bbox append since we already appended
-                    continue
-
-                else:
-                    # Standard bbox calculation for normal glyphs
-                    # Note: DVI y-coordinates go down, we negate for standard math convention
-                    bbox = {
-                        "token": token,
-                        "xMin": float(glyph.x),
-                        "yMin": float(-glyph.y - glyph.total_height),
-                        "xMax": float(glyph.x + glyph.width),
-                        "yMax": float(-glyph.y)
-                    }
-
-            bboxes.append(bbox)
-            glyph_idx += 1
+            # Standard bbox for normal glyphs
+            bbox = create_standard_bbox(token, glyph)
+            ctx.append_bbox(bbox)
+            ctx.advance_glyph()
 
         # Process boxes (fraction bars, overlines, etc.)
         for box in boxes:
-            box_token = self.classify_box(box, glyphs, tokens)
+            box_token = self.classify_box(box, glyphs, ctx.tokens)
             if box_token:
-                bbox = {
-                    "token": box_token,
-                    "xMin": float(box.x),
-                    "yMin": float(-box.y - box.height),
-                    "xMax": float(box.x + box.width),
-                    "yMax": float(-box.y)
-                }
-                bboxes.append(bbox)
+                bbox = BoundingBox(
+                    token=box_token,
+                    x_min=float(box.x),
+                    y_min=float(-box.y - box.height),
+                    x_max=float(box.x + box.width),
+                    y_max=float(-box.y)
+                )
+                ctx.append_bbox(bbox)
 
         # Sort by x-position to maintain left-to-right reading order
-        bboxes.sort(key=lambda b: b["xMin"])
+        ctx.bboxes.sort(key=lambda b: b.x_min)
 
-        return bboxes
+        return ctx.bboxes
+
+    def _is_structural_token(self, token: str) -> bool:
+        """Check if token is a structural/spacing token that doesn't render as a glyph."""
+        structural_tokens = [
+            '^', '_', '{', '}', '\\ ', '\\,', '\\;', '\\:', '\\!', '\\quad', '\\qquad',
+            '\\mathrm', '\\mathbf', '\\mathit', '\\mathcal', '\\mathsf', '\\mathtt',
+            '\\mathfrak', '\\mathnormal'
+        ]
+        return token in structural_tokens or token.startswith('\\frac')
 
     def process_expression(
         self,
@@ -1011,11 +674,11 @@ ${expression}$
             if not bboxes:
                 return None
 
-            # Create result
+            # Create result - convert BoundingBox objects to dicts for JSON serialization
             result = {
                 "label": expression,
                 "normalizedLabel": expression,  # Could use latex_normalizer here
-                "bboxes": bboxes
+                "bboxes": [bbox.to_dict() for bbox in bboxes]
             }
 
             return result
