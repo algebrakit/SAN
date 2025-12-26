@@ -289,7 +289,8 @@ def fit_to_bbox(
     preserve_aspect: bool = True,
     padding: float = 0.0,
     glyph_height: Optional[float] = None,
-    glyph_depth: Optional[float] = None
+    glyph_depth: Optional[float] = None,
+    center_vertically: bool = False
 ) -> StrokeSet:
     """
     Transform strokes to fit within a target bounding box.
@@ -307,6 +308,7 @@ def fit_to_bbox(
                  E.g., 0.05 = 5% padding on each side
         glyph_height: Height above baseline (for baseline-aware positioning)
         glyph_depth: Depth below baseline (for baseline-aware positioning)
+        center_vertically: If True, center strokes vertically in box (for operators)
 
     Returns:
         New StrokeSet fitted to target bounding box
@@ -340,11 +342,13 @@ def fit_to_bbox(
         # Center horizontally
         dx = x_min + (target_width - scaled_width) / 2 - scaled_bbox[0]
 
-        # Vertical positioning: align top of strokes with y_max (baseline)
-        # This preserves the natural baseline relationship from source symbols
-        if glyph_height is not None:
-            # Baseline-aware: align top of scaled strokes with y_max
-            # The top of the source strokes should align with the top of the target box
+        # Vertical positioning
+        if center_vertically:
+            # Center vertically in the box (for operators like -, +, =)
+            dy = y_min + (target_height - scaled_height) / 2 - scaled_bbox[1]
+        elif glyph_height is not None:
+            # Baseline-aware: align bottom of strokes with y_max
+            # This preserves the natural baseline relationship from source symbols
             dy = y_max - scaled_bbox[3]
         else:
             # Fallback: center vertically (for symbols without glyph metrics)

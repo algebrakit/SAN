@@ -20,6 +20,17 @@ from stroke_transformer import StrokeSet, combine_stroke_sets, fit_to_bbox
 from models import BoundingBox
 
 
+# Tokens that should be vertically centered in their bounding box (operators)
+# These symbols don't fill their full glyph height - they're centered within it
+VERTICALLY_CENTERED_TOKENS = {
+    '-', '+', '=',
+    '\\times', '\\div', '\\cdot', '\\pm', '\\mp',
+    '<', '>', '\\leq', '\\geq', '\\neq',
+    '\\sim', '\\approx', '\\equiv',
+    '\\in', '\\notin', '\\subset', '\\supset',
+}
+
+
 class ExpressionSynthesizer:
     """Synthesizes handwritten expressions from bounding boxes and symbol library."""
 
@@ -159,13 +170,17 @@ class ExpressionSynthesizer:
                 # to allow them to stretch to correct dimensions
                 preserve_symbol_aspect = preserve_aspect and bbox.token not in ['\\frac', '\\overline', '\\underline']
 
+                # Center vertically for operator symbols (-, +, =, etc.)
+                center_vertically = bbox.token in VERTICALLY_CENTERED_TOKENS
+
                 fitted_strokes = fit_to_bbox(
                     symbol_strokes,
                     bbox.x_min, bbox.y_min, bbox.x_max, bbox.y_max,
                     preserve_aspect=preserve_symbol_aspect,
                     padding=padding,
                     glyph_height=bbox.glyph_height,
-                    glyph_depth=bbox.glyph_depth
+                    glyph_depth=bbox.glyph_depth,
+                    center_vertically=center_vertically
                 )
 
                 # Debug logging for bounding box info
