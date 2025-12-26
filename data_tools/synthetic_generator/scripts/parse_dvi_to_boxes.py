@@ -13,7 +13,8 @@ import json
 import argparse
 from pathlib import Path
 from typing import List, Dict, Tuple
-import re
+
+from utils import tokenize_latex
 
 try:
     import matplotlib.dviread as dviread
@@ -21,43 +22,6 @@ except ImportError:
     print("Error: matplotlib is required for DVI parsing")
     print("Install with: pip install matplotlib")
     exit(1)
-
-
-def tokenize_latex(latex: str) -> List[str]:
-    """
-    Tokenize a LaTeX string into individual symbols/commands.
-
-    Args:
-        latex: LaTeX expression string
-
-    Returns:
-        List of tokens
-    """
-    command_pattern = re.compile(
-        r'\\(mathbb{[a-zA-Z]}|begin{[a-z]+}|end{[a-z]+}|operatorname\*|[a-zA-Z]+|.)'
-    )
-
-    tokens = []
-    s = latex
-
-    while s:
-        if s[0] == '\\':
-            match = command_pattern.match(s)
-            if match:
-                tokens.append(match.group(0))
-                s = s[len(match.group(0)):]
-            else:
-                tokens.append(s[0])
-                s = s[1:]
-        elif s[0] in '{}^_':
-            s = s[1:]
-        elif s[0].isspace():
-            s = s[1:]
-        else:
-            tokens.append(s[0])
-            s = s[1:]
-
-    return tokens
 
 
 def parse_dvi(dvi_path: Path, dpi: int = 72) -> List[Tuple[float, float, str, float]]:

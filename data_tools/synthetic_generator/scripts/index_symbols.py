@@ -13,9 +13,10 @@ import json
 import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
-import xml.etree.ElementTree as ET
 from collections import defaultdict
 from tqdm import tqdm
+
+from utils import parse_inkml_label as _parse_inkml_label, get_inkml_bounds
 
 
 class SymbolIndexer:
@@ -42,19 +43,10 @@ class SymbolIndexer:
         Returns:
             str: The symbol label (LaTeX format) or None if not found
         """
-        try:
-            tree = ET.parse(file_path)
-            root = tree.getroot()
-
-            # Find annotation with type="label"
-            for annotation in root.findall('.//{http://www.w3.org/2003/InkML}annotation'):
-                if annotation.get('type') == 'label':
-                    return annotation.text
-
-            return None
-        except Exception as e:
-            print(f"Error parsing {file_path.name}: {e}")
-            return None
+        label = _parse_inkml_label(file_path)
+        if label is None:
+            print(f"Error parsing {file_path.name}: no label found")
+        return label
 
     def get_stroke_bounds(self, file_path: Path) -> Optional[Tuple[float, float, float, float]]:
         """
@@ -66,30 +58,10 @@ class SymbolIndexer:
         Returns:
             Tuple of (xmin, ymin, xmax, ymax) or None if error
         """
-        try:
-            tree = ET.parse(file_path)
-            root = tree.getroot()
-
-            all_x = []
-            all_y = []
-
-            # Extract all points from all traces
-            for trace in root.findall('.//{http://www.w3.org/2003/InkML}trace'):
-                points = trace.text.split(',')
-                for point in points:
-                    coords = point.strip().split()
-                    if len(coords) >= 2:
-                        all_x.append(float(coords[0]))
-                        all_y.append(float(coords[1]))
-
-            if not all_x or not all_y:
-                return None
-
-            return (min(all_x), min(all_y), max(all_x), max(all_y))
-
-        except Exception as e:
-            print(f"Error getting bounds for {file_path.name}: {e}")
-            return None
+        bounds = get_inkml_bounds(file_path)
+        if bounds is None:
+            print(f"Error getting bounds for {file_path.name}")
+        return bounds
 
     def index_symbols(self) -> None:
         """

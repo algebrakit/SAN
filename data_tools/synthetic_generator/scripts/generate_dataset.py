@@ -65,34 +65,57 @@ class DatasetGenerator:
             "failed_saving": 0,
         }
 
-    def read_latex_file(self, latex_file: Path) -> List[str]:
+    def read_latex_file(self, latex_file: Path) -> List[Dict[str, str]]:
         """
         Read LaTeX expressions from file.
 
+        Supports two formats:
+        1. Simple: one LaTeX expression per line
+        2. Tab-separated: <filename>\\t<latex> per line
+
         Args:
-            latex_file: Path to file with LaTeX expressions (one per line)
+            latex_file: Path to file with LaTeX expressions
 
         Returns:
-            List of LaTeX expressions
+            List of dicts with 'filename' (optional) and 'latex' keys
         """
         try:
+            entries = []
             with open(latex_file, 'r', encoding='utf-8') as f:
-                expressions = [line.strip() for line in f if line.strip() and line.strip()[0]!='#']
-            return expressions
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+
+                    # Check for tab-separated format: <filename>\t<latex>
+                    if '\t' in line:
+                        parts = line.split('\t', 1)
+                        entries.append({
+                            'filename': parts[0],
+                            'latex': parts[1] if len(parts) > 1 else ''
+                        })
+                    else:
+                        # Simple format: just LaTeX expression
+                        entries.append({
+                            'filename': None,
+                            'latex': line
+                        })
+
+            return entries
         except Exception as e:
             print(f"Error reading LaTeX file: {e}")
             return []
 
     def generate_bboxes_batch(
         self,
-        expressions: List[str],
+        entries: List[Dict[str, str]],
         work_dir: Path
     ) -> List[Optional[Dict]]:
         """
         Generate bounding boxes for a batch of expressions.
 
         Args:
-            expressions: List of LaTeX expressions
+            entries: List of dicts with 'filename' and 'latex' keys
             work_dir: Working directory for temporary files
 
         Returns:
@@ -100,14 +123,18 @@ class DatasetGenerator:
         """
         results = []
 
-        for i, expression in enumerate(expressions, 1):
-            print(f"[{i}/{len(expressions)}] Generating bboxes for: {expression}")
+        for i, entry in enumerate(entries, 1):
+            latex = entry['latex']
+            filename = entry.get('filename', '')
+            display = f"{filename}\t{latex}" if filename else latex
+            print(f"[{i}/{len(entries)}] Generating bboxes for: {display}")
 
-            bbox_data = self.bbox_generator.process_expression(expression, work_dir)
+            bbox_data = self.bbox_generator.process_expression(latex, work_dir)
 
             if bbox_data:
+                # Store original filename in bbox_data for later use
+                bbox_data['source_filename'] = filename
                 results.append(bbox_data)
-                # print(f"  ✓ Generated {len(bbox_data['bboxes'])} bounding boxes")
             else:
                 results.append(None)
                 self.stats["failed_bbox"] += 1
@@ -156,7 +183,7 @@ class DatasetGenerator:
     def save_inkml_batch(
         self,
         stroke_sets: List[Optional[StrokeSet]],
-        expressions: List[str],
+        bbox_data_list: List[Optional[Dict]],
         output_dir: Path
     ) -> List[Optional[Path]]:
         """
@@ -164,7 +191,7 @@ class DatasetGenerator:
 
         Args:
             stroke_sets: List of StrokeSets
-            expressions: List of LaTeX expressions (for filenames and labels)
+            bbox_data_list: List of bbox data dicts (contains label and source_filename)
             output_dir: Output directory for InkML files
 
         Returns:
@@ -173,18 +200,28 @@ class DatasetGenerator:
         output_dir.mkdir(parents=True, exist_ok=True)
         results = []
 
-        for i, (stroke_set, expression) in enumerate(zip(stroke_sets, expressions), 1):
-            if stroke_set is None:
+        for i, (stroke_set, bbox_data) in enumerate(zip(stroke_sets, bbox_data_list), 1):
+            if stroke_set is None or bbox_data is None:
                 results.append(None)
                 continue
 
-            # Generate filename
-            safe_expr = expression.replace('\\', '').replace('{', '').replace('}', '')
-            safe_expr = safe_expr.replace('/', '_').replace(' ', '_').replace('.', '_')
-            if len(safe_expr) > 40:
-                safe_expr = safe_expr[:40]
+            expression = bbox_data['label']
+            source_filename = bbox_data.get('source_filename', '')
 
-            filename = f"expr_{i:04d}_{safe_expr}.inkml"
+            # Generate output filename
+            if source_filename:
+                # Use source filename as base (remove extension, sanitize)
+                base_name = Path(source_filename).stem
+                safe_name = base_name.replace(' ', '_').replace('/', '_')
+                filename = f"expr_{i:04d}_{safe_name}.inkml"
+            else:
+                # Generate from expression
+                safe_expr = expression.replace('\\', '').replace('{', '').replace('}', '')
+                safe_expr = safe_expr.replace('/', '_').replace(' ', '_').replace('.', '_')
+                if len(safe_expr) > 40:
+                    safe_expr = safe_expr[:40]
+                filename = f"expr_{i:04d}_{safe_expr}.inkml"
+
             output_path = output_dir / filename
 
             print(f"[{i}/{len(stroke_sets)}] Saving: {filename}")
@@ -211,7 +248,7 @@ class DatasetGenerator:
     def create_labels_file(
         self,
         inkml_paths: List[Optional[Path]],
-        expressions: List[str],
+        bbox_data_list: List[Optional[Dict]],
         output_path: Path
     ) -> None:
         """
@@ -219,13 +256,14 @@ class DatasetGenerator:
 
         Args:
             inkml_paths: List of InkML file paths
-            expressions: List of LaTeX expressions
+            bbox_data_list: List of bbox data dicts (contains label)
             output_path: Path to labels.txt
         """
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
-                for inkml_path, expression in zip(inkml_paths, expressions):
-                    if inkml_path is not None:
+                for inkml_path, bbox_data in zip(inkml_paths, bbox_data_list):
+                    if inkml_path is not None and bbox_data is not None:
+                        expression = bbox_data['label']
                         # Write: filename.inkml\texpression
                         f.write(f"{inkml_path.name}\t{expression}\n")
 
@@ -282,14 +320,14 @@ class DatasetGenerator:
             print("STEP 4: Saving InkML files")
             print("="*70)
             inkml_dir = output_dir / "inkml"
-            inkml_paths = self.save_inkml_batch(stroke_sets, expressions, inkml_dir)
+            inkml_paths = self.save_inkml_batch(stroke_sets, bbox_data_list, inkml_dir)
 
             # Step 4: Create labels file
             print("\n" + "="*70)
             print("STEP 5: Creating labels.txt")
             print("="*70)
             labels_path = output_dir / "labels.txt"
-            self.create_labels_file(inkml_paths, expressions, labels_path)
+            self.create_labels_file(inkml_paths, bbox_data_list, labels_path)
 
             # Calculate success count
             self.stats["successful"] = sum(1 for p in inkml_paths if p is not None)
