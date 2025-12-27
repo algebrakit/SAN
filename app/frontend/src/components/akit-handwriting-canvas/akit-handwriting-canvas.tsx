@@ -742,20 +742,20 @@ export class AkitHandwritingCanvas {
               <RedoIcon />
             </button>
             <button
-              class="icon-button"
-              onClick={() => this.erase()}
-              disabled={this.isAutoConverting}
-              title="Clear"
-            >
-              <TrashIcon />
-            </button>
-            <button
               class={`icon-button ${this.isEraserMode ? 'active' : ''}`}
               onClick={() => this.toggleEraserMode()}
               disabled={this.isAutoConverting}
               title="Eraser"
             >
               <EraserIcon />
+            </button>
+            <button
+              class="icon-button"
+              onClick={() => this.erase()}
+              disabled={this.isAutoConverting}
+              title="Clear"
+            >
+              <TrashIcon />
             </button>
           </div>
           <div class="canvas-container">

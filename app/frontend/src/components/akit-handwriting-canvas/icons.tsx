@@ -16,15 +16,16 @@ export const RedoIcon: FunctionalComponent = () => (
 
 export const TrashIcon: FunctionalComponent = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="3 6 5 6 21 6"></polyline>
-    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+    <polyline points="3 4 5 4 21 4"></polyline>
+    <path d="M19 4v14a2 2 0 01-2 2H7a2 2 0 01-2-2V4m3 0V2a2 2 0 012-2h4a2 2 0 012 2v2"></path>
   </svg>
 );
 
 export const EraserIcon: FunctionalComponent = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 20H7L3 16L12 7L17 12M11 11L13 13"></path>
-    <path d="M8.5 15.5L6 13"></path>
+    <path d="M19 4L22 7L11 18H5V12L16 1L19 4Z"></path>
+    <path d="M5 18H2"></path>
+    <line x1="11" y1="6" x2="18" y2="13"></line>
   </svg>
 );
 
