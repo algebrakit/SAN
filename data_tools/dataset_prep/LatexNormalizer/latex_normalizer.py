@@ -188,6 +188,7 @@ class ParseNode:
     value: str
     children: List['ParseNode']
     parent: Optional['ParseNode'] = None
+    optional: bool = False # Applies when type = NodeType.GROUP. Used for optional arguments like in \sqrt[n]{x}
 
     def __post_init__(self):
         if self.children is None:
@@ -231,13 +232,14 @@ class Parser:
 
     def parse_group(self) -> ParseNode:
         """Parse a group enclosed in braces."""
-        if self.current_token().type != TokenType.LBRACE:
-            raise LaTeXError(f"Expected '{{' at position {self.current_token().position}")
+        if not self.current_token().type in [TokenType.LBRACE, TokenType.LBRACKET]:
+            raise LaTeXError(f"Expected '{{' or '[' at position {self.current_token().position}")
+        openingBracket = self.current_token().type
 
         brace_pos = self.current_token().position
         self.brace_stack.append(brace_pos)
         self.advance()  # Skip opening brace
-        group_node = ParseNode(NodeType.GROUP, "", [])
+        group_node = ParseNode(NodeType.GROUP, "", [], optional=(openingBracket == TokenType.LBRACKET))
 
         while (self.current_token().type != TokenType.RBRACE and
                self.current_token().type != TokenType.EOF):
@@ -245,8 +247,10 @@ class Parser:
             if child:
                 group_node.add_child(child)
 
-        if self.current_token().type != TokenType.RBRACE:
+        if openingBracket == TokenType.LBRACE and self.current_token().type != TokenType.RBRACE:
             raise LaTeXError(f"Unmatched opening brace '{{' at position {brace_pos}")
+        if openingBracket == TokenType.LBRACKET and self.current_token().type != TokenType.RBRACKET:
+            raise LaTeXError(f"Unmatched opening bracket '[' at position {brace_pos}")  
 
         self.brace_stack.pop()
         self.advance()  # Skip closing brace
@@ -291,13 +295,13 @@ class Parser:
                         group = ParseNode(NodeType.GROUP, "", [single_arg])
                         command_node.add_child(group)
 
-        elif token.value in ['\\sqrt']:
-            # Handle optional argument [n] for \sqrt
+        elif token.value in ['\\sqrt', '\\lognl']:
+            # Handle optional argument [n]
             optional_present = False
             if self.current_token().type == TokenType.LBRACKET:
                 optional_present = True
                 self.advance()  # Skip [
-                optional_arg = ParseNode(NodeType.GROUP, "", [])
+                optional_arg = ParseNode(NodeType.GROUP, "", [], optional=True)
                 while (self.current_token().type != TokenType.RBRACKET and
                        self.current_token().type != TokenType.EOF):
                     child = self.parse_expression()
@@ -307,7 +311,6 @@ class Parser:
                 if self.current_token().type == TokenType.RBRACKET:
                     self.advance()  # Skip ]
                     # Mark this as an optional argument (we'll handle it in LaTeX generation)
-                    optional_arg.value = "optional"
                     command_node.add_child(optional_arg)
 
             # Main argument
@@ -351,7 +354,7 @@ class Parser:
         elif token.type == TokenType.COMMAND:
             return self.parse_command()
 
-        elif token.type == TokenType.LBRACE:
+        elif token.type in [TokenType.LBRACE, TokenType.LBRACKET]:
             return self.parse_group()
 
         elif token.type == TokenType.TEXT:
@@ -359,8 +362,7 @@ class Parser:
             self.advance()
             return node
 
-        elif token.type in [TokenType.LPAREN, TokenType.RPAREN,
-                           TokenType.LBRACKET, TokenType.RBRACKET]:
+        elif token.type in [TokenType.LPAREN, TokenType.RPAREN]:
             node = ParseNode(NodeType.OPERATOR, token.value, [])
             self.advance()
             return node
@@ -818,7 +820,7 @@ class Normalizer:
                     continue
                 normalized_children.append(normalized_child)
 
-        res = ParseNode(NodeType.GROUP, node.value, normalized_children)
+        res = ParseNode(NodeType.GROUP, node.value, normalized_children, optional=node.optional)
         # Check for group commands like \over, \atop, \choose
         transformed_node = self._check_group_commands(res)
         if transformed_node:
@@ -892,7 +894,7 @@ class Normalizer:
                     filtered_child = self._filter_space_tokens(child)
                     filtered_children.append(filtered_child)
 
-            return ParseNode(node.type, node.value, filtered_children, node.parent)
+            return ParseNode(node.type, node.value, filtered_children, node.parent, optional=node.optional)
 
         elif node.type == NodeType.OPERATOR:
             # Recursively process operator's children (base and exponent/subscript)
@@ -961,9 +963,9 @@ class LaTeXGenerator:
             result = node.value
 
             # Special handling for \sqrt with optional argument
-            if node.value == "\\sqrt" and len(node.children) >= 1:
+            if len(node.children) >= 1:
                 first_child = node.children[0]
-                if first_child.type == NodeType.GROUP and first_child.value == "optional":
+                if first_child.type == NodeType.GROUP and first_child.optional:
                     # This is an optional argument - use brackets
                     result += " [ " + self.generate(first_child) + " ] "
                     # Add remaining children as regular arguments
@@ -979,13 +981,6 @@ class LaTeXGenerator:
                             result += " { " + self.generate(child) + " }"
                         else:
                             result += self.generate(child)
-            else:
-                # Regular command handling
-                for child in node.children:
-                    if child.type == NodeType.GROUP:
-                        result += " { " + self.generate(child) + " }"
-                    else:
-                        result += self.generate(child)
             return result
 
         elif node.type == NodeType.GROUP:
