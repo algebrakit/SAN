@@ -7,7 +7,7 @@ FORBIDDEN_COMMANDS = [
     '\\limits', '\\aleph', '\\oplus', '\\models', '\\biguplus', '\\bigwedge', '\\bigvee', '\\coprod',
     '\\bigoplus', '\\propto', '\\Im', '\\Re', '\\wp', '\\xi', '\\zeta', '\\Xi', '\\iota', '\\mp', '\\dagger', '\\star', '\\bullet',
     '\\oint', '\\ominus', '\\mathfrak', '\\odot', '\\hbar', '\\triangleleft', '\\triangleq', '\\triangleleft',
-    '\\supseteq', '\\subsetneq', '\\sqsubseteq', '\\rightleftharpoons', '\\Vdash', '\\lg', '\\pmod', '\\tbinom',
+    '\\supseteq', '\\subsetneq', '\\sqsubseteq', '\\rightleftharpoons', '\\Vdash', '\\lg', '\\pmod', '\\tbinom', '\\#', '\\&',
     # '\\\\', '\\choose', # to handle later
     # forbidden accents
     '\\breve', '\\acute', '\\grave', '\\mathring'
@@ -52,6 +52,7 @@ VARIANT_REPLACEMENTS = {
     r'\\vec': r'\\overrightarrow',
     r'\\widehat': r'\\hat',
     r'\\widetilde': r'\\tilde',
+    r'\\\|': r'\\Vert',
     r'\\rVert': r'\\Vert',
     r'\\lVert': r'\\Vert',
     r'\\parallel': r'\\Vert',
@@ -100,7 +101,7 @@ VARIANT_REPLACEMENTS = {
     r'<': r'\\lt',
     r'>': r'\\gt',
     r'~': r' ',
-    r'\\degree': r'^ { o }',
+    r'\\degree': r'^ { o }'
 }
 
 # Commands to detect and ensure spacing around

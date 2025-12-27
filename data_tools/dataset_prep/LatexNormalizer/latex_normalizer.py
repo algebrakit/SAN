@@ -83,7 +83,7 @@ class Tokenizer:
 
             # Handle special single-character commands including escaped braces and backslash
             char = self.current_char()
-            if char in ',;:>! {}\\%':
+            if char in ',;:>! {}\\%#&|':
                 command += char
                 self.advance()
                 return command
@@ -297,9 +297,7 @@ class Parser:
 
         elif token.value in ['\\sqrt', '\\lognl']:
             # Handle optional argument [n]
-            optional_present = False
             if self.current_token().type == TokenType.LBRACKET:
-                optional_present = True
                 self.advance()  # Skip [
                 optional_arg = ParseNode(NodeType.GROUP, "", [], optional=True)
                 while (self.current_token().type != TokenType.RBRACKET and

@@ -87,11 +87,16 @@ if __name__ == '__main__':
     if params['finetune']:
         print('loading pretrain model weight')
         print(f'pretrain model: {params["checkpoint"]}')
-        training_state = load_checkpoint(model, optimizer, params['checkpoint'], scaler)
-        start_epoch = training_state['epoch']
-        min_score = training_state['best_score']
-        min_step = training_state['min_step']
-        print(f'Resuming from epoch {start_epoch}, best_score={min_score:.4f}, min_step={min_step}')
+        weights_only = False
+        if weights_only:
+            training_state = load_checkpoint(model, None, params['checkpoint'], None)
+        else:
+            training_state = load_checkpoint(model, optimizer, params['checkpoint'], scaler)
+            start_epoch = training_state['epoch']
+            min_score = training_state['best_score']
+            min_step = training_state['min_step']
+            print(f'Resuming from epoch {start_epoch}, best_score={min_score:.4f}, min_step={min_step}')
+
 
     if not args.check:
         if not os.path.exists(os.path.join(params['checkpoint_dir'], model.name)):
