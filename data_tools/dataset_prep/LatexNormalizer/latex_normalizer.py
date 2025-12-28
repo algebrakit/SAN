@@ -295,7 +295,7 @@ class Parser:
                         group = ParseNode(NodeType.GROUP, "", [single_arg])
                         command_node.add_child(group)
 
-        elif token.value in ['\\sqrt', '\\lognl']:
+        elif token.value in ['\\sqrt']:
             # Handle optional argument [n]
             if self.current_token().type == TokenType.LBRACKET:
                 self.advance()  # Skip [
@@ -327,6 +327,23 @@ class Parser:
                 if single_arg:
                     group = ParseNode(NodeType.GROUP, "", [single_arg])
                     command_node.add_child(group)
+
+        elif token.value in ['\\lognl']:
+            # Handle optional argument [n]
+            if self.current_token().type == TokenType.LBRACKET:
+                self.advance()  # Skip [
+                optional_arg = ParseNode(NodeType.GROUP, "", [], optional=True)
+                while (self.current_token().type != TokenType.RBRACKET and
+                       self.current_token().type != TokenType.EOF):
+                    child = self.parse_expression()
+                    if child:
+                        optional_arg.add_child(child)
+
+                if self.current_token().type == TokenType.RBRACKET:
+                    self.advance()  # Skip ]
+                    # Mark this as an optional argument (we'll handle it in LaTeX generation)
+                    command_node.add_child(optional_arg)
+
         elif token.value in COMMAND_SINGLE_ARGUMENT:
             if self.current_token().type == TokenType.LBRACE:
                 arg = self.parse_group()

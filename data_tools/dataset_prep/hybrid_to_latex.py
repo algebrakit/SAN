@@ -97,7 +97,14 @@ def _iter(nodeid, gtd_list, swapSubSup:bool):
                 if child_list[i][2] in ['right']:
                     return_string += _iter(child_list[i][1], gtd_list,swapSubSup)
         else:
-            return_string = [gtd_list[nodeid][0]]
+            cmd = gtd_list[nodeid][0]
+            if cmd == '\\log':
+                # the hybrid tree uses \log token for the \lognl command (it's the same symbol visually), but we have to convert it back here
+                for i in range(len(child_list)):
+                    if child_list[i][2] == 'L-sup':
+                        cmd = '\\lognl'
+
+            return_string = [cmd]
             for i in range(len(child_list)):
                 if child_list[i][2] in ['L-sup']:
                     return_string += ['['] + _iter(child_list[i][1], gtd_list,swapSubSup) + [']']
@@ -128,7 +135,5 @@ def hybrid_to_latex(nodeid, lines, swapSubSup=False):
     gtd_list = _convert_to_gtd(lines)
     latex = ' '.join(_iter(nodeid, gtd_list, swapSubSup))
 
-    pattern = r'\\log \['
-    latex = re.sub(pattern, r'\\lognl [', latex)
     return latex
 
