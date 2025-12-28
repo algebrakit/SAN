@@ -213,7 +213,7 @@ The following tools are available to prepare a data set:
   - cleans expressions: remove font styles, non-math commands (\mathbf, \textrm, etc), 
   - convert matrix notations to `\stack` syntax.
   - filters out expressions with unsupported symbols, like `\bigoplus`, `\bigvee`, etc
-  - normalises the latex expression by parsing the expression and serialising again.
+  - normalises the latex expression by parsing the expression and serialising again. This removes any meaningless variations in the latex. 
 - `prep_latex.py`: Converts expressions into token lists
   - tokens are symbols (`1`, `x`), commands (`\frac`) and syntax symbols (`{`, `_`)
   - tokens are separated by space
@@ -244,10 +244,13 @@ Matrics and systems of equations use a vertical stack of expressions. In matrics
 
 
 #### Dutch Logarithms {#dutch-logarithms}
+In the Netherlands (and some other countries such as Indonesia), the base of the logarithm is written to the top-left of the log token. This notation is encoded as non-standard latex `\lognl[2](x)`, which renders as ${}^2\log(x)$.
+
+We don't want to introduce a `\lognl` token while training, as the command looks exactly the same as the `\log` token. This will be handled when converting from latex to hybrid and back.
 
 #### Spaces {#spaces}
 Spaces are default ignored, so latex expression `x\ =\ 2` is normalised into token list `x,=,2`.
-This leads to problems ror expressions with natural language. 
+This leads to problems for expressions with natural language. 
 
 Examples:
 - `x=2\ or\ x=3`: Normalising would give `x,2,o,r,x,=,3` which in latex is `x=2orx=3`
