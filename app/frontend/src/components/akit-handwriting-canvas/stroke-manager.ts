@@ -159,10 +159,14 @@ export class StrokeManager {
   }
 
   clear(): void {
+    // Only save to undo stack if there are strokes to clear
+    if (this.strokes.length > 0) {
+      this.undoStack.push([...this.strokes]);
+      this.redoStack = [];  // Clear redo stack (new action)
+    }
+
     this.strokes = [];
     this.currentStroke = [];
-    this.undoStack = [];
-    this.redoStack = [];
     this.highlightedStrokeIds = [];
     this.autoScrollReferenceStroke = null;
     this.renderer.clear();
