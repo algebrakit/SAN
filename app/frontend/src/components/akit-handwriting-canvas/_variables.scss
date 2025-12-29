@@ -7,18 +7,16 @@
 
 .akit-handwriting-canvas-container {
   // ==========================================================================
-  // Convert Button (green up-arrow button)
+  // Primary Color (used for accents, progress bars, etc.)
   // ==========================================================================
-  --akit-handwriting-canvas-color-convert-button: #22c55e;
-  --akit-handwriting-canvas-color-convert-button-dark: #16a34a;
-  --akit-handwriting-canvas-color-convert-button-darkest: #15803d;
+  --akit-handwriting-canvas-color-primary: #336699;
 
   // ==========================================================================
-  // Submit Button (blue button in submit mode)
+  // Convert Button
   // ==========================================================================
-  --akit-handwriting-canvas-color-submit-button: #3b82f6;
-  --akit-handwriting-canvas-color-submit-button-dark: #2563eb;
-  --akit-handwriting-canvas-color-submit-button-darkest: #1d4ed8;
+  --akit-handwriting-canvas-color-convert-button: #336699;
+  --akit-handwriting-canvas-color-convert-button-hover: #2d5a87;
+  --akit-handwriting-canvas-color-convert-button-active: #264d75;
 
   // ==========================================================================
   // Error Message
@@ -55,6 +53,19 @@
   --akit-handwriting-canvas-color-autoscroll-zone: rgba(90, 159, 212, 0.3);
 
   // ==========================================================================
+  // Text Colors
+  // ==========================================================================
+  --akit-handwriting-canvas-color-text: #111b21;
+  --akit-handwriting-canvas-color-text-secondary: #667781;
+  --akit-handwriting-canvas-color-text-stale: #9ca3af;
+
+  // ==========================================================================
+  // Preview Bar
+  // ==========================================================================
+  --akit-handwriting-canvas-preview-bar-bg: #ffffff;
+  --akit-handwriting-canvas-preview-bar-border-radius: 24px;
+
+  // ==========================================================================
   // Disabled State
   // ==========================================================================
   --akit-handwriting-canvas-color-disabled: #cbd5e1;
@@ -64,7 +75,6 @@
   // ==========================================================================
 
   // Button sizes
-  --akit-handwriting-canvas-convert-button-size: 44px;
   --akit-handwriting-canvas-icon-button-size: 40px;
   --akit-handwriting-canvas-icon-size: 20px;
 

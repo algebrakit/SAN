@@ -29,12 +29,6 @@ export const EraserIcon: FunctionalComponent = () => (
   </svg>
 );
 
-export const SpinnerIcon: FunctionalComponent<{ class?: string }> = (props) => (
-  <svg class={props.class || 'spinner'} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-  </svg>
-);
-
 export const CheckmarkIcon: FunctionalComponent<{ class?: string }> = (props) => (
   <svg class={props.class || 'checkmark'} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
     <polyline points="20 6 9 17 4 12"></polyline>

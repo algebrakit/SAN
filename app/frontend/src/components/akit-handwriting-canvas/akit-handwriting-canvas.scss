@@ -150,6 +150,17 @@
   border-radius: 0 var(--akit-handwriting-canvas-border-radius) var(--akit-handwriting-canvas-border-radius) 0;
 }
 
+// Progress bar showing countdown until auto-scroll triggers
+.auto-scroll-progress-bar {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  // height is set dynamically via inline style (0-100%)
+  background-color: var(--akit-handwriting-canvas-color-primary);
+  border-radius: 0 0 var(--akit-handwriting-canvas-border-radius) 0;
+}
+
 .canvas-container::-webkit-scrollbar {
   height: 8px;
 }
@@ -208,8 +219,8 @@ canvas.eraser-cursor:active {
   align-self: flex-start; // Don't stretch to full width in flex column container
   gap: 8px;
   padding: 2px 6px 2px 16px;
-  background: #ffffff;
-  border-radius: 24px;
+  background: var(--akit-handwriting-canvas-preview-bar-bg);
+  border-radius: var(--akit-handwriting-canvas-preview-bar-border-radius);
   margin: 0 12px 8px 12px;
   min-height: 48px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -218,37 +229,23 @@ canvas.eraser-cursor:active {
 
   // Gray out the expression when stale (strokes changed, conversion pending)
   &.stale .preview-latex {
-    color: #9ca3af;
+    color: var(--akit-handwriting-canvas-color-text-stale);
 
     .katex {
-      color: #9ca3af;
+      color: var(--akit-handwriting-canvas-color-text-stale);
     }
-  }
-}
-
-.preview-spinner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-
-  svg {
-    width: 24px;
-    height: 24px;
-    color: #667781;
-    animation: spin 1s linear infinite;
   }
 }
 
 .preview-error {
   flex: 1;
-  color: #ea0038;
+  color: var(--akit-handwriting-canvas-color-error-text);
   font-size: 14px;
 }
 
 .preview-placeholder {
   flex: 1;
-  color: #667781;
+  color: var(--akit-handwriting-canvas-color-text-secondary);
   font-size: 14px;
 }
 
@@ -262,7 +259,7 @@ canvas.eraser-cursor:active {
   font-size: 1.1em;
   padding: 4px 0;
   min-width: 150px;
-  color: #111b21;
+  color: var(--akit-handwriting-canvas-color-text);
 
   // KaTeX styling - left align display mode
   .katex-display {
@@ -282,14 +279,14 @@ canvas.eraser-cursor:active {
   }
 }
 
-// WhatsApp-style circular send button
+// Circular send button
 .accept-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: #25d366;
+  width: var(--akit-handwriting-canvas-icon-button-size);
+  height: var(--akit-handwriting-canvas-icon-button-size);
+  background: var(--akit-handwriting-canvas-color-convert-button);
   color: white;
   border: none;
   border-radius: 50%;
@@ -298,8 +295,8 @@ canvas.eraser-cursor:active {
   flex-shrink: 0;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: var(--akit-handwriting-canvas-icon-size);
+    height: var(--akit-handwriting-canvas-icon-size);
     stroke-width: 2.5;
   }
 
@@ -309,42 +306,17 @@ canvas.eraser-cursor:active {
   }
 
   &:hover:not(:disabled) {
-    background: #22c55e;
+    background: var(--akit-handwriting-canvas-color-convert-button-hover);
   }
 
   &:active:not(:disabled) {
-    background: #16a34a;
+    background: var(--akit-handwriting-canvas-color-convert-button-active);
   }
 
   &:disabled {
-    background: #9ca3af;
+    background: var(--akit-handwriting-canvas-color-disabled);
     cursor: not-allowed;
     opacity: 0.6;
-  }
-
-  // Loading state - show spinner in button
-  &.loading {
-    background: #86efac;
-
-    svg {
-      animation: spin 1s linear infinite;
-    }
-  }
-}
-
-.spinner {
-  width: var(--akit-handwriting-canvas-icon-size);
-  height: var(--akit-handwriting-canvas-icon-size);
-  color: #86efac;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
   }
 }
 

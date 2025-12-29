@@ -36,6 +36,7 @@ export class AkitHandwritingCanvas {
   @State() panOffsetY: number = VERTICAL_SCROLL_MAX;  // Start centered vertically
   @State() isEraserMode: boolean = false;
   @State() isInAutoScrollZone: boolean = false;
+  @State() autoScrollProgress: number = 0;  // 0 to 1, for progress bar animation
 
   // Preview bar state
   @State() previewLatex: string = '';
@@ -63,6 +64,11 @@ export class AkitHandwritingCanvas {
   private autoConvertTimeout: ReturnType<typeof setTimeout> | null = null;
   private _symbolAdjustments: SymbolAdjustment[];
 
+  // Auto-scroll progress animation
+  private autoScrollStartTime: number = 0;
+  private autoScrollDuration: number = 0;
+  private autoScrollAnimationFrame: number | null = null;
+
   // Inter-stroke timing data collection
   private lastStrokeEndTimestamp: number = 0;
   private interStrokeIntervals: number[] = [];
@@ -87,6 +93,30 @@ export class AkitHandwritingCanvas {
     const adaptive = Math.min(q3 * AUTO_SCROLL_DEBOUNCE_MARGIN, AUTO_SCROLL_DEBOUNCE_MAX_MS);
 
     return adaptive;
+  }
+
+  /**
+   * Animates the auto-scroll progress bar using requestAnimationFrame.
+   * Updates progress from 0 to 1 over the debounce duration.
+   */
+  private animateAutoScrollProgress(): void {
+    const elapsed = performance.now() - this.autoScrollStartTime;
+    this.autoScrollProgress = Math.min(elapsed / this.autoScrollDuration, 1);
+
+    if (this.autoScrollProgress < 1 && this.isInAutoScrollZone) {
+      this.autoScrollAnimationFrame = requestAnimationFrame(() => this.animateAutoScrollProgress());
+    }
+  }
+
+  /**
+   * Cancels the auto-scroll progress animation and resets progress state.
+   */
+  private cancelAutoScrollAnimation(): void {
+    if (this.autoScrollAnimationFrame) {
+      cancelAnimationFrame(this.autoScrollAnimationFrame);
+      this.autoScrollAnimationFrame = null;
+    }
+    this.autoScrollProgress = 0;
   }
 
   componentDidLoad() {
@@ -203,6 +233,7 @@ export class AkitHandwritingCanvas {
           clearTimeout(this.autoScrollTimeout);
           this.autoScrollTimeout = null;
           this.isInAutoScrollZone = false;
+          this.cancelAutoScrollAnimation();
         }
 
         // Clamp scroll position to keep strokes visible
@@ -238,6 +269,7 @@ export class AkitHandwritingCanvas {
       clearTimeout(this.autoScrollTimeout);
       this.autoScrollTimeout = null;
       this.isInAutoScrollZone = false;
+      this.cancelAutoScrollAnimation();
     }
 
     // Cancel any active drawing when pan starts
@@ -404,6 +436,7 @@ export class AkitHandwritingCanvas {
       clearTimeout(this.autoScrollTimeout);
       this.autoScrollTimeout = null;
       this.isInAutoScrollZone = false;
+      this.cancelAutoScrollAnimation();
     }
 
     // Cancel pending auto-convert and clear preview while drawing
@@ -480,6 +513,7 @@ export class AkitHandwritingCanvas {
       // Cancel any pending auto-scroll (user is still drawing)
       if (this.autoScrollTimeout) {
         clearTimeout(this.autoScrollTimeout);
+        this.cancelAutoScrollAnimation();
       }
 
       // Schedule auto-scroll after debounce period
@@ -492,12 +526,20 @@ export class AkitHandwritingCanvas {
 
         if (this.isInAutoScrollZone) {
           const scrollX = refStrokeBbox.maxX;
+
+          // Start progress bar animation
+          this.autoScrollDuration = this.getAdaptiveDebounceMs();
+          this.autoScrollStartTime = performance.now();
+          this.autoScrollProgress = 0;
+          this.animateAutoScrollProgress();
+
           // Schedule auto-scroll and hide overlay after it completes
           this.autoScrollTimeout = setTimeout(() => {
             this.checkAutoScroll(scrollX);
             this.isInAutoScrollZone = false;
             this.autoScrollTimeout = null;
-          }, this.getAdaptiveDebounceMs());
+            this.cancelAutoScrollAnimation();
+          }, this.autoScrollDuration);
         }
       } else {
         // No reference stroke - hide overlay
@@ -544,6 +586,7 @@ export class AkitHandwritingCanvas {
     if (this.autoScrollTimeout) {
       clearTimeout(this.autoScrollTimeout);
       this.autoScrollTimeout = null;
+      this.cancelAutoScrollAnimation();
     }
     if (this.autoConvertTimeout) {
       clearTimeout(this.autoConvertTimeout);
@@ -769,7 +812,12 @@ export class AkitHandwritingCanvas {
             />
           </div>
           {this.isInAutoScrollZone && (
-            <div class="auto-scroll-zone-overlay" style={{ width: `${AUTO_SCROLL_MIN_GAP}px` }}></div>
+            <div class="auto-scroll-zone-overlay" style={{ width: `${AUTO_SCROLL_MIN_GAP}px` }}>
+              <div
+                class="auto-scroll-progress-bar"
+                style={{ height: `${this.autoScrollProgress * 100}%` }}
+              />
+            </div>
           )}
         </div>
       </div>
