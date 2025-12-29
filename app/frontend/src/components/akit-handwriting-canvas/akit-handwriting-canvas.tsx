@@ -73,6 +73,9 @@ export class AkitHandwritingCanvas {
   private lastStrokeEndTimestamp: number = 0;
   private interStrokeIntervals: number[] = [];
 
+  // Track last converted stroke state to avoid redundant conversions
+  private lastConvertedStrokeIds: string = '';
+
   /**
    * Calculates adaptive auto-scroll debounce time based on observed inter-stroke intervals.
    * Uses Q3 (75th percentile) * margin as a robust upper bound estimate.
@@ -559,6 +562,9 @@ export class AkitHandwritingCanvas {
       // For normal drawing, cancel without saving
       this.strokeManager.cancelDrawing();
     }
+
+    // Reset stale flag since no strokes actually changed
+    this.isPreviewStale = false;
   };
 
   private toggleEraserMode() {
@@ -611,6 +617,9 @@ export class AkitHandwritingCanvas {
     // Reset inter-stroke timing data for new session
     this.lastStrokeEndTimestamp = 0;
     this.interStrokeIntervals = [];
+
+    // Reset conversion tracking
+    this.lastConvertedStrokeIds = '';
   }
 
   @Method()
@@ -632,8 +641,16 @@ export class AkitHandwritingCanvas {
   }
 
   /**
+   * Gets a string representation of current stroke IDs for comparison.
+   */
+  private getCurrentStrokeIds(): string {
+    return this.strokeManager.getStrokes().map(s => s.id).join(',');
+  }
+
+  /**
    * Schedules auto-conversion after a debounce period.
    * Cancels any pending conversion and starts a new timer.
+   * Skips conversion if strokes haven't changed since last conversion.
    */
   private scheduleAutoConvert() {
     // Cancel any pending auto-convert
@@ -643,14 +660,22 @@ export class AkitHandwritingCanvas {
 
     // Only schedule if there are strokes
     if (this.strokeCount > 0) {
+      // Check if strokes have actually changed
+      const currentStrokeIds = this.getCurrentStrokeIds();
+      if (currentStrokeIds === this.lastConvertedStrokeIds) {
+        // Strokes unchanged - skip redundant conversion
+        return;
+      }
+
       this.autoConvertTimeout = setTimeout(() => {
         this.autoConvert();
         this.autoConvertTimeout = null;
       }, AUTO_CONVERT_DEBOUNCE_MS);
     } else {
-      // No strokes - clear preview
+      // No strokes - clear preview and reset tracking
       this.previewLatex = '';
       this.conversionError = '';
+      this.lastConvertedStrokeIds = '';
     }
   }
 
@@ -662,8 +687,12 @@ export class AkitHandwritingCanvas {
     const strokes = this.strokeManager.getStrokes();
     if (strokes.length === 0) {
       this.previewLatex = '';
+      this.lastConvertedStrokeIds = '';
       return;
     }
+
+    // Record which strokes we're converting
+    const strokeIds = strokes.map(s => s.id).join(',');
 
     this.isAutoConverting = true;
     this.conversionError = '';
@@ -672,6 +701,8 @@ export class AkitHandwritingCanvas {
       const result = await convertStrokes(strokes, this._symbolAdjustments);
       this.previewLatex = result.latex;
       this.isPreviewStale = false; // Preview is now up-to-date
+      // Record successful conversion state
+      this.lastConvertedStrokeIds = strokeIds;
     } catch (err) {
       this.conversionError = 'Conversion failed';
       console.error('Auto-conversion error:', err);
@@ -792,15 +823,15 @@ export class AkitHandwritingCanvas {
             >
               <EraserIcon />
             </button>
-            <button
-              class="icon-button"
-              onClick={() => this.erase()}
-              disabled={this.isAutoConverting}
-              title="Clear"
-            >
-              <TrashIcon />
-            </button>
           </div>
+          <button
+            class={`clear-button icon-button ${this.isDrawing || this.isErasing ? 'drawing-active' : ''}`}
+            onClick={() => this.erase()}
+            disabled={this.isAutoConverting}
+            title="Clear"
+          >
+            <TrashIcon />
+          </button>
           <div class="canvas-container">
             <canvas
               class={`${this.isEraserMode ? 'eraser-cursor' : ''} ${this.isDrawing || this.isErasing ? 'drawing-active' : ''}`}

@@ -47,23 +47,28 @@
 
 .toolbar {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0px;
+  right: 0px;
   left: auto;
   display: flex;
   flex-direction: row;
   gap: var(--akit-handwriting-canvas-toolbar-gap);
   z-index: 10;
-  // padding: var(--akit-handwriting-canvas-toolbar-padding);
-  // background: var(--akit-handwriting-canvas-color-toolbar-bg);
-  // border: 1px solid var(--akit-handwriting-canvas-color-border-light);
-  // border-radius: var(--akit-handwriting-canvas-border-radius);
-  // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  // backdrop-filter: blur(8px);
-  // -webkit-backdrop-filter: blur(8px);
 
   &.drawing-active {
     z-index: 5; // Below canvas during drawing - allows strokes to pass over buttons
+  }
+}
+
+// Clear button positioned separately in bottom-right to prevent accidental clicks
+.clear-button {
+  position: absolute;
+  bottom: 0px; // Above scrollbar
+  right: 0px;
+  z-index: 10;
+
+  &.drawing-active {
+    z-index: 5; // Below canvas during drawing
   }
 }
 
