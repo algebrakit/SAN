@@ -53,9 +53,9 @@ X
 Y
 Z
 [
-\#
+reserved5
 \%
-\&
+reserved6
 \And
 \Delta
 \Gamma
@@ -178,7 +178,7 @@ Z
 \triangle
 \underline
 \vdash
-\vdots
+reserved7
 \{
 \}
 ]
