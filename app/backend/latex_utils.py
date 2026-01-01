@@ -134,3 +134,13 @@ def expand_symbol_adjustments(
 
     # Convert back to list of adjustments
     return [{'symbol': sym, 'offset': off} for sym, off in symbol_offsets.items()]
+
+def normalise(latex: str) -> str:
+    """Transform LaTex for best support by KateX and MathQuill."""
+
+    if not latex:
+        return latex
+
+    latex = re.sub(r'\\Vert', '||', latex)
+
+    return latex

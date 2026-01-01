@@ -11,6 +11,7 @@ import time
 import logging
 import sys
 sys.path.append('../..')
+from app.backend.latex_utils import normalise
 from data_tools.stroke_processing.stroke2img import strokes_to_image,save_as_bmp
 from data_tools.stroke_processing.scale_strokes import rescale_strokes
 from inference_single import Inference
@@ -115,6 +116,9 @@ def convert_strokes_to_latex():
         # Convert to LaTeX (with optional symbol adjustments)
         try:
             latex = inference_model.convert2latex(img, symbol_adjustments)
+            if latex:
+                latex = normalise(latex)
+            
         except ValueError as e:
             # Invalid symbol or offset type
             return jsonify({'error': str(e)}), 400
