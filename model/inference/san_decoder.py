@@ -64,7 +64,33 @@ class SAN_decoder(nn.Module):
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
 
-    def forward(self, cnn_features, images_mask, images, word_log_priors=None):
+    def _capture_alternatives(self, word_log_prob, k=3):
+        """
+        Capture top-k alternative symbols from word log probabilities.
+
+        Args:
+            word_log_prob: Tensor of shape [1, vocab_size] with log probabilities
+            k: Number of alternatives to capture (default 3)
+
+        Returns:
+            List of dicts with 'word', 'prob', 'word_id', 'delta' for each top-k candidate
+        """
+        top_log_probs, top_indices = torch.topk(word_log_prob, k, dim=1)
+        best_log_prob = top_log_probs[0, 0].item()
+
+        candidates = []
+        for i in range(k):
+            word_id = top_indices[0, i].item()
+            log_prob = top_log_probs[0, i].item()
+            candidates.append({
+                'word': self.params['words'].words_index_dict[word_id],
+                'prob': float(log_prob),
+                'word_id': word_id,
+                'delta': float(log_prob - best_log_prob)
+            })
+        return candidates
+
+    def forward(self, cnn_features, images_mask, images, word_log_priors=None, max_steps=None):
 
         height, width = cnn_features.shape[2:]
         images_mask = images_mask[:, :, ::self.ratio, ::self.ratio].contiguous()
@@ -87,10 +113,21 @@ class SAN_decoder(nn.Module):
             word = torch.LongTensor([1])
 
             result = [['<s>', 0, -1, 'root']]
+            # alternative options:
+            # [probability, alternative word, id, parent_id, relation]]
+            alternatives = []
 
             while iter < 400:
                 iter += 1
 
+                if max_steps is not None:
+                    num_symbols = len([r for r in result if r[0] not in ['<s>', '<eos>', 'struct']])
+                    if num_symbols > max_steps:
+                        print(f"Max steps reached ({max_steps}), stopping inference to prevent infinite loop.") 
+                        # throw an error
+                        raise RuntimeError("Max steps reached, stopping inference to prevent infinite loop.")
+                    
+                
                 # word
                 word_hidden_first = self.word_input_gru(word_embedding, parent_hidden)
 
@@ -182,6 +219,16 @@ class SAN_decoder(nn.Module):
                         cid += 1
                         result.append([self.params['words'].words_index_dict[word.item()], cid, pid, p_re])
 
+                        # Capture top-3 alternative symbols for this decision point
+                        candidates = self._capture_alternatives(word_log_prob, k=3)
+                        alternatives.append({
+                            'step': iter,
+                            'cid': cid,
+                            'pid': pid,
+                            'relation': p_re,
+                            'candidates': candidates
+                        })
+
                     # in default left-to-right, the current symbol is the parent of the next
                     p_re = 'right'
                     pid = cid 
@@ -195,8 +242,8 @@ class SAN_decoder(nn.Module):
                 # image = images[0,0,:,:]
                 # alpha = word_alpha[0,:,:]
                 # visualize_attention(image, alpha, alpha_query, alpha_coverage, iter, word_str)
-                                        
-        return result
+
+        return result, alternatives
 
 
     def init_hidden(self, features, feature_mask):

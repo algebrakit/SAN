@@ -90,7 +90,7 @@ class Inference:
 
         return priors
 
-    def convert2latex(self, img, symbol_adjustments=None):
+    def convert2latex(self, img, symbol_adjustments=None, max_steps=None):
         with torch.no_grad():
             # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             image = torch.Tensor(img) / 255
@@ -103,7 +103,21 @@ class Inference:
             # Build per-request priors tensor from symbol adjustments
             word_log_priors = self._build_priors_tensor(symbol_adjustments)
 
-            prediction = self.model(image, image_mask, word_log_priors)
+            prediction = None
+            do_repeat = True
+            while do_repeat:
+                do_repeat = False
+                # try catch runtime error from max steps
+                try:
+                    prediction, alternatives = self.model(image, image_mask, word_log_priors, max_steps=max_steps)
+                except RuntimeError as e:
+                    do_repeat = True
+                    if word_log_priors is None:
+                        word_log_priors = torch.zeros(1, self.params['word_num']).to(device=device)
+                    idx = self.params['words'].encode(['<eos>'])[0]
+                    word_log_priors[0, idx] = word_log_priors[0, idx] + 2 # boost eos to end earlier
+                    print("Retrying with adjusted priors to encourage EOS. EOS priority now:", word_log_priors[0, idx].item())
+
             expr = parse_gtd(prediction)
             if expr is None:
                 return None

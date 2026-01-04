@@ -19,11 +19,11 @@ class Backbone(nn.Module):
         self.ratio = params['densenet']['ratio'] if params['encoder']['net'] == 'DenseNet' else 16 * params['resnet'][
             'conv1_stride']
 
-    def forward(self, images, images_mask, word_log_priors=None):
+    def forward(self, images, images_mask, word_log_priors=None, max_steps=None):
 
         cnn_features = self.encoder(images)
-        prediction = self.decoder(cnn_features, images_mask, images, word_log_priors)
+        prediction, alternatives = self.decoder(cnn_features, images_mask, images, word_log_priors, max_steps=max_steps)
 
-        return prediction
+        return prediction, alternatives
 
 

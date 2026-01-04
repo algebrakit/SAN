@@ -111,11 +111,15 @@ def convert_strokes_to_latex():
             padding=2
         )
         
+        # used to detect infinite loop in the inference algorithm. 
+        # The expression cannot have more symbols than strokes
+        num_strokes = len(strokes)
+
         # save_as_bmp(img, 'debug.bmp')  # For debugging
 
         # Convert to LaTeX (with optional symbol adjustments)
         try:
-            latex = inference_model.convert2latex(img, symbol_adjustments)
+            latex = inference_model.convert2latex(img, symbol_adjustments, max_steps=num_strokes)
             if latex:
                 latex = normalise(latex)
             
